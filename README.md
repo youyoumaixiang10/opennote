@@ -25,7 +25,7 @@ You're on the bus and have an idea. You open Claude on your phone and say:
 Asymmetry is the whole game when the future is uncertain.
 ```
 
-Hit send. That's it. Claude handles the rest — organizes it into a markdown file, commits, and pushes to your Git repo. Timestamped, categorized, searchable, and yours forever.
+**Hit send. That's it.** Claude handles the rest — organizes it into a markdown file, commits, and pushes to your Git repo. Timestamped, categorized, searchable, and yours forever.
 
 </td>
 </tr>
