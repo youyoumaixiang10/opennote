@@ -2,7 +2,7 @@
 
 ## Config
 
-- **Timezone**: TIMEZONE_PLACEHOLDER
+- **Timezone**: Asia/Shanghai
 
 ## What This Repo Is
 
