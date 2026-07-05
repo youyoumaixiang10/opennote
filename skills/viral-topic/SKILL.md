@@ -1,58 +1,77 @@
 ---
 name: viral-topic
-description: |
-  爆款选题雷达：输入一个内容领域/赛道，检索近期各平台（小红书/抖音/B站/视频号/公众号等）出现的"低粉爆款"内容——即发布账号粉丝基数不高、却拿到远超其体量互动数据的笔记或视频。这类内容的走红更多归因于选题和内容本身而非账号自带流量，最具复制参考价值。
-  显式触发："爆款选题""低粉爆款""黑马内容""帮我找爆款参考""最近这个赛道什么火"。
-  隐式触发：用户在做内容规划、想蹭近期热点、想知道某个垂类最近什么内容表现好、准备起号或做对标分析。
+description: Route viral topic discovery across platform-specific account-growth skills. Use when the user asks for 起号选题, low-follower viral references, recent viral content, cross-platform topic mining, or does not specify whether to search WeChat, X, Bilibili, or YouTube.
 ---
 
-# 爆款选题雷达 · Viral Topic Radar
+# Viral Topic
 
-> 目标不是"这个领域最大的头部在发什么"，而是"一个没什么粉丝的普通账号，靠什么内容意外跑出来了"。头部账号的爆款很难解释——可能只是因为他有粉丝基础。低粉账号的爆款几乎只能用内容本身解释，这才是能抄的作业。
+Use this skill as the control layer for finding topic references across platforms. It does not fetch data itself; it routes the request to the platform skill whose collection logic matches the platform.
 
-## Step 0：收集参数（不清楚就先问，别瞎猜）
+## Package Layout
 
-必须明确：
-1. **领域/赛道**：具体到细分方向（"美妆"太泛，"油皮平价护肤"才能搜）
-2. **目标平台**：小红书/抖音/B站/视频号/公众号，可多选，未指定则默认小红书+抖音（中文内容场景最常用）
-3. **"低粉"的口径**：默认账号粉丝量 < 1万（细分领域可放宽到 3万），若用户有自己的定义以用户为准
-4. **时间范围**：默认近 30 天，用户可指定"近一周""近三个月"
+This repository publishes `viral-topic/` as one skill package:
 
-## Step 1：检索策略
-
-平台不开放公共 API，也登录不了看后台数据，所以不要假装能直接"抓取"。实际可行的路径：
-
-1. **第三方数据/复盘平台**：用 WebSearch 搜索该领域 + 平台名 + "爆款笔记""涨粉复盘""黑马账号"，结合新榜、蝉妈妈、灰豚数据、飞瓜数据、卡思数据等第三方榜单/复盘文章里被引用的案例——这些文章经常专门扒"小粉丝爆款"做案例分析
-2. **平台内搜索的公开页面**：对小红书/抖音等可直接 WebFetch 的公开笔记/视频页面，搜索"[领域] 笔记"或"[领域] site:xiaohongshu.com"一类查询，找到具体内容页后用 WebFetch 打开核对点赞/收藏/评论数与博主粉丝量
-3. **垂类自媒体/运营社区的复盘帖**：知乎、公众号、即刻上常有人专门拆解"没粉丝为什么这条爆了"，是效率较高的信息源
-4. **多查几轮**：单次搜索结果里头部大号内容会混进来，需要多组关键词交叉，主动过滤掉明显是大号（简介/认证/粉丝数展示为几十万以上）的结果
-
-## Step 2：筛选"低粉"信号
-
-数据不一定能拿到精确粉丝数，此时看间接信号：
-- 内容/评论区出现"没想到火了""小号也能爆""涨粉xx"这类文字
-- 复盘文章明确写了博主粉丝量级
-- 账号主页可访问时直接核实
-
-**拿不到精确数据时，如实标注"粉丝量未核实"，不要编造一个看起来合理的数字。**
-
-## Step 3：输出格式
-
-按平台分组，每条内容包含：
-
-```
-【平台】XX
-【标题/钩子】原文标题或开场白
-【内容角度】一句话说清"这条内容在讲什么、切的是什么角度"（不是复述标题）
-【为什么火】具体到可复制的原因：选题稀缺性 / 情绪共鸣点 / 反常识信息差 / 强对比结构 / 蹭到的热点，等等——不要写"内容优质"这种空话
-【数据】互动数据 + 博主粉丝量级（注明数据来源和获取时间；若未核实，写"未核实"）
-【链接】若可获取
+```text
+viral-topic/
+├── SKILL.md
+├── references/platforms.md
+├── wechat-viral-topic/
+├── x-viral-topic/
+├── bilibili-viral-topic/
+└── youtube-viral-topic/
 ```
 
-结尾给一句总结：这几条低粉爆款有没有共同的选题模式或结构套路，能不能提炼成一条可复用的公式。
+The root `SKILL.md` is the controller. The platform directories are child skills/adapters with their own `SKILL.md`, `references/`, `agents/`, and scripts.
 
-## 红线
+## Platform Routing
 
-- 平台数据会变、也可能压根抓不到——不确定就说不确定，别为了看起来完整而编数字
-- 优先给"选题+角度"层面的可复制信息，而不是让用户抄标题原文（抄标题没有意义，抄角度和结构才有）
-- 若用户想保存检索结果，按本仓库 `CLAUDE.md` 的记录规范存入 `explorations/`（因为这是"带着特定视角对信息做加工"的产出，不是原始笔记）
+Read `references/platforms.md` before deciding which child skills to run.
+
+Implemented child skills:
+
+- `$wechat-viral-topic`: WeChat public-account articles that exceed the account's average reads.
+- `$x-viral-topic`: X/Twitter posts from low-follower authors that outperform their audience size.
+- `$bilibili-viral-topic`: B站 videos from low-follower UP主 that outperform their follower base.
+- `$youtube-viral-topic`: recent high-performing YouTube videos without low-subscriber filtering.
+
+If the user gives no platform, default to the implemented set: WeChat, X, Bilibili, and YouTube. If the user asks for 小红书 or 抖音, explain that those adapters are not implemented yet and propose the available API/browser-automation path before building it.
+
+## Workflow
+
+1. Normalize the user's niche into 3-8 focused search terms.
+2. Choose platforms from the request. For "全平台" or "各个平台", run all implemented child skills.
+3. Run each platform skill independently with its own defaults:
+   - WeChat: `--days 7`, `--min-read 10000`, `--min-read-month-avg-ratio 2`
+   - X: `--days 7`, `--max-followers 50000`, `--min-engagement 100`
+   - Bilibili: `--days 30`, `--max-followers 100000`, `--min-play 10000`
+   - YouTube: `--days 30`, `--min-views 10000`
+4. Preserve source URLs, author/account metrics, timing, and evidence labels.
+5. Merge outputs into a cross-platform topic table only after preserving each platform's original evidence.
+6. Label confidence carefully:
+   - WeChat confirms average-read breakout, not low-follower breakout.
+   - X and Bilibili can confirm low-follower viral only when follower counts are present.
+   - YouTube confirms viral strength, not low-subscriber breakout.
+
+## Output Shape
+
+When combining platforms, use this compact table first:
+
+```text
+platform | title | author | published_at | main_metric | scale_metric | breakout_reason | url
+```
+
+Then add a short synthesis:
+
+- reusable topic angle
+- title/hook pattern
+- format pattern
+- why it likely worked
+- whether the evidence is confirmed or proxy-only
+
+## Guardrails
+
+- Do not collapse all platforms into one scoring formula without keeping platform-specific evidence.
+- Do not call YouTube results low-fan by default.
+- Do not use WeChat `follower_count` as the default low-fan signal; compare article reads with `month_read_avg`.
+- Never write API keys, cookies, app secrets, or access tokens into skill files or outputs.
+- Use results as topic references and structure inspiration. Do not copy posts, articles, video scripts, captions, or thumbnails wholesale.

@@ -1,57 +1,147 @@
 ---
 name: viral-title
-description: |
-  爆款标题工坊：针对给定的内容主题/核心信息，为不同平台（小红书/抖音/B站/公众号/视频号等）生成风格适配的爆款标题参考，兼顾平台调性、字数限制、关键词与情绪钩子，每个标题标注用的是哪种钩子、为什么在该平台有效。
-  显式触发："爆款标题""标题怎么写""帮我起个标题""标题优化""这个标题行不行"。
-  隐式触发：用户写完内容问标题效果、要把同一条内容发多个平台但只想到一个通用标题、内容规划阶段就想先定标题方向。
+description: Generate high-potential viral title candidates for content across WeChat public account articles, X/Twitter posts, YouTube videos, Bilibili videos, and similar content platforms. Use when the user needs headline/title ideation, batch title generation, platform-specific title adaptation, title-library reuse, title selection, title scoring, or a reusable title workflow based on universal formulas plus separated platform methods such as 公众号, X, YouTube, and B站.
 ---
 
-# 爆款标题工坊 · Viral Title Workshop
+# Viral Title
 
-## Step 0：收集参数
+## Overview
 
-必须明确：
-1. **内容主题/核心信息**：这条内容实际讲了什么（不是领域，是具体信息点，比如"油皮别用磨砂膏，会破坏皮脂膜"）
-2. **目标平台**：小红书/抖音/B站/公众号/视频号，可多选，未指定则默认小红书+抖音
-3. **目标受众**（如有）：会影响用词和身份认同类钩子的写法
-4. 若用户已有标题草稿，先诊断这条草稿用了什么钩子、缺什么，再给替代方案，不要无视已有草稿从零开始
+Use this skill to generate and select viral title candidates. The current version implements Phase 1 universal methodology, WeChat public-account title reuse, X/Twitter hook generation, YouTube title-thumbnail packaging, Bilibili title-cover-tag packaging, and a lightweight evolution loop.
 
-## Step 1：平台调性备忘
+Phase 1 must generate 30 titles: 10 universal formulas x 3 variants per formula. Then score the candidates and recommend the single best title.
 
-| 平台 | 风格 | 常见结构 | 长度/约束 |
-|---|---|---|---|
-| 小红书 | 人设感强、口语化、情绪先行 | 利益点前置 + 反差/悬念 + 数字量化，emoji 适度点缀（1-3个） | 标题一般 ≤ 20 字，太长会被截断 |
-| 抖音 | 标题要能撑住前 3 秒不划走 | 强钩子：反常识 / 冲突 / 悬念 / 结果先行，标题和视频开场白往往是同一句 | 简短直接，避免书面语 |
-| B站 | 允许玩梗、信息量可以更高、可自嘲/吐槽 | 玩梗 + 具体信息 + 反差萌，粉丝黏性高、太营销号腔调会被弹幕嘲 | 可以比小红书长，但别啰嗦 |
-| 公众号 | 偏搜索场景，SEO关键词要前置 | 痛点/疑问前置 + 具体数字/结果，关键词决定能不能被搜到 | 标题可较长，但前 15 字要包含核心关键词 |
-| 视频号 | 熟人社交场域，情感/实用向更容易被转发 | 情感共鸣或"有用到想转发给谁"的实用向 | 平实，别太浮夸，容易被认为标题党 |
+## Workflow
 
-## Step 2：钩子类型清单（生成标题时至少覆盖 3 种不同钩子，不要 5 条标题都是同一个套路）
+1. Clarify only if the content is too vague to title.
+2. Identify the core material:
+   - topic or content summary
+   - target audience
+   - platform if provided
+   - strongest value, conflict, novelty, or emotional hook
+   - hard facts, numbers, names, examples, and constraints that must remain true
+3. Read `references/phase1-universal-methodology.md`.
+4. If the user names a platform, load the matching platform reference from `references/platforms/`.
+5. Read `references/evolution/promoted-rules.md` and `references/evolution/anti-patterns.md`.
+6. Generate exactly 3 titles for each of the 10 Phase 1 formulas.
+7. If a platform reference is implemented, generate platform-tuned candidates after the universal batch when the user asks for platform-specific titles.
+8. If the user asks to reuse proven titles or says "套用标题库", retrieve relevant examples instead of loading full libraries.
+9. Score the candidate pool with the Phase 1 scoring rubric plus any platform-specific rules.
+10. Select one best title and briefly explain why.
+11. End every substantial title-generation response with the feedback prompt from `Feedback Hook`.
+12. If the user replies with a selected title, edit, rating, or critique, log it with `scripts/log_feedback.py`.
 
-- **悬念/信息差**：藏一个"关键结论"不说，逼你点进去看
-- **反常识**：说一个和常识相反的事实
-- **利益点量化**：直接给数字化的收益（省了多少钱/多少时间/多少步骤）
-- **身份认同**："XX人才懂"式的圈层认同
-- **恐惧/焦虑**：点出一个读者正在担心但没意识到的风险
-- **对比/反差**：两个看似矛盾的事实并列，或"以前 vs 现在"
-- **从众/社会证明**："都在用""XX万人都这样做了"
+## Platform Routing
 
-## Step 3：输出格式
+Use one platform file at a time:
 
-按平台分组，每个平台给 3-5 条：
+| User says | Platform file | Status |
+|---|---|---|
+| 公众号, 微信公众号, WeChat article | `references/platforms/wechat-public-account.md` | Implemented |
+| X, Twitter, 推特 | `references/platforms/x.md` | Implemented |
+| YouTube, 油管 | `references/platforms/youtube.md` | Implemented |
+| B站, Bilibili | `references/platforms/bilibili.md` | Implemented |
 
+For title-library reuse, load only the current platform's library:
+
+- `references/title-library/wechat-public-account-hot-titles.md` for summary and examples.
+- `references/title-library/wechat-ai-curated-hot-titles.md` for user-curated AI/tech viral title patterns and hotspot-dependent examples.
+- `references/title-library/wechat-public-account-hot-titles.json` only when many source titles are needed for matching or adaptation.
+- `references/title-library/x-hot-hooks.md` for X/Twitter hook skeletons and reusable mechanisms.
+- `references/title-library/youtube-hot-titles.md` for YouTube title-thumbnail packaging skeletons.
+- `references/title-library/bilibili-hot-titles.md` for B站 title-cover-tag packaging skeletons.
+
+For token-efficient retrieval, prefer:
+
+```bash
+python3 scripts/retrieve_title_examples.py --platform <wechat|x|youtube|bilibili> --query "<topic words>" --mechanism "<optional mechanism>" --limit 10
 ```
-【平台】XX
-1. 标题原文
-   钩子类型：XX ｜ 为什么在这个平台有效：一句话
+
+## Evolution Loop
+
+Use the loop only when logging, feedback, review, or evaluation is useful. Do not load historical logs during ordinary title generation.
+
+| Need | Command |
+|---|---|
+| Log a title session | `python3 scripts/log_title_session.py --platform <platform> --topic "..." --recommended-title "..."`
+| Log user feedback | `python3 scripts/log_feedback.py --session-id "..." --platform <platform> --selected-title "..." --user-edit "..." --rating 5 --feedback "..."`
+| Retrieve title examples | `python3 scripts/retrieve_title_examples.py --platform <wechat|x|youtube|bilibili> --query "AI Agent speed" --limit 10` |
+| Review recent learning | `python3 scripts/analyze_feedback.py --recent 20` |
+| Run seed evals | `python3 scripts/run_title_evals.py --evals references/evals/bilibili-ai-title-evals.json --case-id agent-speed-step37-bilibili --titles-json titles.json` |
+
+Follow `meta/RULES.md`: append logs automatically, but require user confirmation before modifying core methodology or promoting rules.
+
+## Feedback Hook
+
+After every substantial title-generation response, append exactly one short feedback prompt:
+
+```markdown
+**反馈一下**
+你最终会用哪个标题？如果你改了标题，把最终版发我；也可以给 1-5 分。我会用这次反馈优化下次标题。
+```
+
+Do not ask for feedback after pure research, implementation, explanation, or tiny one-off edits.
+
+When feedback arrives:
+
+1. Treat a chosen title, edited title, rating, or critique as evolution feedback.
+2. Log feedback with the current platform when known.
+3. Prefer `user_edit` over `selected_title` when both are provided.
+4. Store titles, platform, rating, tags, and concise feedback only. Do not store full unpublished drafts by default.
+5. After every 5-20 feedback records, run `scripts/analyze_feedback.py --recent 20` and summarize learning candidates.
+6. Do not promote candidate observations into methodology files without user confirmation.
+
+## Phase 1 Output Format
+
+Use this structure:
+
+```markdown
+**内容判断**
+核心对象：
+目标人群：
+主要点击理由：
+真实约束：
+
+**第一阶段：通用方法论标题池**
+
+1. 结果承诺型
+- ...
+- ...
+- ...
+
+2. 问题解决型
+- ...
+- ...
+- ...
+
+[continue through all 10 formulas]
+
+**最佳标题**
+标题：
+理由：
+
+**备选 Top 3**
+1. ...
 2. ...
+3. ...
+
+**反馈一下**
+你最终会用哪个标题？如果你改了标题，把最终版发我；也可以给 1-5 分。我会用这次反馈优化下次标题。
 ```
 
-结尾给一句判断：如果只能选一条发，选哪条、为什么。
+## Quality Rules
 
-## 红线
+- Generate exactly 30 Phase 1 candidates unless the user explicitly asks for fewer.
+- Each formula must contribute exactly 3 titles.
+- Do not fabricate unsupported facts, names, numbers, or results.
+- Prefer concrete nouns, visible stakes, and reader-facing benefits over abstract claims.
+- Keep titles platform-neutral in Phase 1. Do not overfit to WeChat, X, YouTube, or Bilibili unless the user asks.
+- Use Chinese titles by default when the user writes in Chinese. Use English when the source content or user request is English.
+- Avoid empty hype such as "震惊", "必看", "全网最强", unless the user's style explicitly asks for it.
+- Make the final recommendation decisive. Do not say "it depends" after scoring.
 
-- **标题必须兑现内容**：不允许为了效果编一个内容里没有的结论或数字，标题党可以博点击，但会反噬账号信任度和平台限流风险——如果某个钩子必须夸大才成立，换一个钩子而不是硬写
-- **不同平台不能简单复制同一条标题**：调性不对会显得违和，必须按 Step 1 的备忘表分别调整措辞、长度、语气
-- 避免使用平台明确限流/敏感的词汇（如涉医疗功效的绝对化用语、涉政涉黄擦边词），拿不准就提醒用户自查平台规则
-- 若用户想保存生成结果，按本仓库 `CLAUDE.md` 的记录规范存入 `notes/`（这是围绕具体一条内容产出的素材，不是跨笔记的主题探索）
+## Future Extension Points
+
+- Add deeper live-sampled libraries for each platform as more user-approved data sources become available.
+- Split Bilibili libraries by partition if a single library becomes too broad.
+- Load only the platform or library reference needed for the current user request.
