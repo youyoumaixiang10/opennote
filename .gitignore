@@ -4,3 +4,5 @@
 *~
 .claude/*
 !.claude/skills/
+node_modules/
+videos/**/renders/*.mp4.tmp

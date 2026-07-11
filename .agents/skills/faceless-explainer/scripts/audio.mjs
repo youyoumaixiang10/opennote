@@ -150,6 +150,8 @@ function runGenerate(argv) {
     bgm: { mode: "retrieve", query, blob: g.message || "", arc: g.arc || "" },
   };
   if (userVoice) request.voice = userVoice;
+  const userLang = flag(argv, "lang", null);
+  if (userLang) request.lang = userLang;
 
   const neutral = neutralPath(outPath);
   runEngine({ request, hyperframesDir, neutral, only: "tts,bgm" }, die);
