@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is source-file metadata only; the runtime clones <template> contents -->
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Noto Serif CJK SC"; font-weight: 400; src: url("../../assets/fonts/serif-regular.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Serif CJK SC"; font-weight: 700; src: url("../../assets/fonts/serif-bold.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 400; src: url("../../assets/fonts/sans-regular.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 500; src: url("../../assets/fonts/sans-medium.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 700; src: url("../../assets/fonts/sans-bold.woff2") format("woff2"); }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1080px;
+          height: 1920px;
+          overflow: hidden;
+          font-family: "Noto Sans CJK SC", sans-serif;
+          color: #141413;
+        }
+
+        /* full-bleed ground lives on a clip layer, never on #root */
+        .bg {
+          position: absolute;
+          inset: 0;
+          background: #faf9f5;
+        }
+
+        .content {
+          position: absolute;
+          inset: 0;
+        }
+
+        /* ---- divider (supporting) — vertical hairline, self-draws top -> down ---- */
+        .divider-svg {
+          position: absolute;
+          inset: 0;
+          width: 1080px;
+          height: 1920px;
+          overflow: visible;
+        }
+        .divider-svg path {
+          fill: none;
+          stroke: rgba(20, 20, 19, 0.24);
+          stroke-width: 2;
+          stroke-linecap: round;
+        }
+
+        /* ---- title card (focal — the golden line) ---- */
+        .title-card {
+          position: absolute;
+          left: 64px;
+          right: 64px;
+          top: 636px;
+          text-align: center;
+          opacity: 0; /* revealed by timeline: single slide-up crossfade */
+        }
+        .title-card .line {
+          font-family: "Noto Serif CJK SC", serif;
+          font-weight: 400;
+          font-size: 90px;
+          line-height: 1.32;
+          letter-spacing: -0.02em;
+          color: #141413;
+        }
+        .title-card .line .accent {
+          color: #cc785c;
+        }
+
+        /* ---- camp clusters (supporting) ---- */
+        .camp {
+          position: absolute;
+          top: 1050px;
+          width: 432px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 28px;
+        }
+        .camp.left {
+          left: 64px;
+        }
+        .camp.right {
+          left: 584px;
+        }
+
+        .plate-row {
+          display: flex;
+          gap: 22px;
+        }
+
+        .plate {
+          background: #efe9de;
+          border: 1px solid rgba(20, 20, 19, 0.12);
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(20, 20, 19, 0.08), 0 4px 16px rgba(20, 20, 19, 0.04);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          opacity: 0; /* slides in by timeline */
+        }
+        .plate.small {
+          width: 174px;
+          height: 208px;
+        }
+        .plate.solo {
+          width: 268px;
+          height: 224px;
+          border: 2px solid #cc785c;
+          box-shadow: 0 1px 3px rgba(20, 20, 19, 0.08), 0 6px 20px rgba(204, 120, 92, 0.1);
+        }
+        .plate .name {
+          font-family: "Noto Serif CJK SC", serif;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          color: #141413;
+          white-space: nowrap;
+        }
+        .plate.small .name {
+          font-size: 42px;
+        }
+        .plate.solo .name {
+          font-size: 58px;
+        }
+
+        .camp-tag {
+          font-size: 30px;
+          font-weight: 500;
+          letter-spacing: 0.14em;
+          margin-right: -0.14em;
+          color: rgba(20, 20, 19, 0.62);
+          white-space: nowrap;
+          opacity: 0; /* fades in after the plates settle */
+        }
+        .camp.right .camp-tag {
+          color: #cc785c;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="09-divergence"
+        data-width="1080"
+        data-height="1920"
+        data-duration="8.256"
+      >
+        <div id="f9-bg" class="bg clip" data-start="0" data-duration="8.256" data-track-index="0"></div>
+
+        <div id="f9-content" class="content clip" data-start="0" data-duration="8.256" data-track-index="1">
+          <!-- Scene 1: divider self-draws, two camps slide in from opposite sides -->
+          <svg class="divider-svg" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+            <path id="f9-divider" d="M 540 970 L 540 1410" />
+          </svg>
+
+          <div class="camp left">
+            <div class="plate-row">
+              <div class="plate small" id="f9-naval">
+                <div class="name">纳瓦尔</div>
+              </div>
+              <div class="plate small" id="f9-inamori">
+                <div class="name">稻盛和夫</div>
+              </div>
+            </div>
+            <div class="camp-tag" id="f9-tag-left">想得通</div>
+          </div>
+
+          <div class="camp right">
+            <div class="plate solo" id="f9-jung">
+              <div class="name">荣格</div>
+            </div>
+            <div class="camp-tag" id="f9-tag-right">想不通——先看情绪</div>
+          </div>
+
+          <!-- Scene 2: title card — the one restrained move -->
+          <div class="title-card" id="f9-title">
+            <div class="line"><span class="accent">分歧</span>本身，</div>
+            <div class="line">就是答案的一部分</div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        // svg-path-draw setup: dash pattern = measured path length (DOM API, not a magic number)
+        const divider = document.getElementById("f9-divider");
+        const dividerLen = divider.getTotalLength();
+        divider.style.strokeDasharray = `${dividerLen}`;
+        divider.style.strokeDashoffset = `${dividerLen}`;
+
+        const tl = gsap.timeline({ paused: true });
+
+        /* ---------------- Scene 1 (0.0 - ~3.30s) — VO "他们没有和稀泥":
+           divider self-draws top -> down; the two camps slide in from their own side of
+           the line — 纳瓦尔/稻盛和夫 from the left ("想得通"), 荣格 alone from the right
+           ("想不通——先看情绪") — each camp settles with a long power3 tail, no bounce. ---------------- */
+        tl.to("#f9-divider", { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0.05);
+
+        tl.fromTo(
+          ["#f9-naval", "#f9-inamori"],
+          { opacity: 0, x: -56 },
+          { opacity: 1, x: 0, duration: 0.6, ease: "power3.out", stagger: 0.12 },
+          0.35,
+        );
+        tl.fromTo(
+          "#f9-tag-left",
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+          1.05,
+        );
+
+        tl.fromTo(
+          "#f9-jung",
+          { opacity: 0, x: 56 },
+          { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
+          1.05,
+        );
+        tl.fromTo(
+          "#f9-tag-right",
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+          1.75,
+        );
+
+        /* ---------------- Scene 2 (~3.30 - ~5.78s) — VO lands on "解决不了内耗":
+           titlecard-reveal signature — the ONE restrained move: a single slide-up
+           crossfade brings the golden line to rest above the divider. ---------------- */
+        tl.fromTo(
+          "#f9-title",
+          { opacity: 0, y: 36 },
+          { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
+          3.3,
+        );
+
+        /* ---------------- Scene 3 (~5.78 - 8.256s) — held frame:
+           no further motion of any kind — the allocated stillness is the deliverable. ---------------- */
+
+        window.__timelines["09-divergence"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
