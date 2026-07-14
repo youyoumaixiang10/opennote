@@ -1,0 +1,393 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head is source-file metadata only; the runtime clones <template> contents -->
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Noto Serif CJK SC"; font-weight: 400; src: url("../../assets/fonts/serif-regular.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Serif CJK SC"; font-weight: 700; src: url("../../assets/fonts/serif-bold.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 400; src: url("../../assets/fonts/sans-regular.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 500; src: url("../../assets/fonts/sans-medium.woff2") format("woff2"); }
+        @font-face { font-family: "Noto Sans CJK SC"; font-weight: 700; src: url("../../assets/fonts/sans-bold.woff2") format("woff2"); }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1080px;
+          height: 1920px;
+          overflow: hidden;
+          font-family: "Noto Sans CJK SC", sans-serif;
+          color: #141413;
+        }
+
+        /* full-bleed ground lives on a clip layer, never on #root */
+        .bg {
+          position: absolute;
+          inset: 0;
+          background: #faf9f5;
+        }
+
+        .content {
+          position: absolute;
+          inset: 0;
+        }
+
+        /* ---- era band (supporting, top) ---- */
+        .era-band {
+          position: absolute;
+          left: 84px;
+          right: 84px;
+          top: 152px;
+          height: 96px;
+        }
+        .era-line-svg {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 912px;
+          height: 18px;
+          display: block;
+          overflow: visible;
+        }
+        .era-line-svg path {
+          fill: none;
+          stroke: rgba(20, 20, 19, 0.28);
+          stroke-width: 2;
+          stroke-linecap: round;
+        }
+        .era-stops {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 96px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+        .era-stop {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          opacity: 0; /* lit by timeline fromTo */
+        }
+        .era-stop .era-label {
+          font-size: 27px;
+          font-weight: 500;
+          letter-spacing: 0.18em;
+          margin-right: -0.18em;
+          color: rgba(20, 20, 19, 0.72);
+          white-space: nowrap;
+        }
+        .era-stop .era-tick {
+          width: 2px;
+          height: 16px;
+          background: rgba(20, 20, 19, 0.55);
+        }
+
+        /* ---- count label (mono voice, ink) ---- */
+        .count-label {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 306px;
+          text-align: center;
+          font-size: 30px;
+          font-weight: 500;
+          letter-spacing: 0.22em;
+          margin-right: -0.22em;
+          color: rgba(20, 20, 19, 0.6);
+          opacity: 0;
+        }
+
+        /* ---- roster grid (foreground subject) ---- */
+        .grid {
+          position: absolute;
+          left: 84px;
+          right: 84px;
+          top: 420px;
+          height: 1096px;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(5, 1fr);
+          gap: 24px;
+        }
+        .cell {
+          position: relative;
+        }
+        .ghost {
+          position: absolute;
+          inset: 0;
+          border: 1px dashed rgba(20, 20, 19, 0.2);
+          border-radius: 12px;
+          opacity: 0; /* staggered in by timeline */
+        }
+        .card {
+          position: absolute;
+          inset: 0;
+          background: #efe9de;
+          border: 1px solid rgba(20, 20, 19, 0.12);
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(20, 20, 19, 0.08), 0 4px 16px rgba(20, 20, 19, 0.04);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          opacity: 0; /* cascades in by timeline */
+          perspective: 600px; /* static; for the corner-tag flip */
+        }
+        .card .idx {
+          position: absolute;
+          top: 16px;
+          left: 20px;
+          font-size: 22px;
+          font-weight: 500;
+          letter-spacing: 0.08em;
+          color: rgba(20, 20, 19, 0.38);
+        }
+        .card .name {
+          font-family: "Noto Serif CJK SC", serif;
+          font-weight: 400;
+          font-size: 58px;
+          line-height: 1;
+          letter-spacing: -0.01em;
+          color: #141413;
+          white-space: nowrap;
+        }
+        .card .domain {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .card .domain .rule {
+          width: 18px;
+          height: 1px;
+          background: rgba(20, 20, 19, 0.3);
+        }
+        .card .domain .domain-text {
+          font-size: 26px;
+          font-weight: 500;
+          letter-spacing: 0.18em;
+          margin-right: -0.18em;
+          color: rgba(20, 20, 19, 0.62);
+          white-space: nowrap;
+        }
+
+        /* ---- coral corner tag "方法" (the one coral moment) ---- */
+        .corner-tag {
+          position: absolute;
+          top: -14px;
+          right: -10px;
+          background: #cc785c;
+          color: #faf9f5;
+          border-radius: 6px;
+          padding: 7px 16px;
+          font-size: 24px;
+          font-weight: 500;
+          letter-spacing: 0.1em;
+          margin-right: 0;
+          line-height: 1;
+          white-space: nowrap;
+          opacity: 0; /* flips in by timeline */
+          backface-visibility: hidden;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="04-roster"
+        data-width="1080"
+        data-height="1920"
+        data-duration="9.109"
+      >
+        <div id="f4-bg" class="bg clip" data-start="0" data-duration="9.109" data-track-index="0"></div>
+
+        <div id="f4-content" class="content clip" data-start="0" data-duration="9.109" data-track-index="1">
+          <!-- Scene 1: era band, self-drawing left -> right -->
+          <div class="era-band">
+            <svg class="era-line-svg" viewBox="0 0 912 18" xmlns="http://www.w3.org/2000/svg">
+              <path id="f4-era-line" d="M 1 9 L 911 9" />
+            </svg>
+            <div class="era-stops">
+              <div class="era-stop"><div class="era-label">古希腊</div><div class="era-tick"></div></div>
+              <div class="era-stop"><div class="era-label">先秦</div><div class="era-tick"></div></div>
+              <div class="era-stop"><div class="era-label">晚清</div><div class="era-tick"></div></div>
+              <div class="era-stop"><div class="era-label">当代</div><div class="era-tick"></div></div>
+            </div>
+          </div>
+
+          <div id="f4-count" class="count-label">认知框架 × 10</div>
+
+          <!-- Scene 2: 2x5 roster grid, four cascade waves on the VO clauses -->
+          <div class="grid">
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c1">
+                <div class="idx">01</div>
+                <div class="name">芒格</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">决策</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c2">
+                <div class="idx">02</div>
+                <div class="name">达里奥</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">复盘</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c3">
+                <div class="idx">03</div>
+                <div class="name">马斯克</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">破界</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c4">
+                <div class="idx">04</div>
+                <div class="name">孙子</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">竞争</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c5">
+                <div class="idx">05</div>
+                <div class="name">纳瓦尔</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">杠杆</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c6">
+                <div class="idx">06</div>
+                <div class="name">曾国藩</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">执行</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c7">
+                <div class="idx">07</div>
+                <div class="name">荣格</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">内耗</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c8">
+                <div class="idx">08</div>
+                <div class="name">稻盛和夫</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">初心</div><div class="rule"></div></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c9">
+                <div class="idx">09</div>
+                <div class="name">苏格拉底</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">追问</div><div class="rule"></div></div>
+                <div class="corner-tag" id="f4-tag-9">方法</div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="ghost"></div>
+              <div class="card" id="f4-c10">
+                <div class="idx">10</div>
+                <div class="name">老子</div>
+                <div class="domain"><div class="rule"></div><div class="domain-text">反转</div><div class="rule"></div></div>
+                <div class="corner-tag" id="f4-tag-10">方法</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        // svg-path-draw setup: dash pattern = measured path length (DOM API, not a magic number)
+        const eraLine = document.getElementById("f4-era-line");
+        const eraLen = eraLine.getTotalLength();
+        eraLine.style.strokeDasharray = `${eraLen}`;
+        eraLine.style.strokeDashoffset = `${eraLen}`;
+
+        const tl = gsap.timeline({ paused: true });
+
+        /* ---------------- Scene 1 (0 - ~2.3s) — era band self-draws, labels light on VO order ---------------- */
+        tl.to("#f4-era-line", { strokeDashoffset: 0, duration: 1.6, ease: "power2.out" }, 0.05);
+
+        const eraStops = gsap.utils.toArray(".era-stop");
+        const eraTimes = [0.35, 0.9, 1.45, 2.0]; // 古希腊 -> 先秦 -> 晚清 -> 当代
+        eraStops.forEach((stop, i) => {
+          tl.fromTo(
+            stop,
+            { opacity: 0, y: 12 },
+            { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+            eraTimes[i],
+          );
+        });
+
+        /* ---------------- Scene 1.5 (~2.7 - 4.4s) — VO "十种互不重叠的认知框架":
+           count label + ten empty ghost slots establish the grid region ---------------- */
+        tl.fromTo(
+          "#f4-count",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          2.7,
+        );
+        tl.fromTo(
+          ".ghost",
+          { opacity: 0, scale: 0.985 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: "power2.out", stagger: 0.12 },
+          2.85,
+        );
+
+        /* ---------------- Scene 2 (~4.5 - 8.2s) — grid-card-assemble signature:
+           four cascade waves, each riding a VO clause; short fade+slide directly into slot,
+           long power3 tails, no bounce ---------------- */
+        const waves = [
+          { sel: ["#f4-c1", "#f4-c2"], t: 4.55 }, // 有人管决策 — 芒格 / 达里奥
+          { sel: ["#f4-c3", "#f4-c4"], t: 5.65 }, // 有人破约束 — 马斯克 / 孙子
+          { sel: ["#f4-c5", "#f4-c6"], t: 6.7 }, // 有人算杠杆 — 纳瓦尔 / 曾国藩
+          { sel: ["#f4-c7", "#f4-c8", "#f4-c9", "#f4-c10"], t: 7.5 }, // 有人解内耗 — 荣格 / 稻盛和夫 + 方法双卡
+        ];
+        waves.forEach((w) => {
+          tl.fromTo(
+            w.sel.join(", "),
+            { opacity: 0, y: 46, scale: 0.97 },
+            { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out", stagger: 0.09 },
+            w.t,
+          );
+        });
+
+        /* ---------------- Scene 3 (~8.4s - end) — coral "方法" corner tags flip out on
+           苏格拉底 / 老子, then the grid locks and holds still ---------------- */
+        tl.fromTo(
+          "#f4-tag-9",
+          { opacity: 0, rotationX: -95, transformOrigin: "50% 0%" },
+          { opacity: 1, rotationX: 0, duration: 0.42, ease: "power3.out" },
+          8.42,
+        );
+        tl.fromTo(
+          "#f4-tag-10",
+          { opacity: 0, rotationX: -95, transformOrigin: "50% 0%" },
+          { opacity: 1, rotationX: 0, duration: 0.42, ease: "power3.out" },
+          8.56,
+        );
+        // no exit — the root transition owns the seam; grid holds fully still to the end
+
+        window.__timelines["04-roster"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
