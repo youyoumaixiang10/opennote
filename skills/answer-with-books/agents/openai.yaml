@@ -1,0 +1,4 @@
+interface:
+  display_name: "以书作答"
+  short_description: "拆解具体困扰，推荐2至3本互补书籍并给出有依据的多重回答"
+  default_prompt: "使用 $answer-with-books 拆解我的具体困扰，并推荐2至3本书分别回答。"
