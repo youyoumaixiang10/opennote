@@ -1548,24 +1548,24 @@ function chartSVG() {
   <!-- west channel, marked foul -->
   <polyline points="${CX(-19)},${CY(-70)} ${CX(-13)},${CY(-52)} ${CX(-7)},${CY(-34)}"
     fill="none" stroke="#6b6450" stroke-width="1.8"/>
-  ${xm(-12.6, -51)}
+  ${xm(-14.9, -57)}
   ${wr.map(p => rock(p, 5)).join('')}
-  ${T2(wr[1].x - 1, wr[1].z + 5.6, '白礁', 'middle', 11.5)}
+  ${T2(-11, -41, '白礁', 'middle', 11.5)}
   <!-- middle channel, foul ground -->
   <polyline points="${CX(1)},${CY(-70)} ${CX(2)},${CY(-52)} ${CX(4)},${CY(-34)}"
     fill="none" stroke="#6b6450" stroke-width="1.8"/>
   <circle cx="${CX(sh.x)}" cy="${CY(sh.z)}" r="17" fill="none" stroke="#6b6450" stroke-width="1.2" stroke-dasharray="3 3"/>
   <g fill="#6b6450">${[[-4, -3], [3, 2], [0, 5], [5, -4], [-3, 4]].map(o => `<circle cx="${CX(sh.x + o[0])}" cy="${CY(sh.z + o[1])}" r="1.8"/>`).join('')}</g>
-  ${xm(2.5, -45)}
-  ${T2(sh.x, sh.z + 9.5, '暗礁 · 浅滩', 'middle', 11)}
+  ${xm(2.6, -44)}
+  ${T2(9.5, -53, '暗礁 · 浅滩', 'start', 11)}
   <!-- east channel, the way in -->
-  <polyline points="${CX(27)},${CY(-66)} ${CX(23.5)},${CY(-56)} ${CX(16.8)},${CY(-42)} ${CX(13)},${CY(-26)} ${CX(11)},${CY(-6)} ${CX(8)},${CY(12)} ${CX(2.6)},${CY(23)}"
+  <polyline points="${CX(27)},${CY(-66)} ${CX(23.5)},${CY(-56)} ${CX(16.8)},${CY(-42)} ${CX(18.5)},${CY(-26)} ${CX(21)},${CY(-10)} ${CX(22)},${CY(2)} ${CX(20)},${CY(12)} ${CX(14)},${CY(20)} ${CX(5.5)},${CY(25.5)} ${CX(2.2)},${CY(24)}"
     fill="none" stroke="#b4553f" stroke-width="2.2" stroke-dasharray="7 5" stroke-linecap="round"/>
   ${bu.map(p => `<circle cx="${CX(p.x)}" cy="${CY(p.z)}" r="4.4" fill="#b4553f"/>`).join('')}
-  ${T2(bu[1].x + 1, bu[1].z - 4, '红浮标', 'start', 11.5, '#b4553f')}
-  ${T2(21, -30, '东水道', 'start', 12.5, '#b4553f')}
-  ${T2(-19, -44, '西水道', 'middle', 12.5)}
-  ${T2(-1.5, -62, '中水道', 'end', 12.5)}
+  ${T2(bu[1].x + 1.5, bu[1].z - 3.5, '红浮标', 'start', 11.5, '#b4553f')}
+  ${T2(24.5, -32, '东水道', 'start', 12.5, '#b4553f')}
+  ${T2(-21, -63, '西水道', 'middle', 12.5)}
+  ${T2(-1.5, -69, '中水道', 'end', 12.5)}
   <!-- island marks -->
   <g stroke="#3a3626" fill="none" stroke-width="1.5">
     <circle cx="${CX(T.x)}" cy="${CY(T.z)}" r="4.6" fill="#3a3626"/>
@@ -1997,7 +1997,7 @@ function updateCamera(dt) {
     camPosT.set(walker.pos.x, walker.pos.y + 11.0, walker.pos.z + 12.5);
     camAimT.set(walker.pos.x, walker.pos.y + 1.3, walker.pos.z - 2.2);
   }
-  const k = camSnap ? 1 : 1 - Math.exp(-dt * (camMode === 'cine' ? 2.1 : 3.2));
+  const k = camSnap ? 1 : 1 - Math.exp(-dt * (camMode === 'cine' ? 3.0 : 3.2));
   camPos.lerp(camPosT, k);
   camAim.lerp(camAimT, k);
   camSnap = false;
@@ -2194,7 +2194,7 @@ function setSound(on) {
 /* ============================================================
    15. THE LAST SHIP COMES IN
    ============================================================ */
-const SHIP_ROUTE = [[29.8, -71.8], [24, -56], [16.8, -42], [13.5, -26], [12.5, -8], [12, 10], [10.5, 22], [7.5, 30], [4.6, 31], [3.3, 24.6]];
+const SHIP_ROUTE = [[29.8, -71.8], [24, -56], [17.5, -42], [18.5, -26], [21, -10], [22, 2], [20, 12], [15, 19], [8, 25], [5.0, 28.5], [3.35, 26.8], [3.35, 24.6]];
 const SHIP_LEN = (() => {
   const acc = [0];
   for (let i = 1; i < SHIP_ROUTE.length; i++) {
@@ -2248,7 +2248,7 @@ function cineCamFor(key) {
     case 'sea': return { pos: [14, 15, -20], aim: [sp.x, 3, sp.z] };
     case 'sea2': return { pos: [sp.x - 16, 10, sp.z + 22], aim: [sp.x, 2.5, sp.z] };
     /* trails the ship down the east side, always over open water */
-    case 'follow': return { pos: [sp.x + 17, 11.5, sp.z + 15], aim: [sp.x, 2.5, sp.z - 2] };
+    case 'follow': return { pos: [sp.x + 19, 12.5, sp.z + 17], aim: [sp.x, 2.5, sp.z - 3] };
     /* the quay shots look up the pier from the water, so nothing blocks the lens */
     /* the quay shots ride with her, from the water side, so nothing blocks the lens */
     case 'dockclose': {
@@ -2295,10 +2295,12 @@ function updateEnding(dt) {
   OBJ.shipLight.visible = blinkOn;
   OBJ.shipHalo.visible = blinkOn;
   // the crossing
-  const u = smoothstep(0, 1, clamp((endClock - 6.2) / 11.2, 0, 1));
+  // fast while she is only a light in the fog, easing right down for the last few lengths
+  const u = Math.pow(clamp((endClock - 4.5) / 13.0, 0, 1), 0.62);
   const sp = shipAt(u);
   OBJ.ship.position.set(sp.x, 0, sp.z);
-  OBJ.ship.rotation.y = sp.yaw;
+  let dy = ((sp.yaw - OBJ.ship.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  OBJ.ship.rotation.y += dy * Math.min(1, dt * 1.7);
   // gangway and passenger, driven by the clock so skipping ahead stays consistent
   if (endClock > 17.8) { OBJ.plank.visible = true; OBJ.passenger.visible = true; }
   const P = OBJ.passenger;
