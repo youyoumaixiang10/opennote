@@ -1,0 +1,195 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>fly-style: the life of a fruit fly</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script>
+// ============================================================
+// fly-style: a Canvas 2D "hand-drawn animation" kit.
+// Everything is drawn procedurally; no images, no libraries.
+// Cadence: drawn at 12 fps ("on twos"), packed to 24 fps video.
+// Textures are seeded, so nothing boils unless you ask for it.
+// ============================================================
+// Built on core.js. Designed for 1:1 with literal centres; render it square.
+// Built on core.js. Colours below are literal because this film predates the palette system;
+// the palette only sets the finish and the player defaults.
+usePalette('paperInk');
+const off=layer(),octx=off.getContext('2d'),off2=layer(),o2ctx=off2.getContext('2d');
+const BOIL=false;   // true = re-seed outlines every 3 drawn frames (deliberate boil)
+
+// ---------- the fly (local coords, heading up = -y) ----------
+const FLY={head:ellPath(0,-40,20,18),eyeL:ellPath(-19,-44,13,15,-.3),eyeR:ellPath(19,-44,13,15,.3),thorax:ellPath(0,0,26,30),abd:ellPath(0,54,27,46)};
+function wingGeom(side,ang){const px=side*10,py=-8,dx=side*Math.sin(ang),dy=Math.cos(ang),cx=px+dx*58,cy=py+dy*58;return{cx,cy,rot:Math.atan2(dy,dx),path:ellPath(cx,cy,60,20,Math.atan2(dy,dx))}}
+function compoundEye(c,mode,path,side,seed){c.save();c.clip(path);const box=[side*19-14,-60,28,32];
+  if(mode==='ink'){c.fillStyle='#b81c27';c.fill(path);hexCells(box,3.4,(x,y)=>{const d=Math.hypot(x-side*13,y+50);const l=clamp(1-d/26,0,1);c.fillStyle=`rgb(${Math.round(lerp(140,255,l))},${Math.round(lerp(16,95,l))},${Math.round(lerp(28,95,l))})`;c.fill(hexPath(x,y,3.4));c.strokeStyle='rgba(60,5,12,.55)';c.lineWidth=.6;c.stroke(hexPath(x,y,3.4))});
+    c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.arc(side*14,-51,2.6,0,TAU);c.fill()}
+  else{c.strokeStyle='#cfd6ff';c.lineWidth=.7;c.globalAlpha=.75;hexCells(box,3.4,(x,y)=>c.stroke(hexPath(x,y,3.4)));c.globalAlpha=1;c.fillStyle='#fff';c.beginPath();c.arc(side*14,-51,2.4,0,TAU);c.fill()}
+  c.restore()}
+// pose: {wing: angle from body axis, flap: 0..1 blur, legs: 0..1 tuck, walk: phase}
+function drawFly(c,mode,pose,seed){const r=rng(seed);const ink=mode==='ink';const line=ink?'#1e1630':'#e8ecff';const lw=ink?2.2:2.4;
+  c.save();c.lineJoin='round';c.lineCap='round';
+  // legs
+  for(let i=0;i<3;i++)for(const s of[-1,1]){const y0=-14+i*14,tuck=pose.legs;const ph=Math.sin(pose.walk*TAU+i*2.1+s)*6*(1-tuck);
+    const pts=[[s*22,y0],[s*(40-tuck*10),y0-12+ph+i*4],[s*(60-tuck*22),y0+2+ph+i*8],[s*(70-tuck*30),y0+26+ph+i*10]];
+    c.strokeStyle=line;c.lineWidth=ink?2:1.8;c.globalAlpha=ink?.95:.9;wob(c,pts,1.5,seed+11+i*3+s)}
+  // wings (drawn first so body overlaps); flap = draw 3 ghost copies
+  const ghosts=pose.flap>0?[-1,0,1]:[0];
+  for(const s of[-1,1])for(const g of ghosts){const wg=wingGeom(s,pose.wing+g*.22*pose.flap);
+    if(ink){c.fillStyle=`rgba(225,232,255,${.34/ghosts.length+.06})`;c.fill(wg.path);c.strokeStyle='rgba(40,30,60,.55)';c.lineWidth=1.2;wob(c,ellPts(wg.cx,wg.cy,60,20,wg.rot),1.2,seed+21+s+g,true);
+      // veins
+      c.strokeStyle='rgba(40,30,60,.5)';c.lineWidth=.9;for(let k=-1;k<=1;k++){c.beginPath();c.moveTo(wg.cx-Math.cos(wg.rot)*52,wg.cy-Math.sin(wg.rot)*52);const ex=wg.cx+Math.cos(wg.rot)*55-Math.sin(wg.rot)*k*13,ey=wg.cy+Math.sin(wg.rot)*55+Math.cos(wg.rot)*k*13;c.quadraticCurveTo((wg.cx+ex)/2-Math.sin(wg.rot)*k*10,(wg.cy+ey)/2+Math.cos(wg.rot)*k*10,ex,ey);c.stroke()}}
+    else{c.strokeStyle='#cfd6ff';c.lineWidth=1.4;c.globalAlpha=.8;wob(c,ellPts(wg.cx,wg.cy,60,20,wg.rot),1.2,seed+21+s+g,true);c.globalAlpha=1}}
+  // body parts: fill (ink) + hatch + outline
+  const parts=[['abd','#c99a5a',[-30,6,60,96]],['thorax','#b8864e',[-28,-32,56,64]],['head','#c9a063',[-22,-60,44,40]]];
+  for(const [k,col,box] of parts){const p=FLY[k];
+    if(ink){c.fillStyle=col;c.globalAlpha=1;c.fill(p);
+      if(k==='abd'){c.save();c.clip(p);c.strokeStyle='#3b2412';c.lineWidth=7;c.globalAlpha=.9;for(let i=0;i<5;i++){const y=26+i*16;c.beginPath();c.moveTo(-30,y-3);c.quadraticCurveTo(0,y+6,30,y-3);c.stroke()}c.restore()}
+      hatch(c,p,box,{angle:1.2,gap:4.5,len:9,jitter:3,color:'#3a2214',alpha:.35,width:1,seed:seed+40});
+      grain(c,p,box,160,'#2b1608',.35,seed+50,1.4);}
+    c.strokeStyle=line;c.lineWidth=lw;c.globalAlpha=1;wob(c,ellPts(...pathArgs(k)),1.8,seed+60+k.length,true)}
+  compoundEye(c,mode,FLY.eyeL,-1,seed);compoundEye(c,mode,FLY.eyeR,1,seed);
+  c.strokeStyle=line;c.lineWidth=1.6;wob(c,ellPts(-19,-44,13,15,-.3),1.2,seed+70,true);wob(c,ellPts(19,-44,13,15,.3),1.2,seed+71,true);
+  // antennae
+  c.lineWidth=1.4;for(const s of[-1,1]){wob(c,[[s*6,-56],[s*12,-70],[s*20,-74]],1,seed+80+s);c.beginPath();c.arc(s*20,-74,2.2,0,TAU);c.stroke()}
+  if(ink){scribble(c,FLY.thorax,0,0,{seed:seed+90,amp:5,alpha:.5});scribble(c,FLY.abd,0,54,{seed:seed+91,amp:6,alpha:.5})}
+  c.restore()}
+function pathArgs(k){return{head:[0,-40,20,18],thorax:[0,0,26,30],abd:[0,54,27,46]}[k]}
+
+
+// ---------- scene 0: fly on a peach ----------
+function scenePeach(c,t,mode,seed=1){const ink=mode==='ink';
+  c.setTransform(1,0,0,1,0,0);c.fillStyle=ink?'#f3e6cf':'#0b0d1f';c.fillRect(0,0,W,H);
+  if(ink){c.save();c.translate(W/2,H/2);c.rotate(-Math.PI/4);c.fillStyle='rgba(255,238,200,.65)';for(let i=-6;i<=6;i++)c.fillRect(-1200,i*160-40,2400,80);c.restore()}
+  else{grain(c,rectPath(0,0,W,H),[0,0,W,H],400,'#ffffff',.5,seed+5,1.6)}
+  cam(c,540,520,lerp(1.15,1.3,sm(0,2.4,t)));
+  const peach=circPath(560,980,700),pbox=[-140,280,1400,1400];
+  if(ink){c.fillStyle='#e79256';c.fill(peach);
+    c.save();c.clip(peach);
+    hatch(c,circPath(300,560,420),[-120,140,840,840],{angle:.8,gap:6,len:16,jitter:6,color:'#fff1d6',alpha:.6,width:1.4,seed:seed+2});
+    hatch(c,circPath(820,1150,620),[200,530,1240,1240],{angle:-.6,gap:5,len:18,jitter:5,color:'#c8473f',alpha:.38,width:1.2,seed:seed+3});
+    hatch(c,circPath(860,1200,480),[380,720,960,960],{angle:.9,gap:6,len:20,jitter:5,color:'#8e2a30',alpha:.35,width:1.1,seed:seed+4});
+    c.restore();
+    grain(c,peach,pbox,7000,'#7a2f16',.35,seed+6,2);
+    c.strokeStyle='#2a1a2e';c.lineWidth=3;c.globalAlpha=.85;wob(c,ellPts(560,980,700,700,0,120),2.5,seed+7,true);c.globalAlpha=1;
+    // dew drop
+    const d=circPath(215,690,15);c.fillStyle='rgba(255,244,225,.55)';c.fill(d);c.strokeStyle='#2a1a2e';c.lineWidth=2;c.stroke(d);c.fillStyle='rgba(255,255,255,.9)';c.fill(ellPath(219,694,6,4));c.fill(circPath(209,684,2));
+  } else {c.strokeStyle='#cfd6ff';c.lineWidth=1.2;c.globalAlpha=.7;wob(c,ellPts(560,980,700,700,0,120),1.5,seed+7,true);c.globalAlpha=1}
+  // the fly, big, sitting; idle twitch quantised to the 12 fps grid
+  const f=Math.floor(t*FPS_DRAW),tw=rng(seed+f);const twitch=(f%9===0)?.18:0;
+  c.save();c.translate(520,430);c.rotate(-.17);c.scale(1.9,1.9);
+  if(ink){construction(c,0,10,120,seed+9,'rgba(70,100,255,.45)')}
+  drawFly(c,mode,{wing:.55+twitch,flap:0,legs:0,walk:0},seed+(BOIL?f%3:0));
+  c.restore();
+  if(ink){c.strokeStyle='rgba(70,100,255,.5)';c.lineWidth=.9;cross(c,300,300,8);cross(c,760,640,8)}
+}
+// ink-blot transition: blueprint version of the scene grows out of the fly
+function blotIn(c,t,drawInside){const p=sm(2.4,3.2,t,easeOut),R=lerp(0,1000,p);if(p<=0)return;
+  drawInside(octx);
+  const r=rng(77);const pts=[];for(let i=0;i<72;i++){const a=i/72*TAU;pts.push([540+20+Math.cos(a)*R*(1+(r()-.5)*.16),380+Math.sin(a)*R*(1+(r()-.5)*.16)])}
+  c.setTransform(1,0,0,1,0,0);const path=new Path2D();pts.forEach((q,i)=>i?path.lineTo(q[0],q[1]):path.moveTo(q[0],q[1]));path.closePath();
+  c.save();c.clip(path);c.drawImage(off,0,0,W,H);c.restore();
+  // bristly fringe
+  c.save();c.strokeStyle='#0b0d1f';c.lineWidth=1.6;c.globalAlpha=.9;const rr=rng(78);
+  for(let i=0;i<420;i++){const a=rr()*TAU,rad=R*(1+(rr()-.5)*.14),L=10+rr()*38;const x=560+Math.cos(a)*rad,y=380+Math.sin(a)*rad;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*L,y+Math.sin(a)*L);c.stroke()}
+  c.restore()}
+
+// ---------- scene 1: blueprint egg, cleavage, segmentation ----------
+const DOUBLINGS=[1.1,1.4,1.7,2.0,2.3];
+function sceneEgg(c,tau,seed=11){c.setTransform(1,0,0,1,0,0);c.fillStyle='#0b0d1f';c.fillRect(0,0,W,H);grain(c,rectPath(0,0,W,H),[0,0,W,H],500,'#ffffff',.45,seed,1.6);
+  const cx=540,cy=560,rot=-.42,rx=205,ry=330;
+  cam(c,540,540,1);
+  // 0: a lone spark
+  const s0=sm(0,.3,tau);aster(c,cx,cy,4,14,'#7fe7ff',seed+1,s0);
+  // 1: construction
+  construction(c,cx,cy,300,seed+2,'rgba(150,170,255,.7)',sm(.3,.7,tau));
+  // 2: egg outline draws itself
+  const pe=sm(.7,1.1,tau,easeOut);if(pe>0){c.save();c.strokeStyle='#e6ebff';c.lineWidth=3;const per=TAU*Math.max(rx,ry)*1.1;c.setLineDash([per*pe,per]);wob(c,ellPts(cx,cy,rx,ry,rot,140),1.5,seed+3,true);c.restore()}
+  const egg=ellPath(cx,cy,rx,ry,rot);
+  // hex lattice inside
+  const pl=sm(1.0,1.4,tau);if(pl>0){c.save();c.clip(egg);hexLattice(c,[cx-360,cy-360,720,720],17,'#8d97c9',.38*pl,.9);c.restore()}
+  // polar bodies (two pale balloons on stalks at the top pole)
+  if(pe>.5){c.save();c.strokeStyle='#cfd6ff';c.lineWidth=2;const tx=cx+Math.sin(rot)*ry*.96,ty=cy-Math.cos(rot)*ry*.96;
+    for(const [dx,dy,r0] of[[-70,-95,22],[-18,-118,19]]){c.beginPath();c.moveTo(tx,ty);c.lineTo(tx+dx,ty+dy);c.stroke();c.fillStyle='rgba(150,170,255,.6)';c.fill(ellPath(tx+dx,ty+dy-8,r0,r0*1.25,.4));}c.restore()}
+  // nuclei doubling
+  const k=DOUBLINGS.filter(d=>tau>=d).length;const n=Math.pow(2,k);const rr=rng(seed+4);const pts=[];
+  for(let i=0;i<32;i++){let x,y;do{const u=(rr()-.5)*2,v=(rr()-.5)*2;x=u*rx*.85;y=v*ry*.85;if((x*x)/(rx*rx)+(y*y)/(ry*ry)<.72)break}while(true);pts.push([cx+x*Math.cos(rot)-y*Math.sin(rot),cy+x*Math.sin(rot)+y*Math.cos(rot)])}
+  const fadeN=1-sm(2.4,2.8,tau);
+  if(tau>=1.0&&fadeN>0){c.save();c.globalAlpha=fadeN;const last=k?DOUBLINGS[k-1]:1.0;const g=sm(last,last+.25,tau,easeOut);
+    // spindle lines between sibling pairs right after a doubling
+    if(k&&g<1){c.strokeStyle='rgba(127,231,255,.8)';c.lineWidth=1;for(let i=0;i<n;i+=2){c.beginPath();c.moveTo(pts[i][0],pts[i][1]);c.lineTo(pts[i+1][0],pts[i+1][1]);c.stroke()}}
+    for(let i=0;i<n;i++)aster(c,pts[i][0],pts[i][1],k<3?7:5,12,'#7fe7ff',seed+10+i,.6+.4*g);c.restore()}
+  // segmentation stripes
+  const nb=tau>=2.4?Math.min(7,1+Math.floor((tau-2.4)/.11)):0;
+  if(nb){c.save();c.clip(egg);c.translate(cx,cy);c.rotate(rot);for(let i=0;i<nb;i++){const y=-ry*.7+i*(ry*1.4/7);c.fillStyle='rgba(95,224,138,.85)';c.fillRect(-rx-20,y,rx*2+40,26);grain(c,rectPath(-rx-20,y,rx*2+40,26),[-rx-20,y,rx*2+40,26],260,'#ffffff',.55,seed+30+i,1.6)}c.restore();
+    c.save();c.globalAlpha=.5;c.strokeStyle='#ffb3f0';c.lineWidth=1;c.stroke(ellPath(cx,cy,rx*1.06,ry*1.03,rot));c.restore()}
+  // lineage tree, top right
+  if(k){c.save();c.strokeStyle='#cfd6ff';c.fillStyle='#cfd6ff';c.lineWidth=1;const x0=930,y0=80;
+    for(let d=0;d<=k;d++){const cnt=Math.pow(2,d),span=Math.min(220,cnt*14);for(let i=0;i<cnt;i++){const x=x0-span/2+(cnt===1?0:i*span/(cnt-1)),y=y0+d*22;c.beginPath();c.arc(x,y,2,0,TAU);c.fill();
+      if(d<k){const cc=cnt*2,sp=Math.min(220,cc*14);for(const j of[2*i,2*i+1]){const x2=x0-sp/2+j*sp/(cc-1),y2=y0+(d+1)*22;c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke()}}}}c.restore()}
+}
+
+// ---------- scene 2: flight over the kitchen floor ----------
+const PATH=[[300,2000],[1300,1500],[500,700],[1900,450]];
+function drawRoom(c,seed=21){c.fillStyle='#eef0e8';c.fillRect(-200,-200,2800,2800);
+  for(let i=-1;i<22;i++)for(let j=-1;j<22;j++){if((i+j)%2){c.fillStyle='#a9c4c9';c.fillRect(i*120+8,j*120+8,104,104);grain(c,rectPath(i*120+8,j*120+8,104,104),[i*120+8,j*120+8,104,104],14,'#5e8a91',.35,seed+i*31+j,2)}}
+  c.strokeStyle='rgba(40,50,80,.35)';c.lineWidth=1;for(let i=0;i<22;i++)for(let j=0;j<22;j++)cross(c,i*120,j*120,4);
+  // table with wood grain
+  c.fillStyle='#d9b078';c.fillRect(900,250,960,760);const r=rng(seed+3);c.strokeStyle='rgba(120,70,20,.35)';c.lineWidth=1.2;for(let i=0;i<40;i++){const y=260+r()*740;wob(c,[[910,y],[1200,y+(r()-.5)*20],[1500,y+(r()-.5)*20],[1850,y]],3,seed+40+i)}
+  c.strokeStyle='#2a1a2e';c.lineWidth=3;wob(c,[[900,250],[1860,250],[1860,1010],[900,1010]],2.5,seed+4,true);
+  // plate with rings + fruit
+  const px=1380,py=650;c.fillStyle='#f4f1e6';c.fill(circPath(px,py,230));c.strokeStyle='#7fb3a8';c.lineWidth=5;c.stroke(circPath(px,py,215));c.strokeStyle='#2a1a2e';c.lineWidth=2.5;wob(c,ellPts(px,py,230,230,0,80),2,seed+5,true);
+  c.strokeStyle='rgba(120,140,160,.6)';c.lineWidth=1;for(let k=1;k<6;k++)c.stroke(circPath(px,py,40*k));
+  const orange=circPath(px-60,py-20,85);c.fillStyle='#f0923c';c.fill(orange);hatch(c,orange,[px-150,py-110,180,180],{angle:1,gap:5,len:12,jitter:4,color:'#b8501e',alpha:.4,seed:seed+6});c.strokeStyle='#2a1a2e';c.lineWidth=2.5;wob(c,ellPts(px-60,py-20,85,85),2,seed+7,true);
+  const gr=rng(seed+8);for(let i=0;i<9;i++){const gx=px+80+(gr()-.5)*90,gy=py+70+(gr()-.5)*70;const g=circPath(gx,gy,22);c.fillStyle='#7b4b9a';c.fill(g);c.strokeStyle='#2a1a2e';c.lineWidth=2;c.stroke(g);c.fillStyle='rgba(255,255,255,.5)';c.fill(circPath(gx-6,gy-7,5))}
+}
+function sceneFlight(c,tau,seed=21){const u=sm(0,2.2,tau,easeIO);const p=bez(...PATH,u),q=bez(...PATH,Math.min(1,u+.01));const dir=Math.atan2(q[1]-p[1],q[0]-p[0]);
+  c.setTransform(1,0,0,1,0,0);c.fillStyle='#eef0e8';c.fillRect(0,0,W,H);
+  cam(c,p[0]+Math.cos(dir)*120,p[1]+Math.sin(dir)*120,1);
+  drawRoom(c,seed);
+  // shadow
+  c.save();c.translate(p[0]+45,p[1]+70);c.rotate(dir+Math.PI/2);const sh=ellPath(0,0,40,90);hatch(c,sh,[-50,-100,100,200],{angle:.4,gap:4,len:12,jitter:3,color:'#2a1a2e',alpha:.35,seed:seed+9});c.restore();
+  const f=Math.floor(tau*FPS_DRAW);
+  speedLines(c,p[0],p[1],dir,seed+f,9,.55);loops(c,p[0],p[1],dir,seed+3,.7);
+  c.save();c.translate(p[0],p[1]);c.rotate(dir+Math.PI/2);drawFly(c,'ink',{wing:1.25,flap:1,legs:1,walk:0},seed+(BOIL?f%3:0));c.restore()}
+
+// ---------- scene 3: what the fly sees (compound-eye mosaic) ----------
+function sceneEye(c,tau,seed=31){const u=sm(0,.7,tau);
+  // render the room once into an offscreen buffer
+  o2ctx.setTransform(1,0,0,1,0,0);o2ctx.fillStyle='#eef0e8';o2ctx.fillRect(0,0,W,H);cam(o2ctx,1380,650,.8);drawRoom(o2ctx,21);
+  const img=o2ctx.getImageData(0,0,W,H).data;const s=lerp(40,13,u);
+  c.setTransform(1,0,0,1,0,0);c.fillStyle='#0b0d1f';c.fillRect(0,0,W,H);
+  c.save();c.clip(circPath(540,540,505));
+  hexCells([0,0,W,H],s,(x,y)=>{const xi=clamp(Math.round(x),0,W-1),yi=clamp(Math.round(y),0,H-1),i=(yi*W+xi)*4;c.fillStyle=`rgb(${img[i]*.92|0},${img[i+1]*.92|0},${img[i+2]*.95|0})`;const hp=hexPath(x,y,s);c.fill(hp);c.strokeStyle='rgba(20,25,60,.55)';c.lineWidth=1;c.stroke(hp)});
+  c.fillStyle='rgba(120,160,255,.10)';c.fillRect(0,0,W,H);
+  c.strokeStyle='rgba(20,30,90,.5)';c.lineWidth=1;const r=rng(seed);for(let i=0;i<10;i++)cross(c,r()*W,r()*H,5);
+  c.restore();
+  c.strokeStyle='#e6ebff';c.lineWidth=3;wob(c,ellPts(540,540,505,505,0,120),2,seed+1,true)}
+
+// ---------- timeline ----------
+function scenePeachInk(c,tau,i){scenePeach(c,tau,'ink');blotIn(c,tau,cc=>scenePeach(cc,tau,'blueprint'))}
+// ---------- score (Web Audio; same timeline drives the music) ----------
+function buildScore(ac,t0,dest){const master=ac.createGain();master.gain.value=.6;master.connect(dest||ac.destination);
+  const note=(f,t,d,type='triangle',g=.25)=>{const o=ac.createOscillator(),e=ac.createGain();o.type=type;o.frequency.value=f;e.gain.setValueAtTime(0,t0+t);e.gain.linearRampToValueAtTime(g,t0+t+.02);e.gain.exponentialRampToValueAtTime(.0008,t0+t+d);o.connect(e);e.connect(master);o.start(t0+t);o.stop(t0+t+d+.05)};
+  const pent=[0,2,4,7,9],base=220,r=rng(7),hz=(o,s)=>base*Math.pow(2,o+pent[s]/12);
+  for(let t=0;t<2.4;t+=.5)note(hz(0,Math.floor(r()*5)),t,.7,'triangle',.2);
+  note(55,2.4,1.2,'sawtooth',.12);note(110,2.5,1.0,'sine',.15);
+  DOUBLINGS.forEach((t,i)=>note(hz(1,i%5),3.2+t,.5,'sine',.22));
+  for(let i=0;i<7;i++)note(hz(2,i%5),3.2+2.4+i*.11,.25,'triangle',.14);
+  for(let t=6.4;t<8.6;t+=.125)note(hz(1,Math.floor(r()*5)),t,.14,'square',.05);
+  for(let t=6.4;t<8.6;t+=.5)note(hz(0,0),t,.4,'sine',.12);
+  note(hz(-1,0),8.6,1.0,'sine',.25);note(hz(0,2),8.7,.9,'sine',.15)}
+
+defineFilm({timeline:[
+  {name:'peach', dur:3.2, fn:scenePeachInk},
+  {name:'egg',   dur:3.2, fn:(c,tau,i)=>sceneEgg(c,tau)},
+  {name:'flight',dur:2.2, fn:(c,tau,i)=>sceneFlight(c,tau)},
+  {name:'eye',   dur:0.9, fn:(c,tau,i)=>sceneEye(c,tau)},
+], score:(ac,t0,dest)=>buildScore(ac,t0,dest)});
+</script>

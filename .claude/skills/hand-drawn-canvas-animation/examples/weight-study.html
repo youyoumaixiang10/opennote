@@ -1,0 +1,144 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>One careful cup — a performance study</title>
+<style>body{margin:0;background:#24232a;color:#ddd;font:13px system-ui;display:grid;justify-items:center}canvas{width:min(100vw,1100px);height:auto}.bar{display:flex;gap:12px;padding:16px;align-items:center;flex-wrap:wrap}input{width:260px}</style>
+<canvas id="c"></canvas>
+<script src="../assets/core.js"></script>
+<script src="../assets/studio.js"></script>
+<script src="../assets/materials.js"></script>
+<script src="held-once-photos.js"></script>
+<script>
+// Performance brief: a small bear lifts an oversized cup with both hands, then
+// looks up. One 7-second shot. Keys: observe .0, reach .8, grip 1.5, load 2.0,
+// lift 2.4..3.5, inspect 4.2, acknowledge 5.2, held finish 6..7.
+// Feet stay planted. Hands share the cup anchors after grip. Each limb is IK.
+// Run with render.mjs --look ink|pencil|riso|screen|doodle.
+const LOOK = new URLSearchParams(location.search).get('look') || 'ink';
+if (!['ink','pencil','riso','screen','doodle'].includes(LOOK)) throw new Error('Unknown look: ' + LOOK);
+const LOOKPAL = {ink:'paperInk',pencil:'pencilMinimal',riso:'risoPop',screen:'screenSea',doodle:'doodlePastel'};
+const P = makePalette({paper:'#f2eadb',paperBand:null,ink:'#302c36',fills:['#cfa574','#547973','#b66e59','#e5c494','#e2d9bb'],shade:'#51453e',light:'#fff7e5',accents:['#bd654f','#4f7978','#c8a653']},LOOKPAL[LOOK]);
+if (LOOK === 'pencil') Object.assign(P,{paper:'#efebe2',ink:'#4b4545',fills:['#e2ddd2','#cbcfc8','#d7c4bb','#e8e1d3','#e8e1d3']});
+if (LOOK === 'riso') Object.assign(P,{paper:'#f1e6ce',ink:'#334b67',fills:['#efa25e','#50758c','#d57380','#e9bc65','#f1e6ce']});
+if (LOOK === 'screen') Object.assign(P,{paper:'#f0e4cf',ink:'#293f49',fills:['#d6995a','#477f84','#bc5d4c','#ebc178','#f0e4cf']});
+usePalette(P);
+const poseTime = exposureTrack([{at:0,on:2},{at:1.5,on:1},{at:3.5,on:2},{at:5,on:1},{at:5.5,on:2}]);
+const cache = new Map();
+function drawing(id, pts, width=3, close=true) {
+  if (!cache.has(id)) cache.set(id,{path:curvePath(pts,close,Math.PI),stroke:makeStroke(pts,{id,width,close,rough:.24}),pts});
+  return cache.get(id);
+}
+function edge(c,id,pts,{width=2.3,color=PAL.ink,opacity=1,close=false}={}) {
+  drawStroke(c,drawing(id,pts,width,close).stroke,{color,opacity,material:LOOK==='pencil'?'pencil':'ink'});
+}
+function part(c,id,pts,col,{tone=.3,outline=true}={}) {
+  const D=drawing(id,pts,LOOK==='pencil'?2.2:3.2,true), xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+  const box=[Math.min(...xs)-3,Math.min(...ys)-3,Math.max(...xs)-Math.min(...xs)+6,Math.max(...ys)-Math.min(...ys)+6];
+  if(LOOK==='screen')screenFill(c,D.path,box,{color:col,seed:strokeSeed(id),wear:.025});
+  else if(LOOK==='riso'){
+    c.fillStyle=PAL.paper;c.fill(D.path);
+    dotScreen(c,D.path,box,{color:col,cell:3.3,density:.72,angle:.25,jitter:.15,seed:strokeSeed(id)});
+  }else if(LOOK==='pencil'){
+    c.fillStyle=col;c.fill(D.path);
+    graphite(c,D.path,box,{seed:strokeSeed(id),tone:(x,y)=>clamp(tone+(x-box[0])/box[2]*.25,0,1),direction:(x,y)=>.6+(y-box[1])/box[3]*.7});
+  }else{
+    c.fillStyle=col;c.fill(D.path);
+    if(LOOK==='doodle')pigmentWash(c,D.path,box,{color:shade(col,.18),seed:strokeSeed(id),opacity:.18});
+    else formHatch(c,D.path,box,{seed:strokeSeed(id),spacing:6.5,length:13,opacity:.15,tone:(x,y)=>tone*clamp((x-box[0])/box[2],0,1),direction:(x,y)=>.7+(y-box[1])/box[3]*.8});
+  }
+  if(outline)drawStroke(c,D.stroke,{color:PAL.ink,opacity:LOOK==='screen'?.62:.9,material:LOOK==='pencil'?'pencil':'ink'});
+}
+const oval=(rx,ry,n=32)=>Array.from({length:n},(_,k)=>[rx*Math.cos(k/n*TAU),ry*Math.sin(k/n*TAU)]);
+function disc(c,id,x,y,rx,ry,col){c.save();c.translate(x,y);part(c,id,oval(rx,ry),col);c.restore();}
+function bone(c,id,a,b,length,r,col){c.save();c.translate(...a);c.rotate(Math.atan2(b[1]-a[1],b[0]-a[0])-Math.PI/2);part(c,id,[[-r,4],[-r*.9,length*.65],[-r*.65,length],[0,length+5],[r*.65,length],[r,length*.4],[r,4],[0,-7]],col);c.restore();}
+function state(t){
+  const reach=sm(.5,1.5,t,easeInOutSine), load=sm(1.5,2,t,easeInOutSine)*(1-sm(2.05,2.6,t,easeInOutSine));
+  const lift=sm(2.1,3.5,t,easeInOutSine), turn=sm(4.6,5.5,t,easeInOutSine);
+  return {reach,load,lift,turn,x:CX-170+reach*14-lift*24,y:CY+165+load*15-lift*10,cup:[CX+35-lift*35,CY+129-lift*133],blink:Math.max(sm(.18,.25,t)*(1-sm(.29,.42,t)),sm(4.95,5.03,t)*(1-sm(5.09,5.23,t)))};
+}
+function cupAnchors(s){
+  if(LOOK==='doodle'){const pl=place('cup',{x:s.cup[0],y:s.cup[1]-5,w:187,flip:true});return {pl,grips:[on(pl,.42,.96),on(pl,.87,.40)]};}
+  return {grips:[[s.cup[0]+12,s.cup[1]+70],[s.cup[0]-83,s.cup[1]+4]]};
+}
+function drawCup(c,s){
+  const [x,y]=s.cup;
+  if(LOOK==='doodle'){
+    // The cup photograph and its provenance are in held-once-photos.js.
+    photo(c,cupAnchors(s).pl,{shadow:0});return;
+  }
+  c.save();c.translate(x,y);
+  c.strokeStyle=PAL.fills[1];c.lineWidth=19;c.beginPath();c.ellipse(-68,1,25,32,0,0,TAU);c.stroke();
+  edge(c,'cup-handle', [[-59,-29],[-86,-31],[-98,-8],[-91,22],[-67,29]],{width:2.6});
+  part(c,'cup-body',[[-68,-48],[-65,21],[-50,62],[-25,75],[29,75],[55,57],[68,13],[70,-48]],PAL.fills[1],{tone:.6});
+  disc(c,'cup-rim',0,-47,69,14,PAL.fills[4]);disc(c,'tea',0,-47,56,8,shade(PAL.fills[0],.38));
+  edge(c,'cup-highlight',[[46,-22],[44,16],[32,46]],{width:3,color:PAL.light,opacity:.6});
+  c.restore();
+}
+function hand(c,id,p,rot){c.save();c.translate(...p);c.rotate(rot);part(c,id,[[-14,-13],[-20,-3],[-16,13],[-4,18],[12,10],[16,-2],[8,-15]],PAL.fills[0]);edge(c,id+'-fingers',[[-9,-1],[-1,2],[8,0]],{width:1.4});c.restore();}
+function actor(c,t){
+  const s=state(poseTime(t)), base=[s.x,s.y], at=p=>[base[0]+p[0],base[1]+p[1]], ground=CY+345;
+  const shoulders=[at([-40,-130]),at([62,-151])];
+  const {grips}=cupAnchors(s);
+  const rest=[at([-75,95]),at([95,60])];
+  const targets=grips.map((p,i)=>p.map((v,k)=>lerp(rest[i][k],v,s.reach)));
+  const arms=shoulders.map((p,i)=>solveLimb(p,targets[i],i?129:150,i?132:150,1));
+  // Far arm behind torso; the contact hand is composited above the vessel.
+  for(let i=0;i<1;i++){bone(c,'far-upper',arms[i].root,arms[i].joint,150,23,PAL.fills[1]);bone(c,'far-lower',arms[i].joint,arms[i].end,150,19,PAL.fills[1]);}
+  for(const side of [-1,1]){
+    const hip=at([side*44,27]),foot=[CX-170+side*65,ground-17],leg=solveLimb(hip,foot,83,85,-side);
+    bone(c,'thigh'+side,hip,leg.joint,83,34,PAL.fills[1]);bone(c,'shin'+side,leg.joint,leg.end,85,28,PAL.fills[1]);
+    c.save();c.translate(...foot);part(c,'shoe'+side,[[-30,-10],[-39,6],[-40,16],[-16,22],[31,20],[35,11],[21,-6]],PAL.fills[2]);edge(c,'sole'+side,[[-34,15],[-1,18],[29,15]],{width:2,color:PAL.light});c.restore();
+  }
+  c.save();c.translate(...base);
+  part(c,'torso',[[-61,-164],[-92,-139],[-101,-62],[-86,21],[-34,47],[33,46],[82,21],[88,-62],[76,-141],[45,-166]],PAL.fills[1],{tone:.55});
+  edge(c,'jacket-seam',[[0,-133],[8,-83],[6,-29],[4,35]],{width:1.8});
+  part(c,'pocket',[[29,-75],[67,-78],[66,-34],[32,-31]],shade(PAL.fills[1],.08),{tone:.25});
+  for(const yy of [-104,-61,-17])disc(c,'button'+yy,4,yy,3,3,PAL.fills[4]);
+  part(c,'collar',[[-43,-163],[-14,-133],[6,-156],[29,-132],[56,-161],[21,-183],[-18,-184]],PAL.fills[4]);
+  // Head turning uses persistent geometry under a restrained local deformation.
+  c.translate(6+s.reach*10-s.turn*12,-266+s.load*5);c.rotate(-.05+s.lift*.04-s.turn*.035);
+  disc(c,'ear-left',-72,-70,28,32,PAL.fills[0]);disc(c,'ear-right',67,-68,27,31,PAL.fills[0]);
+  disc(c,'inner-ear-left',-72,-68,15,19,PAL.fills[2]);disc(c,'inner-ear-right',67,-66,14,18,PAL.fills[2]);
+  part(c,'head',[[-70,-71],[-91,-38],[-89,21],[-66,67],[-24,86],[22,84],[67,61],[87,16],[84,-36],[59,-72],[1,-86]],PAL.fills[0],{tone:.4});
+  const faceX=16*(1-s.turn);
+  disc(c,'muzzle',faceX+13,38,49,34,PAL.fills[3]);
+  for(const side of [-1,1]){
+    c.save();c.translate(faceX+side*34,-1);c.scale(1,Math.max(.08,1-s.blink));disc(c,'eye'+side,0,0,6.2,9.6,PAL.ink);c.fillStyle=PAL.light;c.beginPath();c.arc(-1.5,-3,1.9,0,TAU);c.fill();c.restore();
+    c.save();c.translate(faceX,0);edge(c,'brow'+side,[[side*34-9,-25],[side*34,-29],[side*34+10,-25]],{width:2});c.restore();
+  }
+  disc(c,'nose',faceX+14,22,15,10,PAL.ink);
+  c.save();c.translate(faceX,0);edge(c,'mouth',[[14,32],[13,43],[6,49],[-2,46]],{width:1.7});c.restore();
+  edge(c,'cheek',[[53,36],[61,33],[67,35]],{width:1.5,opacity:.45});
+  c.restore();
+  bone(c,'near-upper',arms[1].root,arms[1].joint,129,24,PAL.fills[1]);bone(c,'near-lower',arms[1].joint,arms[1].end,132,20,PAL.fills[1]);
+  drawCup(c,s);hand(c,'support-hand',arms[0].end,-.15);hand(c,'grip-hand',arms[1].end,-.6);
+  return {s,arms,grips};
+}
+function shot(c,t){
+  paper(c);cam(c,CX,CY,1.04+.014*sm(0,7,t,easeInOutSine));
+  const floor=CY+345;
+  c.fillStyle=LOOK==='pencil'?'#e8e4dc':'#e9deca';c.fillRect(-100,floor+19,W+200,H-floor+200);
+  c.save();c.translate(CX+315,CY-155);
+  part(c,'window',[[-187,-163],[169,-163],[181,105],[-179,105]],LOOK==='pencil'?'#e4e3db':'#dfdfc7',{tone:.12,outline:false});
+  edge(c,'window-sill',[[-191,111],[186,111]],{width:2.3,opacity:.4});
+  c.restore();
+  // A small plant balances the action without competing with it.
+  c.save();c.translate(CX+466,floor-56);part(c,'pot',[[-40,-5],[-30,53],[29,53],[42,-5]],PAL.fills[2]);
+  for(let k=0;k<5;k++){c.save();c.rotate((k-2)*.27);edge(c,'plant-stem'+k,[[0,0],[0,-42],[12,-113-k*9]],{color:PAL.fills[1],width:2});part(c,'leaf'+k,[[5,-59],[-24,-73],[-30,-100],[-10,-102],[5,-87]],PAL.fills[1],{outline:false});c.restore();}c.restore();
+  const ty=CY+207;
+  c.save();c.translate(CX+188,ty);
+  for(const side of [-1,1])part(c,'table-leg'+side,[[side*117-9,6],[side*108-10,floor-ty+19],[side*108+8,floor-ty+19],[side*117+10,6]],PAL.fills[2]);
+  part(c,'table-top',[[-176,-6],[146,-6],[174,12],[163,26],[-185,26],[-194,11]],PAL.fills[3],{tone:.35});
+  edge(c,'table-edge',[[-184,16],[163,16]],{width:1.5,opacity:.5});c.restore();
+  // Ground shadows remain on the support plane, independent of the moving body.
+  c.save();c.globalAlpha=.09;c.fillStyle=PAL.ink;c.beginPath();c.ellipse(CX-165,floor+15,143,15,0,0,TAU);c.fill();c.restore();
+  const result=actor(c,t);
+  const [cx,cy]=result.s.cup;
+  for(let k=0;k<3;k++){
+    const pts=Array.from({length:18},(_,j)=>{const u=j/17;return [cx-24+k*23+Math.sin(u*5+t*1.5+k)*7,cy-63-u*76];});
+    c.save();c.strokeStyle=PAL.ink;c.globalAlpha=.14;c.lineWidth=1.4;c.stroke(curvePath(pts,false,Math.PI));c.restore();
+  }
+}
+function score(ac,t0,dest){const master=ac.createGain();master.gain.value=.15;master.connect(dest);[[.3,261.6],[1.5,196],[2.2,164.8],[3.5,293.7],[5.4,329.6]].forEach(([t,f])=>note(ac,master,f,t0,t,1.4,'sine',.3));noiseBurst(ac,master,t0,1.5,.05,.07,4);}
+defineFilm({palette:P,timeline:[{name:'one careful cup',dur:7,fn:shot}],score,format:{ar:'16:9',width:1920},fps:24});
+window.__study = t => {const s=state(poseTime(t));return s;};
+</script>

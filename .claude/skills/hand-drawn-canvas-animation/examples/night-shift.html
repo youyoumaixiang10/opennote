@@ -1,0 +1,258 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>night shift</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script src="night-shift-photos.js"></script>
+<script>
+'use strict';
+// ============================================================
+// NIGHT SHIFT. A museum at night. The guard lights the lantern, the flame grows legs and runs,
+// and the chase goes through nine objects until morning. You cannot keep a light in a jar.
+// Photos: The Metropolitan Museum of Art, Open Access (CC0). Credits and sources are in night-shift-photos.js.
+//
+// Square only: scenes use literal frame positions for the ground and the paths.
+// Anchor: the spark, and the pool of light it carries. 120 bpm, a beat is 6 drawn frames, every cut is on a beat.
+// t      dur  scene      paper   object -> becomes              what happens                                         sound
+// 0.0    3.5  lantern    lilac   lantern -> where the light lives  match, flame wakes, hops out, "hey!"              match, bell, the beat starts
+// 3.5    2.5  violin     sky     violin -> a bridge             both run along its real top edge, a note per step    plucks
+// 6.0    2.5  watch      mint    watch -> a merry-go-round      the spark rides a drawn hand round and is flung      ticks, whirr
+// 8.5    2.0  trumpet    butter  trumpet -> a tunnel            light travels through the tube, TOOT, recoil         brass blast
+// 10.5   3.0  helmet     rose    helmet -> a dragon             eyes light up, roar, hedgehog jumps, "hee hee"       growl
+// 13.5   2.5  knight     cream   chess knight -> a getaway horse  gallop with the camera, hobby horse behind         clop clop
+// 16.0   2.5  harp       peach   harp -> a ladder               up the soundboard, strings ring, umbrella down       glissando
+// 18.5   2.5  hourglass  lilac   sandglass -> a trap            falls through the neck with the sand, tired          falling notes, tap tap
+// 21.0   3.5  jar        lilac   lantern -> a jar               caught, it dims, he lets it go                       music box alone
+// 24.5   3.0  sunrise    peach   fan -> the sun                 the fan rises behind a drawn hill, night ends        full chord
+// 27.5   3.5  end        cream   lantern, unlit                 asleep on the job, sign-off, a museum label with the author's handle   last notes
+// ============================================================
+
+const HANDLE = '@superalesha';   // the author's handle on the museum label of the last shot: put your own here
+const GY = 930, SPARK = '#ffd36b', WARM = '#ffcf70', HS = 70, HY = 62, SS = 34, SY = 45;   // hedgehog and spark sizes, and how high their centres sit above what they stand on
+// follow: the camera leans towards the action and whips on the cuts
+const follow = (p, tau, D, zoom = 1.16, o = {}) => setView({ x: CX + (p[0] - CX) * (o.kx ?? .35) + whip(tau, D, o), y: CY + (p[1] - CY) * (o.ky ?? .22) + (o.dy || 0), zoom });
+const tf = (x, y, s, rot = 0, dir = 1) => (px, py) => { const X = px * s * dir, Y = py * s, ca = Math.cos(rot), sa = Math.sin(rot); return [x + X * ca - Y * sa, y + X * sa + Y * ca]; };
+const M = (T, pts) => pts.map(p => T(p[0], p[1]));
+const dot = (d, x, y, r, col) => d.mark((c, k) => { c.fillStyle = col || PAL.ink; c.beginPath(); c.arc(x, y, r * k, 0, TAU); c.fill(); }, .05);
+const hop = (a, b, t, h) => { t = clamp(t, 0, 1); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) - Math.sin(t * Math.PI) * h]; };
+const lin = (a, b, t) => [lerp(a[0], b[0], clamp(t, 0, 1)), lerp(a[1], b[1], clamp(t, 0, 1))];
+const NOW = { start: -9 };   // a doodle that is already on the paper
+
+// ===================== PUPPETS =====================
+// hedgehog: faces +x when dir = 1. run = phase of the run cycle (or null), fright = quills up, hand = [x, y] in frame units
+function hog(d, x, y, s, o = {}) { const { dir = 1, rot = 0, scarf = PAL.accents[0], eye = 'dot', hand = null, body = PAL.light, quills = '#b78d63', w = 4, run = null, fright = 0 } = o;
+  const bobY = run === null ? 0 : -Math.abs(Math.sin(run)) * s * .12, T = tf(x, y + bobY, s, rot + (run === null ? 0 : .1), dir);
+  const B = [[-1, .15], [-.85, -.5], [-.3, -.92], [.35, -.85], [.8, -.45], [1.32, -.04], [.85, .35], [.5, .62], [-.4, .68], [-.9, .5]], Q = [[-1, .15], [-.85, -.5], [-.3, -.92], [.35, -.85], [.72, -.52], [.42, -.22], [.18, .12], [-.12, .47], [-.9, .5]];
+  d.fill(splinePath(M(T, B)), body).wash(splinePath(M(T, Q)), quills, { al: .75, off: 3 }).line(M(T, B), { close: true, w }).line(M(T, [[.72, -.52], [.42, -.22], [.18, .12], [-.12, .47]]), { w: w * .8 });
+  const sp = [], L = 1.22 + fright * .45; for (let k = 0; k < 11; k++) { const a = Math.PI * (1.08 + k * .105), cx = -.1 + Math.cos(a), cy = -.08 + Math.sin(a) * .88; sp.push(M(T, [[cx * .97, cy * .97], [cx * L - .08 * (1 - fright), cy * L]])); }
+  d.lines(sp, { w: w * .85, dur: .05, stagger: .025 }).lines([[[-.45, -.35], [-.55, -.5]], [[-.1, -.45], [-.18, -.62]], [[-.55, .05], [-.68, -.08]], [[-.2, -.05], [-.3, -.2]], [[.15, -.4], [.1, -.57]]].map(p => M(T, p)), { w: w * .7, dur: .04, stagger: .02 });
+  d.line(M(T, [[.3, -.52], [.4, -.74], [.54, -.54]]), { w: w * .8 });
+  if (eye === 'happy') d.line(M(T, [[.64, -.14], [.74, -.25], [.84, -.14]]), { w: w * .85 }); else if (eye === 'sleep') d.line(M(T, [[.64, -.2], [.74, -.12], [.84, -.2]]), { w: w * .85 });
+  else if (eye === 'wide') { d.fill(circPath(...T(.74, -.2), s * .15), '#fffdf7').line(ellPts(...T(.74, -.2), s * .15, s * .15, 0, 8), { close: true, w: w * .6 }); dot(d, ...T(.77, -.2), s * .06); } else dot(d, ...T(.74, -.18), s * .075);
+  dot(d, ...T(1.32, -.04), s * .1); d.wash(ellPath(...T(.62, .1), s * .17, s * .1), PAL.blush, { al: .8, off: 1 });
+  const sw = run === null ? 0 : Math.sin(run) * .42, legs = run === null ? [[[-.45, .66], [-.47, .86], [-.25, .86]], [[.3, .6], [.3, .86], [.52, .86]]] : [[[-.35, .62], [-.35 + sw, .9]], [[.25, .6], [.25 - sw, .9]]];
+  d.lines(legs.map(p => M(T, p)), { w: w * .85 });
+  if (scarf) { const fl = run === null ? 0 : Math.sin(run * 1.3) * .14, S1 = [[.16, .1], [.5, .28], [.88, .34], [.84, .5], [.45, .47], [.1, .3]], S2 = [[.2, .28], [-.25, .3 + fl], [-.7, .1 - fl], [-.72, .34 - fl], [-.25, .5 + fl], [.2, .44]];
+    d.wash(splinePath(M(T, S2)), scarf, { al: .95, off: 2 }).wash(splinePath(M(T, S1)), scarf, { al: .95, off: 2 }).line(M(T, S2), { close: true, w: w * .7 }).line(M(T, S1), { close: true, w: w * .7 }); }
+  if (hand) { const a = T(.5, .3), m = [(a[0] + hand[0]) / 2 + 6 * dir, (a[1] + hand[1]) / 2 + 10]; d.line([a, m, hand], { w: w * .9 }); dot(d, hand[0], hand[1], s * .09); }
+  return d; }
+// spark: the flame with legs. Its colours are fixed, so it looks the same in the ink pass and the chalk pass.
+function spark(d, x, y, s, o = {}) { const { dir = 1, run = null, mood = 'happy', lean = 0, squash = 1 } = o, T = tf(x, y, s, 0, dir), k = squash, line = '#9c5416';
+  const B = [[-lean * 1.2, -1.55 * k], [.5 - lean * .4, -.6 * k], [.78, .15], [.5, .8], [0, .95], [-.5, .8], [-.78, .15], [-.42 - lean * .4, -.55 * k]];
+  d.fill(splinePath(M(T, B)), '#fff4b8').wash(splinePath(M(T, B.map(([a, b]) => [a * .82, b * .82 + .16]))), '#ffab2e', { al: .8, off: 1, blend: 'source-over' }).line(M(T, B), { close: true, w: 3.2, color: line });
+  const e = mood === 'sad' ? .12 : 0; dot(d, ...T(.12, .0 + e), s * .085, '#3a2414'); dot(d, ...T(.46, .0 + e), s * .085, '#3a2414');
+  if (mood === 'happy') d.line(M(T, [[.16, .3], [.3, .42], [.44, .3]]), { w: 2.4, color: '#3a2414' }); else if (mood === 'sad') d.line(M(T, [[.16, .46], [.3, .36], [.44, .46]]), { w: 2.4, color: '#3a2414' }); else dot(d, ...T(.3, .38), s * .1, '#3a2414');
+  const sw = run === null ? 0 : Math.sin(run) * .5; d.lines((run === null ? [[[-.25, .9], [-.25, 1.3]], [[.25, .9], [.25, 1.3]]] : [[[-.2, .9], [-.2 + sw, 1.32]], [[.2, .9], [.2 - sw, 1.32]]]).map(p => M(T, p)), { w: 3, color: line }); return d; }
+// the sparks it drops: positions it had a moment ago
+function trail(c, path, tau, n = 9, step = .07) { c.save(); for (let k = 1; k <= n; k++) { const p = path(tau - k * step); if (!p) continue; const r = rng(k * 7 + Math.floor(tau * 12)); c.fillStyle = k % 2 ? SPARK : '#fff1c0'; c.globalAlpha = 1 - k / (n + 1); c.beginPath(); c.arc(p[0] + (r() - .5) * 16, p[1] + (r() - .5) * 16 + k * 2, 4.5 * (1 - k / (n + 2)) + 1, 0, TAU); c.fill(); } c.restore(); }
+const heartPts = (x, y, s) => Array.from({ length: 18 }, (_, k) => { const a = k / 18 * TAU; return [x + s * Math.pow(Math.sin(a), 3), y - s * (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16]; });
+function sparkle(d, x, y, s, col) { d.lines([[[x - s, y], [x + s, y]], [[x, y - s], [x, y + s]], [[x - s * .5, y - s * .5], [x + s * .5, y + s * .5]], [[x + s * .5, y - s * .5], [x - s * .5, y + s * .5]]], { w: 2.4, dur: .04, stagger: .02, color: col }); return d; }
+function musicNote(d, x, y, s, col) { d.mark((c, k) => { c.save(); c.translate(x, y); c.rotate(-.4); c.fillStyle = col || PAL.ink; c.beginPath(); c.ellipse(0, 0, s * .42 * k, s * .3 * k, 0, 0, TAU); c.fill(); c.restore(); }, .05).line([[x + s * .36, y - s * .1], [x + s * .4, y - s * 1.3], [x + s * .9, y - s * .95]], { w: 3, color: col }); return d; }
+const ground = (d, y = GY, x0 = -900, x1 = W + 900) => d.line([[x0, y + 3], [lerp(x0, x1, .3), y - 2], [lerp(x0, x1, .65), y + 4], [x1, y]], { w: 3.6 });
+const stars = (d, list) => list.forEach(([x, y, s]) => sparkle(d, x, y, s, '#ffe9a8'));
+function trestle(d, x, top, w = 70) { d.lines([[[x, top], [x - w, GY]], [[x, top], [x + w, GY]], [[x - w * .55, lerp(top, GY, .6)], [x + w * .55, lerp(top, GY, .6)]]], { w: 3.4 }); }
+
+// ===================== SCENES =====================
+function sLantern(c, tau, i) { const D = 3.5; usePalette(pastel('lilac'));
+  const pl = place('lantern', { x: 560, y: GY, h: 700, pivot: [.5, 1] }), F = on(pl, .52, .62), lit = sm(.85, 1.05, tau), match = on(pl, -.02, .74);
+  const path = t => t < 1.95 ? F : t < 2.55 ? hop(F, [830, GY - SY], (t - 1.95) / .6, 300) : [830 + (t - 2.55) * 480, GY - SY], sp = path(tau), hx = tau < 2.7 ? 235 : 235 + Math.pow(tau - 2.7, 1.4) * 700; follow([lerp(440, sp[0], sm(1.9, 2.6, tau)), 640], tau, D, 1.08 + .1 * sm(0, 1.9, tau), { inn: 0, kx: .5 });
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => ground(d), { still: true }); photo(c, pl);
+    pen(c, tau, i, 1.0, 31, d => stars(d, [[150, 160, 12], [330, 90, 9], [880, 140, 13], [980, 330, 9], [760, 70, 8], [90, 420, 8]]));
+    pen(c, tau, i, .05, 7, d => { hog(d, hx, GY - HY, HS, { dir: 1, hand: tau < 1.5 ? [match[0] - 46, match[1] + 40] : null, eye: tau > 2.0 ? 'wide' : 'dot', run: tau > 2.7 ? tau * 15 : null, fright: sm(2.0, 2.2, tau) * (1 - sm(2.6, 2.8, tau)) }); if (tau < 1.5) d.line([[match[0] - 46, match[1] + 40], match], { w: 3 }); }, NOW);
+    if (tau > 1.35) pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], tau < 1.95 ? 24 : SS, { run: tau > 2.55 ? tau * 17 : null, mood: tau < 1.95 ? 'o' : 'happy', lean: tau > 2.55 ? .25 : 0 }));
+    if (tau > 1.95) trail(c, path, tau);
+    pen(c, tau, i, 1.1, 41, d => d.text('night shift', 470, 250, { size: 92, align: 'center' }));
+    if (tau > 2.1) pen(c, tau, i, 2.1, 43, d => d.text('hey!', hx - 50, GY - 200, { size: 80 }));
+  }, { k: .88, lights: [{ x: match[0], y: match[1], r: 150 * sm(.2, .4, tau) * (1 - sm(1.2, 1.5, tau)), color: '#ffb84a' }, { x: sp[0], y: sp[1], r: (tau < 1.95 ? 470 : 330) * lit * (1 + Math.sin(i * 1.9) * .05), color: WARM }] }); }
+
+function sViolin(c, tau, i) { const D = 2.5; usePalette(pastel('sky'));
+  const pl = place('violin', { x: 540, y: 600, h: 900, rot: -Math.PI / 2 }), top = v => { const p = rim(pl, 'right', v); return [p[0], p[1]]; };
+  const runner = (t0, t1, s) => t => { const v = (t - t0) / (t1 - t0); if (v < 0) return hop([-80, 560], top(0), 1 + v * 4, 120); if (v > 1) return hop(top(1), [1240, 640], (v - 1) * 3.2, 90); const p = top(v); return [p[0], p[1] - s]; };
+  const pa = runner(.15, 1.55, SY), pb = runner(.6, 2.1, HY), sp = pa(tau), hp = pb(tau); follow([(sp[0] + hp[0]) / 2, 520], tau, D, 1.2, { kx: .45 });
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => { ground(d); trestle(d, 640, top(.55)[1] + 250); trestle(d, 900, top(.9)[1] + 290); }, { still: true }); photo(c, pl, { shadow: 0 });
+    [.18, .36, .54, .72, .9].forEach((v, k) => { const t0 = .15 + v * 1.4; if (tau > t0) { const p = top(v), up = (tau - t0) * 90; pen(c, tau, i, t0, 50 + k, d => musicNote(d, p[0] - 10, p[1] - 110 - up, 24, k % 2 ? PAL.accents[0] : PAL.accents[1])); } });
+    const amp = 9 * sm(.2, .5, tau) * (1 - sm(1.3, 2.0, tau)); if (amp > .3) for (let s = 0; s < 3; s++) brush(c, Array.from({ length: 24 }, (_, k) => { const p = on(pl, .42 + s * .07, .06 + k * .0235); return [p[0], p[1] + Math.sin(k * 1.5 + i * 2.3 + s) * amp]; }), { w: 2, color: PAL.accents[1], amp: 0, taper: 0 });
+    pen(c, tau, i, -9, 7, d => hog(d, hp[0], hp[1], HS, { run: tau * 15, eye: 'dot' })); pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { run: tau * 17, lean: .25 })); trail(c, pa, tau);
+    pen(c, tau, i, .5, 41, d => stars(d, [[120, 170, 11], [420, 110, 9], [760, 190, 12], [960, 90, 9]]));
+  }, { k: .88, lights: [{ x: sp[0], y: sp[1], r: 330, color: WARM }] }); }
+
+function sWatch(c, tau, i) { const D = 2.5; usePalette(pastel('mint'));
+  const pl = place('watch', { x: 540, y: GY - 6, h: 680, pivot: [.5, 1] }), hub = on(pl, .49, .652), R = pl.w * .37, ang = t => Math.PI + Math.pow(sm(.35, 1.7, t, x => x), 1.7) * Math.PI * 2.5, tip = a => [hub[0] + Math.cos(a) * R, hub[1] + Math.sin(a) * R];
+  const path = t => t < .35 ? hop([-60, 640], tip(Math.PI), t / .35, 140) : t < 1.7 ? (p => [p[0], p[1] - 34])(tip(ang(t))) : hop([hub[0], hub[1] - R - 34], [1300, 250], (t - 1.7) / .55, 60), sp = path(tau);
+  const hx = tau < 1.75 ? lerp(-90, 170, sm(.3, 1.0, tau, easeOut)) : 170 + (tau - 1.75) * 1300; follow([lerp(hub[0], sp[0], .4), hub[1] - 40], tau, D, 1.1 + .1 * sm(.3, 1.7, tau));
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => ground(d), { still: true });
+    if (tau >= 1.75) pen(c, tau, i, -9, 7, d => hog(d, hx, GY - HY, HS, { run: tau * 15 }));   // he goes round the back of it
+    photo(c, pl);
+    if (tau < 1.75) pen(c, tau, i, -9, 7, d => hog(d, hx, GY - HY, HS, { run: tau < 1.0 ? tau * 15 : null, eye: tau > 1.0 ? 'wide' : 'dot', rot: tau > 1.0 ? -.18 : 0 }));
+    if (tau > .3) { const a = ang(Math.min(tau, 1.7)); for (let g = 4; g >= 1; g--) { const ag = ang(Math.min(tau, 1.7) - g * .05); if (Math.abs(ag - a) > .02) brush(c, [hub, tip(ag)], { w: 5, color: PAL.accents[0], amp: 0, al: .12 * (5 - g), seed: 2 }); }
+      brush(c, [hub, tip(a)], { w: 8, color: PAL.accents[0], seed: 2, amp: .5, p: sm(.3, .4, tau) }); c.fillStyle = PAL.accents[0]; c.beginPath(); c.arc(hub[0], hub[1], 11, 0, TAU); c.fill(); }
+    pen(c, tau, i, .5, 15, d => d.lines([[[250, 470], [222, 540], [250, 610]], [[212, 445], [176, 540], [212, 635]], [[830, 470], [858, 540], [830, 610]], [[868, 445], [904, 540], [868, 635]]], { w: 3.4, stagger: .06 }));
+    pen(c, tau, i, .7, 17, d => d.text('tick', 100, 330, { size: 60 })); pen(c, tau, i, 1.0, 18, d => d.text('tick', 860, 350, { size: 60 })); pen(c, tau, i, 1.3, 19, d => d.text('tick!', 170, 190, { size: 74 }));
+    pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { mood: tau > .6 && tau < 1.7 ? 'o' : 'happy', lean: tau > .35 ? .3 : .2 })); trail(c, path, tau, 11, .045);
+  }, { k: .88, lights: [{ x: sp[0], y: sp[1], r: 340, color: WARM }] }); }
+
+function sTrumpet(c, tau, i) { const D = 2.0; usePalette(pastel('butter')); const kick = tau > 1.0 ? Math.exp(-(tau - 1.0) * 7) : 0;
+  const pl = place('trumpet', { x: 540 - kick * 46, y: 500, h: 980, rot: -Math.PI / 2 + kick * .03 * Math.sin(tau * 60) }), mouth = on(pl, .27, .0), bell = on(pl, .5, 1.0);
+  const inside = tau > .3 && tau < 1.0, path = t => t < .3 ? hop([-80, 760], mouth, t / .3, 220) : t < 1.0 ? on(pl, .45, (t - .3) / .7) : hop(bell, [1320, 420], (t - 1.0) / .5, 70), sp = path(tau);
+  follow([sp[0], 640], tau, D, 1.1 + kick * .08, { kx: .3, ky: 0 });
+  const hx = tau < 1.15 ? lerp(-90, 130, sm(.35, .9, tau, easeOut)) - kick * 60 : 130 + Math.pow(tau - 1.15, 1.2) * 1250;
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => { ground(d); trestle(d, 330, 560, 60); trestle(d, 820, 590, 60); }, { still: true }); photo(c, pl, { shadow: 0 });
+    pen(c, tau, i, -9, 7, d => hog(d, hx, GY - HY, HS, { run: tau > 1.15 || tau < .9 ? tau * 15 : null, eye: tau > .9 && tau < 1.3 ? 'wide' : 'dot', rot: tau > .9 && tau < 1.15 ? -.3 : 0, fright: kick }));
+    if (!inside) { pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { lean: .3, mood: tau > 1 ? 'o' : 'happy' })); trail(c, path, tau, 10, .04); }
+    if (tau > 1.0) { pen(c, tau, i, 1.0, 21, d => d.lines([0, 1, 2].map(k => Array.from({ length: 9 }, (_, j) => { const a = -1.0 + j * .25, r = 70 + k * 58 + (tau - 1) * 120; return [bell[0] + 10 + Math.cos(a) * r * .55, bell[1] + Math.sin(a) * r]; })), { w: 4, stagger: .04, speed: 3000 }), { still: true });
+      pen(c, tau, i, 1.02, 23, d => d.text('TOOT!', 560, 300, { size: 120 }), { speed: 4000 }); [[880, 250], [960, 700], [800, 760]].forEach(([x, y], k) => pen(c, tau, i, 1.05 + k * .08, 25 + k, d => musicNote(d, x + (tau - 1) * 60, y - (tau - 1) * 50, 30, PAL.accents[k % 2 ? 1 : 0]))); }
+  }, { k: .88, lights: [{ x: sp[0], y: sp[1], r: inside ? 230 : 330 + kick * 300, color: WARM }] }); }
+
+function sHelmet(c, tau, i) { const D = 3.0; usePalette(pastel('rose')); const roar = sm(1.15, 1.3, tau) * (1 - sm(1.75, 1.95, tau));
+  const pl = place('helmet', { x: 680 + Math.sin(tau * 55) * 7 * roar, y: GY, h: 760, pivot: [.5, 1], flip: true, rot: -.04 * roar }), eye = on(pl, .62, .275), jaw = on(pl, .74, .44), crown = on(pl, .4, .0);
+  const out = tau > 2.0, path = t => t < 2.0 ? jaw : t < 2.25 ? hop(crown, [crown[0] + 30, crown[1] - 40], (t - 2.0) / .25, 110) : t < 2.6 ? hop([crown[0] + 30, crown[1] - 40], [1010, GY - SY], (t - 2.25) / .35, 40) : [1010 + (t - 2.6) * 600, GY - SY], sp = path(tau);
+  const hx = tau < 1.2 ? lerp(-90, 215, sm(.2, .85, tau, easeOut)) : tau < 2.3 ? 215 - 95 * sm(1.2, 1.4, tau, easeOut) : 120 + Math.pow(tau - 2.3, 1.25) * 1500, hy = GY - HY - (tau > 1.2 && tau < 1.6 ? Math.sin((tau - 1.2) / .4 * Math.PI) * 120 : 0);
+  follow([tau > 2.0 ? sp[0] : 450, 560], tau, D, 1.08 + roar * .1, { kx: .4, ky: 0 }); const fl = 1 + Math.sin(i * 2.1) * .12, H = d => hog(d, hx, hy, HS, { run: tau < .85 || tau > 2.3 ? tau * 15 : null, eye: tau > .85 && tau < 2.3 ? 'wide' : 'dot', fright: sm(1.15, 1.3, tau) * (1 - sm(2.0, 2.3, tau)) });
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => ground(d), { still: true }); if (tau > 2.3) pen(c, tau, i, -9, 7, H); photo(c, pl); if (tau <= 2.3) pen(c, tau, i, -9, 7, H);
+    if (roar > 0) { pen(c, tau, i, 1.15, 21, d => d.lines([-.35, -.12, .1, .32].map((a, k) => Array.from({ length: 7 }, (_, j) => { const r = 60 + j * 52, z = (j % 2 ? 1 : -1) * 16; return [jaw[0] - 210 - Math.cos(a) * r + Math.sin(a) * z, jaw[1] + 20 + Math.sin(a) * r * 1.4 + Math.cos(a) * z]; })), { w: 5, stagger: .03, smooth: false, speed: 3500, color: PAL.accents[0] }), { still: true });
+      pen(c, tau, i, 1.2, 23, d => d.text('RRRR', 70, 330, { size: 130 }), { speed: 4000 }); }
+    if (tau > 1.25 && tau < 2.2) pen(c, tau, i, 1.25, 25, d => d.text('!', hx + 40, hy - 150, { size: 120 }));
+    if (out) { pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { run: tau > 2.6 ? tau * 17 : null, lean: tau > 2.6 ? .25 : 0 })); trail(c, path, tau); pen(c, tau, i, 2.05, 27, d => d.text('hee hee', 720, 110, { size: 64 })); }
+    pen(c, tau, i, .4, 41, d => stars(d, [[120, 130, 11], [330, 200, 8], [960, 170, 12]]));
+  }, { k: .9, lights: out ? [{ x: sp[0], y: sp[1], r: 330, color: WARM }] : [{ x: eye[0], y: eye[1], r: (70 + roar * 70) * fl * sm(.1, .5, tau), color: '#ff7a3a', glow: .9 }, { x: jaw[0], y: jaw[1], r: (120 + roar * 160) * fl * sm(.1, .5, tau), color: '#ff9a3a', glow: .8 }, { x: hx + 30, y: hy, r: 150, glow: 0, k: .55 }] }); }
+
+function sKnight(c, tau, i) { const D = 2.5; usePalette(pastel('cream')); const px = 120 + tau * 560, gal = tau * 13, bounce = Math.abs(Math.sin(gal)) * 46; setView({ x: px - 60 + whip(tau, D, { dist: 380 }), y: CY + 60, zoom: 1.12 });
+  const pl = place('knight', { x: px, y: GY - bounce, h: 610, pivot: [.5, 1], rot: Math.sin(gal * 2 + .6) * .06 }), seat = on(pl, .1, .4), hx = px - 440, hb = Math.abs(Math.sin(gal + 1.2)) * 40;
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => { ground(d, GY, -400, 2600); for (let k = 0; k < 9; k++) { const x = k * 330 - 100; d.lines([[[x, GY], [x - 8, GY - 26]], [[x + 12, GY], [x + 14, GY - SY]], [[x + 24, GY], [x + 34, GY - 22]]], { w: 3 }); if (k % 3 === 1) d.lines([[[x + 150, GY], [x + 150, GY - 120]], [[x + 150, GY - 120], [x + 210, GY - 100], [x + 150, GY - 80]]], { w: 3.4 }); } }, { still: true });
+    photo(c, pl, { ground: GY, shadow: .3 - bounce / 400 });
+    for (let k = 0; k < 4; k++) { const age = (tau * 4 + k / 4) % 1, x = px - 150 - age * 190 - k * 12, y = GY - 14 - age * 46, r = 12 + age * 26; c.save(); c.globalAlpha = (1 - age) * .9; c.fillStyle = PAL.light; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.strokeStyle = PAL.ink; c.lineWidth = 2.4; c.beginPath(); c.arc(x, y, r, Math.PI * .9, Math.PI * 1.9); c.stroke(); c.restore(); }
+    speedLines(c, px - 250, GY - 330, 0, 5 + Math.floor(tau * 6), 8, .7, PAL.ink);
+    // he follows on a hobby horse
+    pen(c, tau, i, -9, 5, d => { const y = GY - 92 - hb; d.line([[hx - 60, GY - 8 - hb * .4], [hx + 80, y + 10]], { w: 5, color: '#8a6238' }); const hd = [[hx + 70, y + 24], [hx + 86, y - 32], [hx + 150, y - 20], [hx + 160, y + 10], [hx + 106, y + 22]]; d.fill(splinePath(hd), '#e9c9a0').line(hd, { close: true, w: 3.6 }); dot(d, hx + 128, y - 8, 4); d.lines([[[hx + 86, y - 32], [hx + 78, y - 56]], [[hx + 100, y - 30], [hx + 98, y - 56]]], { w: 3 }); hog(d, hx, y - 16, HS, { eye: 'dot', rot: -.08, hand: [hx + 78, y + 4] }); });
+    pen(c, tau, i, -9, 9, d => spark(d, seat[0] + 6, seat[1] - 44, SS, { mood: 'happy', lean: .35 })); trail(c, t => { const q = 120 + t * 560; return [q - 190, GY - 360 - Math.abs(Math.sin(t * 13)) * 46]; }, tau, 10, .04);
+    pen(c, tau, i, .5, 31, d => d.text('clop clop', px - 300, GY + 100, { size: 64 })); pen(c, tau, i, .2, 41, d => stars(d, [[300, 150, 11], [700, 90, 9], [1100, 170, 12], [1500, 110, 10], [1850, 180, 11]]));
+  }, { k: .88, lights: [{ x: seat[0] + 40, y: seat[1] + 40, r: 400, color: WARM }] }); }
+
+function sHarp(c, tau, i) { const D = 2.5; usePalette(pastel('peach'));
+  const pl = place('harp', { x: 520, y: GY, h: 850, pivot: [.5, 1] }), A = on(pl, .34, .86), B = on(pl, .95, .2), peak = [B[0] + 10, B[1] - 40];
+  const climb = (t0, t1, s) => t => t < t0 ? hop([-80, GY - 40], [A[0], A[1] - s], 1 - (t0 - t) / .3, 60) : t < t1 ? (p => [p[0] - s * .4, p[1] - s])(lin(A, B, (t - t0) / (t1 - t0))) : null;
+  const pa = t => climb(.25, 1.25, SY)(t) || (t < 1.4 ? hop([B[0] - 12, B[1] - 30], peak, (t - 1.25) / .15, 30) : [peak[0] + (t - 1.4) * 330, peak[1] + Math.pow(t - 1.4, 1.5) * 420 + Math.sin(t * 9) * 10]), sp = pa(tau);
+  const pb = t => climb(.7, 2.05, HY)(t) || hop([B[0] - 20, B[1] - 50], [1250, 1150], (t - 2.05) / .45, 160), hp = pb(tau), floating = tau > 1.4; follow(sp, tau, D, 1.14, { kx: .3, ky: .45 });
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => ground(d), { still: true }); photo(c, pl);
+    for (let s = 0; s < 9; s++) { const u = .22 + s * .068, t0 = .3 + s * .1, a = 7 * sm(t0, t0 + .08, tau) * (1 - sm(t0 + .3, t0 + .9, tau)); if (a < .3) continue; const v0 = .14 + s * .012, v1 = .84 - s * .068; brush(c, Array.from({ length: 22 }, (_, k) => { const p = on(pl, u, lerp(v0, v1, k / 21)); return [p[0] + Math.sin(k * 1.1 + i * 2.5 + s) * a, p[1]]; }), { w: 2.2, color: PAL.accents[s % 2 ? 0 : 1], amp: 0, taper: 0 }); }
+    [[.35, 0], [.6, 1], [.85, 0], [1.1, 1]].forEach(([t0, k], n) => { if (tau > t0) { const p = lin(A, B, (t0 - .25)), up = (tau - t0) * 80; pen(c, tau, i, t0, 60 + n, d => musicNote(d, p[0] - 190 + n * 20, p[1] - 80 - up, 26, PAL.accents[k])); } });
+    pen(c, tau, i, -9, 7, d => hog(d, hp[0], hp[1], HS, { run: tau * 15, rot: tau > .7 && tau < 2.05 ? -.75 : tau > 2.05 ? .5 : 0, eye: tau > 2.05 ? 'wide' : 'dot', fright: sm(2.05, 2.15, tau) }));
+    if (floating) pen(c, tau, i, 1.38, 13, d => { const x = sp[0], y = sp[1] - 120, dome = [[x - 70, y + 20], [x - 50, y - 36], [x, y - 58], [x + 50, y - 36], [x + 70, y + 20]]; d.fill(polyPath(spline(dome, 5)), PAL.fills[0]).line(dome, { w: 3.6 }).line([[x - 70, y + 20], [x - 35, y + 8], [x, y + 20], [x + 35, y + 8], [x + 70, y + 20]], { w: 3 }).line([[x, y - 58], [x, sp[1] - 40]], { w: 2.6 }); }, { speed: 3000 });
+    pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { run: floating ? null : tau * 17, lean: floating ? 0 : .2, mood: floating ? 'happy' : 'o' })); trail(c, pa, tau);
+    if (tau > 2.1) pen(c, tau, i, 2.1, 27, d => d.text('aaa', hp[0] - 190, hp[1] - 60, { size: 70 })); pen(c, tau, i, .4, 41, d => stars(d, [[120, 120, 11], [900, 80, 10], [980, 420, 9], [160, 520, 8]]));
+  }, { k: .87, lights: [{ x: sp[0], y: sp[1], r: 340, color: WARM }] }); }
+
+function sGlass(c, tau, i) { const D = 2.5; usePalette(pastel('lilac'));
+  const pl = place('hourglass', { x: 540 + (tau > .95 && tau < 1.2 ? Math.sin(tau * 60) * 4 : 0), y: GY, h: 760, pivot: [.5, 1] }), topP = on(pl, .5, .015), bulb = on(pl, .5, .27), neck = on(pl, .5, .5), sand = on(pl, .5, .655);
+  const path = t => t < .3 ? hop([-60, -80], [topP[0], topP[1] - 30], t / .3, -80) : t < .6 ? lin([topP[0], topP[1] - 30], bulb, (t - .3) / .3) : t < 1.2 ? (q => [bulb[0] + Math.sin(q * 9) * 5 * (1 - q), lerp(bulb[1], sand[1] - 22, q * q)])((t - .6) / .6) : [sand[0], sand[1] - 22], sp = path(tau);
+  follow([540, lerp(420, 640, sm(.3, 1.3, tau))], tau, D, 1.12 + .14 * sm(1.2, 2.5, tau), { out: 0, ky: .6 }); const tired = tau > 1.2, breath = tired ? 1 + Math.sin(tau * 9) * .08 : 1, post = v => on(pl, .93, v);
+  const hp = tau < .95 ? hop([-80, -60], [topP[0] + 10, topP[1] - HY], (tau - .55) / .4, -60) : tau < 1.5 ? [topP[0] + 10, topP[1] - HY] : tau < 2.0 ? (p => [p[0] + 56, p[1]])(post(lerp(.05, .88, sm(1.5, 2.0, tau, easeIn)))) : [790, GY - HY];
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => ground(d), { still: true }); photo(c, pl);
+    if (tau > .55 && tau < 1.5) { c.save(); c.fillStyle = '#d9a066'; const r = rng(3 + Math.floor(tau * 12)); for (let k = 0; k < 16; k++) { c.globalAlpha = .9; c.beginPath(); c.arc(neck[0] + (r() - .5) * 10, lerp(neck[1] - 10, sand[1] - 8, r()), 2.6, 0, TAU); c.fill(); } c.restore(); }
+    pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], tau < .3 ? SS : 25 * breath, { mood: tired ? 'sad' : 'o', squash: tau > .3 && tau < .6 ? .7 : 1 })); if (tau < 1.25) trail(c, path, tau, 8, .05);
+    if (tau > .55) pen(c, tau, i, -9, 7, d => hog(d, hp[0], hp[1], HS, { eye: tau > .95 && tau < 1.5 ? 'wide' : tau > 2.0 ? 'happy' : 'dot', rot: tau > .95 && tau < 1.5 ? .5 : tau > 1.5 && tau < 2.0 ? -.3 : 0, dir: tau > 1.5 ? -1 : 1, hand: tau > 2.05 ? on(pl, 1.0, .72 + Math.sin(tau * 25) * .01) : null }));
+    if (tired) pen(c, tau, i, 1.3, 31, d => d.lines([[[sp[0] + 34, sp[1] - 30], [sp[0] + 52, sp[1] - 44]], [[sp[0] + 40, sp[1] - 8], [sp[0] + 62, sp[1] - 10]]], { w: 2.4, color: '#9c5416' }));
+    if (tau > 2.05) pen(c, tau, i, 2.05, 33, d => d.text('tap tap', 800, 560, { size: 62 }));
+    pen(c, tau, i, .4, 41, d => stars(d, [[130, 150, 11], [300, 330, 8], [900, 130, 12], [960, 380, 9]]));
+  }, { k: .84, lights: [{ x: sp[0], y: sp[1], r: tired ? 210 * breath : 320, color: WARM }, { x: hp[0], y: hp[1], r: tau > .55 ? 130 : 0, glow: 0, k: .45 }] }); }
+
+function sJar(c, tau, i) { usePalette(pastel('lilac')); const push = sm(2.2, 2.5, tau, easeOut), dawn = sm(1.8, 3.5, tau, t => t); setView({ zoom: 1.12 - .12 * sm(2.5, 3.2, tau), y: CY + 60 - 60 * sm(2.5, 3.2, tau) });
+  const pl = place('lantern', { x: 477, y: GY, h: 700, pivot: [.15, 1], rot: .07 * push }), F = on(pl, .52, .63), free = tau > 2.6, dim = 1 - .62 * sm(.9, 2.0, tau);
+  const path = t => t < 2.6 ? [F[0], F[1] + 6] : [F[0] + 40 * Math.sin((t - 2.6) * 7), F[1] - Math.pow(t - 2.6, 1.6) * 1500], sp = path(tau);
+  nightShot(c, c => { backdrop(c); pen(c, tau, i, -9, 1, d => { ground(d); d.line([[-100, GY - 120], [300, GY - 150], [700, GY - 128], [1200, GY - 160]], { w: 2.4, color: PAL.shade }); }, { still: true });
+    if (dawn > 0) { c.save(); const g = c.createLinearGradient(0, GY - 420, 0, GY - 120); g.addColorStop(0, 'rgba(255,190,130,0)'); g.addColorStop(1, `rgba(255,190,130,${.55 * dawn})`); c.fillStyle = g; c.fillRect(-200, GY - 420, W + 400, 300); c.restore(); }
+    photo(c, pl);
+    pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], free ? SS : 25, { mood: free ? 'happy' : tau > .8 ? 'sad' : 'o', lean: 0 })); if (free) trail(c, path, tau, 14, .035);
+    if (tau > 1.2 && !free) { const ty = F[1] + 14 + ((tau - 1.2) % .7) * 60; c.fillStyle = '#8fc4e8'; c.beginPath(); c.ellipse(F[0] + 12, ty, 4, 6, 0, 0, TAU); c.fill(); }
+    pen(c, tau, i, -9, 7, d => hog(d, 215, GY - HY, HS, { eye: tau < .9 ? 'happy' : free ? 'happy' : 'dot', hand: tau > 2.15 && tau < 2.7 ? on(pl, .1, .34) : tau > 2.9 ? [290, GY - 170 + Math.sin(tau * 14) * 14] : null, rot: tau > 1.2 && tau < 2.1 ? .06 : 0 }));
+    if (tau < 1.1) pen(c, tau, i, .2, 21, d => d.text('gotcha', 110, GY - 190, { size: 68 })); if (tau > 1.4 && tau < 2.3) pen(c, tau, i, 1.4, 23, d => d.text('. . .', 170, GY - 190, { size: 80 }), { speed: 300 });
+    if (tau > 2.95) pen(c, tau, i, 2.95, 25, d => d.text('go on', 130, GY - 230, { size: 68 }));
+    pen(c, tau, i, -9, 41, d => stars(d, [[120, 140, 11], [330, 80, 9], [880, 120, 12], [980, 320, 9], [760, 230, 8]]));
+  }, { k: .86 - .2 * dawn, lights: [{ x: sp[0], y: sp[1], r: free ? 380 + (tau - 2.6) * 500 : 430 * dim * (1 + Math.sin(i * 1.9) * .04), color: WARM }] }); }
+
+function sSunrise(c, tau, i) { usePalette(pastel('peach')); const rise = sm(.4, 2.1, tau, easeOut), k = .66 * (1 - sm(.5, 2.0, tau)); setView({ zoom: 1.06 - .06 * rise });
+  const pl = place('fan', { x: 540, y: 1180 - rise * 470, h: 500 }), hub = on(pl, .5, .97), hill = Array.from({ length: 13 }, (_, n) => [n * 100 - 60, 800 + Math.sin(n * .9 + 1) * 26 - Math.sin(n / 12 * Math.PI) * 40]);
+  const path = t => t < .55 ? [540, lerp(1100, hub[1], t / .55)] : null, sp = path(tau);
+  nightShot(c, c => { backdrop(c);
+    if (rise > .15) pen(c, tau, i, .7, 11, d => d.lines(Array.from({ length: 13 }, (_, n) => { const a = Math.PI + (n + .5) / 13 * Math.PI, r0 = pl.w * .54, r1 = pl.w * (.64 + (n % 2) * .1); return [[hub[0] + Math.cos(a) * r0, hub[1] + Math.sin(a) * r0], [hub[0] + Math.cos(a) * r1, hub[1] + Math.sin(a) * r1]]; }), { w: 6, color: PAL.accents[2], stagger: .04, speed: 1200 }), { still: true });
+    photo(c, pl, { shadow: 0 });
+    pen(c, tau, i, -9, 3, d => { d.fill(polyPath([...spline(hill, 8), [W + 80, H + 80], [-80, H + 80]]), mix(PAL.paper, PAL.fills[3], .7), { al: 1 }).line(hill, { w: 3.8 }); [[150, 0], [380, 1], [800, 2], [960, 3]].forEach(([x, n]) => { const y = 800 + Math.sin((x + 60) / 100 * .9 + 1) * 26 - Math.sin((x + 60) / 1200 * Math.PI) * 40; d.lines([[[x, y], [x - 8, y - 28]], [[x + 12, y], [x + 14, y - 36]], [[x + 24, y], [x + 34, y - 24]]], { w: 3, color: PAL.accents[3] }); }); }, { still: true });
+    pen(c, tau, i, -9, 7, d => hog(d, 240, 742, 50, { eye: 'happy', hand: [300, 640 + Math.sin(tau * 12) * 14] }));
+    if (sp) { pen(c, tau, i, -9, 9, d => spark(d, sp[0], sp[1], SS, { lean: 0 })); trail(c, path, tau, 12, .04); }
+    [[760, 300, 1.3], [850, 250, 1.45], [900, 330, 1.6]].forEach(([x, y, t0], n) => pen(c, tau, i, t0, 51 + n, d => d.line([[x - 26 + tau * 20, y + 6], [x - 10 + tau * 20, y - 10 - Math.sin(tau * 10 + n) * 6], [x + tau * 20, y + 4], [x + 12 + tau * 20, y - 10 - Math.sin(tau * 10 + n) * 6], [x + 28 + tau * 20, y + 6]], { w: 3.2 })));
+    pen(c, tau, i, 1.9, 31, d => d.text('morning', 540, 190, { size: 96, align: 'center' }));
+  }, { k, lights: [{ x: hub[0], y: Math.min(hub[1] - 120, 690), r: 300 + rise * 1100, color: '#ffd9a0', glow: 0 }] }); }
+
+function sEnd(c, tau, i) { usePalette(pastel('cream')); setView({ zoom: 1.03 }); backdrop(c); const pl = place('lantern', { x: 790, y: GY - 40, h: 640, pivot: [.5, 1] });
+  pen(c, tau, i, -9, 1, d => ground(d, GY - 40), { still: true }); photo(c, pl);
+  pen(c, tau, i, -9, 3, d => { d.wash(circPath(170, 170, 50), PAL.fills[2], { al: .9, off: 3 }).line(ellPts(170, 170, 50, 50, 0, 12), { close: true, w: 3.4 }).lines(Array.from({ length: 9 }, (_, k) => { const a = k / 9 * TAU + tau * .4; return [[170 + Math.cos(a) * 68, 170 + Math.sin(a) * 68], [170 + Math.cos(a) * 92, 170 + Math.sin(a) * 92]]; }), { w: 3.2, color: PAL.accents[2] }); dot(d, 154, 162, 4.5, '#3a2414'); d.line([[178, 160], [188, 154], [198, 160]], { w: 2.6, color: '#3a2414' }).line([[158, 186], [172, 196], [188, 186]], { w: 2.6, color: '#3a2414' }); });
+  pen(c, tau, i, -9, 7, d => hog(d, 585, GY - 40 - HY + Math.sin(tau * 3) * 2, HS, { eye: 'sleep', rot: .22 }));
+  pen(c, tau, i, .3, 21, d => d.text('z', 548, GY - 225, { size: 46 }).text('z', 510, GY - 280, { size: 58 }).text('z', 462, GY - 345, { size: 72 }), { speed: 200 });
+  signOff(c, 'night shift', 'see you tonight', { x: 350, y: 360, size: 88, progressA: sm(.5, 1.2, tau, t => t), progressB: sm(1.3, 2.0, tau, t => t) });
+  // the museum label: a card that draws itself, the X mark in brush pen, the handle letter by letter
+  const drop = easeOut(sm(1.9, 2.2, tau, t => t)), T = tf(276, 756 - (1 - drop) * 26, 1, -.045 + (1 - drop) * .05), card = M(T, [[-222, -66], [222, -66], [222, 66], [-222, 66]]), X = (u, v) => T(-162 + u * 68, v * 68);
+  if (tau > 1.9) { c.save(); c.globalAlpha = .16 * drop; c.fillStyle = '#2a2010'; c.fill(polyPath(M(T, [[-215, -57], [229, -57], [229, 75], [-215, 75]]))); c.restore(); }
+  pen(c, tau, i, 1.9, 61, d => { d.fill(polyPath(card), '#fffdf7', { al: 1 }).line(card, { close: true, w: 3.2, smooth: false, speed: 2600 }); dot(d, ...T(0, -50), 5.5, PAL.accents[0]);
+    d.line([X(-.5, -.5), X(-.2, -.5), X(.5, .5), X(.2, .5)], { close: true, w: 3.6, smooth: false, speed: 900 }).line([X(.46, -.5), X(.07, -.06)], { w: 3.6 }).line([X(-.07, .06), X(-.46, .5)], { w: 3.6 });
+    d.mark((c, k) => { c.save(); c.translate(...T(-108, 19)); c.rotate(-.045); handText(c, HANDLE.slice(0, Math.ceil(HANDLE.length * k)), 0, 0, { size: 53, ink: PAL.ink, ink2: null }); c.restore(); }, .55); }, { still: true });
+  if (tau > 2.9) pen(c, tau, i, 2.9, 63, d => sparkle(d, ...T(208, -88), 14, PAL.accents[2])); }
+
+// ===================== SCORE =====================
+// 120 bpm. A driving minor pentatonic under the chase, it drops to a music box for the jar, and opens into a major chord at sunrise.
+function score(ac, t0, dest) { const master = ac.createGain(); master.gain.value = .55; master.connect(dest); const B = .5, hz = (o, s) => pentHz(o, s, 220), minor = [0, 3, 5, 7, 10], mhz = (o, s) => 110 * Math.pow(2, o + minor[((s % 5) + 5) % 5] / 12 + Math.floor(s / 5));
+  const box = (t, f, g = .2, d = .9) => { note(ac, master, f, t0, t, d, 'sine', g); note(ac, master, f * 2, t0, t, d * .5, 'triangle', g * .22); };
+  const kick = t => { const o = ac.createOscillator(), e = ac.createGain(); o.frequency.setValueAtTime(150, t0 + t); o.frequency.exponentialRampToValueAtTime(42, t0 + t + .12); e.gain.setValueAtTime(.7, t0 + t); e.gain.exponentialRampToValueAtTime(.001, t0 + t + .22); o.connect(e); e.connect(master); o.start(t0 + t); o.stop(t0 + t + .25); };
+  // lantern: match, bell, then the beat
+  noiseBurst(ac, master, t0, .25, .12, .2, 1); box(.9, hz(2, 0), .3, 2); box(.9, hz(1, 2), .2, 2); box(2.0, hz(2, 2), .22); box(2.25, hz(2, 3), .22); box(2.5, hz(2, 4), .25);
+  // the chase, 3.0 to 21.0: kick on the beat, hat off the beat, bass and an arpeggio that steps up with every object
+  for (let t = 3.0; t < 21.0 - .01; t += B) { kick(t); noiseBurst(ac, master, t0, t + B / 2, .04, .1, Math.round(t * 10)); }
+  const cuts = [3.5, 6, 8.5, 10.5, 13.5, 16, 18.5, 21]; cuts.slice(0, -1).forEach((a, n) => { const root = n; for (let t = a, k = 0; t < cuts[n + 1] - .01; t += B / 2, k++) { note(ac, master, mhz(2, root + [0, 2, 4, 2, 3, 4, 2, 1][k % 8]), t0, t, .16, 'square', .045); if (k % 2 === 0) note(ac, master, mhz(0, root + (k % 8 === 4 ? 3 : 0)), t0, t, .28, 'sawtooth', .1); } noiseBurst(ac, master, t0, a, .18, .22, 40 + n); });
+  [3.8, 4.05, 4.3, 4.55, 4.8].forEach((t, k) => note(ac, master, hz(2, k), t0, t, .5, 'triangle', .2));                                   // violin plucks
+  for (let k = 0; k < 9; k++) noiseBurst(ac, master, t0, 6.3 + k * (.19 - k * .012), .025, .2, k + 3);                                        // watch ticks, speeding up
+  [1, 1.26, 1.5, 2].forEach(m => note(ac, master, 233 * m, t0, 9.5, .7, 'sawtooth', .13));                                                    // TOOT
+  note(ac, master, 55, t0, 11.65, .8, 'sawtooth', .3); note(ac, master, 58, t0, 11.65, .8, 'sawtooth', .25); noiseBurst(ac, master, t0, 11.65, .7, .3, 9);   // roar
+  [12.55, 12.7, 12.85].forEach((t, k) => box(t, hz(3, k * 2), .16, .3));                                                                        // hee hee
+  for (let t = 13.6; t < 15.9; t += .25) { noiseBurst(ac, master, t0, t, .03, .22, 5); noiseBurst(ac, master, t0, t + .08, .03, .15, 6); }     // clop clop
+  for (let k = 0; k < 14; k++) box(16.3 + k * .07, hz(1 + Math.floor(k / 5), k % 5), .13, .6);                                                   // harp glissando
+  for (let k = 0; k < 7; k++) box(19.1 + k * .09, hz(3 - Math.floor(k / 3), 4 - (k % 3) * 2), .14, .5); [20.55, 20.75, 21.0].forEach(t => noiseBurst(ac, master, t0, t, .03, .2, 8));   // falling, tap tap
+  // the jar: alone
+  [[21.2, 1, 4], [21.9, 1, 2], [22.6, 1, 1], [23.3, 1, 0]].forEach(([t, o, s]) => box(t, mhz(o + 1, s), .16, 1.4)); for (let k = 0; k < 12; k++) box(23.6 + k * .07, hz(1 + Math.floor(k / 5), k % 5), .1 + k * .012, .5);
+  // sunrise and the end
+  [[0, 0], [0, 2], [1, 0], [1, 2], [1, 4]].forEach(([o, s]) => { note(ac, master, hz(o, s), t0, 24.5, 3.2, 'triangle', .13); note(ac, master, hz(o, s), t0, 24.5, 3.2, 'sine', .13); }); kick(24.5);
+  [[25.0, 2, 0], [25.5, 2, 2], [26.0, 2, 4], [26.5, 3, 0], [27.0, 2, 4]].forEach(([t, o, s]) => box(t, hz(o, s), .2)); [[27.5, 1, 0], [28.0, 1, 2], [28.5, 1, 4], [29.0, 2, 0]].forEach(([t, o, s]) => box(t, hz(o, s), .2, 1.6)); [[29.5, 2, 2], [29.75, 2, 4], [30.0, 3, 0], [30.0, 1, 0], [30.0, 2, 2]].forEach(([t, o, s]) => box(t, hz(o, s), .17, 1.3)); }
+
+// ===================== TIMELINE =====================
+const TIMELINE = [
+  { name: 'lantern', dur: 3.5, fn: sLantern }, { name: 'violin', dur: 2.5, fn: sViolin }, { name: 'watch', dur: 2.5, fn: sWatch }, { name: 'trumpet', dur: 2.0, fn: sTrumpet },
+  { name: 'helmet', dur: 3.0, fn: sHelmet }, { name: 'knight', dur: 2.5, fn: sKnight }, { name: 'harp', dur: 2.5, fn: sHarp }, { name: 'hourglass', dur: 2.5, fn: sGlass },
+  { name: 'jar', dur: 3.5, fn: sJar }, { name: 'sunrise', dur: 3.0, fn: sSunrise }, { name: 'end', dur: 3.5, fn: sEnd },
+];
+defineFilm({ timeline: TIMELINE, score, format: { ar: '1:1' } });
+</script>

@@ -1,0 +1,199 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>one seed</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script src="../assets/sand.js"></script>
+<script src="../assets/roto.js"></script>
+<script src="gallop-clips.js"></script>
+<script>
+'use strict';
+// ============================================================
+// ONE SEED. Sand on a light table, one take, no cuts, 40 seconds.
+// The table is 3000 units across and the camera works over it: the film opens on a single grain, big as a fist,
+// and ends on a forest. Sand is poured, wiped, swept, blown by wind and dropped from the air; the lamp under the
+// glass changes colour with the seasons. The birds are real pigeons from Muybridge's zoopraxiscope drawings
+// (Descriptive Zoopraxography, 1893, public domain), running through the bed as heaped sand.
+// PROLOGUE, 6 s, before the story: the table is already covered in sand, in a cold light. A fingertip draws a tree
+// of light in it, roots, a moon, stars; snow falls. Then the palm wipes it all away to bright glass and the camera
+// dives to one spot, where the story starts. Story times below are counted from the end of the prologue.
+// t     what the hand does                              what it becomes
+// 0.0   sprinkles a little ground, macro                 bare earth under the lamp
+// 1.9   drops one grain                                  the seed
+// 3.6   drops rain, darkens the earth                    the seed is wet
+// 5.2   draws four lines down into the dark earth        roots, light in the ground
+// 7.4   pours a stem and two leaves                      a sprout
+// 9.0   sweeps ground across the whole table             the land, camera pulling back
+// 12.0  pours trunk, branches, twigs, sprinkles a crown  the tree
+// 17.2  pigeons cross                                    summer
+// 19.4  wind takes the crown to the right, leaves fall   autumn, two flashes of lightning
+// 22.6  sprinkles a black sky, wipes a moon, drops snow  winter night
+// 26.4  sweeps the sky away, one pod is left             spring
+// 28.0  the wind carries the seed, the camera goes with it
+// 30.4  it lands and grows
+// 31.8  the whole table answers                          a forest, camera pulling back
+// 35.4  pours two words                                  one seed
+// ============================================================
+const HANDLE = '@superalesha', WORLD = 3000, GY = 1850, TX = 1150, SX = 2180;
+// key(t, K) comes from core.js: keyframes [[t, ...values]], eased per segment
+const row = (y, x0, x1, n, wob = 20) => Array.from({ length: n }, (_, k) => [lerp(x0, x1, k / (n - 1)), y + Math.sin(k * 1.3) * wob]);
+const P = (t0, t1, pts, o = {}, hand) => Object.assign(G.pour(t0, t1, pts, o), hand === undefined ? {} : { hand });
+const SP = (t0, t1, pts, o = {}, hand) => Object.assign(G.sprinkle(t0, t1, pts, o), hand === undefined ? {} : { hand });
+
+// a tree in unit form: foot at (0, 0), one unit tall, y up
+const UT = { trunk: [[0, .03], [.025, -.30], [-.02, -.58], [.03, -.80]],
+  br: [[[.01, -.38], [-.13, -.54], [-.27, -.68]], [[.02, -.50], [.17, -.64], [.31, -.77]], [[0, -.68], [-.11, -.81], [-.19, -.94]], [[.02, -.74], [.13, -.87], [.21, -.99]]],
+  tw: [[[-.27, -.68], [-.38, -.75]], [[.31, -.77], [.42, -.83]], [[-.19, -.94], [-.27, -1.03]], [[.21, -.99], [.30, -1.07]]],
+  crown: [[-.27, -.76, .12], [-.07, -.90, .14], [.17, -.85, .13], [.31, -.72, .10], [.05, -.70, .12], [.25, -.97, .09], [-.09, -1.04, .10], [-.20, -.88, .10]] };
+const TT = (x, h) => (u, v) => [x + u * h, GY + v * h];
+const tip = (x, h, k) => TT(x, h)(...UT.tw[k][1]);
+// growTree: every stroke of one tree, from t0. hand: null makes it grow with nobody in shot.
+function growTree(t0, x, h, o = {}) { const { dur = 3.2, hand, crown = true, seed = 1 } = o, T = TT(x, h), f = dur / 3.2, rs = h / 820, g = [];
+  g.push(P(t0, t0 + .95 * f, UT.trunk.map(p => T(...p)), { r: 17 * rs, amount: 2.9 }, hand));
+  UT.br.forEach((b, k) => g.push(P(t0 + (.85 + k * .26) * f, t0 + (1.08 + k * .26) * f, b.map(p => T(...p)), { r: (k < 2 ? 10 : 7.5) * rs, amount: 2.7 }, hand)));
+  UT.tw.forEach((b, k) => g.push(P(t0 + (1.92 + k * .1) * f, t0 + (2.0 + k * .1) * f, b.map(p => T(...p)), { r: 5 * rs, amount: 2.5 }, hand)));
+  if (crown) UT.crown.forEach(([u, v, r], k) => { const p = T(u, v); g.push(SP(t0 + (2.32 + k * .1) * f, t0 + (2.44 + k * .1) * f, [[p[0] - 6, p[1]], [p[0] + 6, p[1] + 4]], { r: r * h, amount: 4.2 }, hand)); });
+  return g; }
+function crownAgain(t0, x, h, o = {}) { const T = TT(x, h), g = []; UT.crown.forEach(([u, v, r], k) => { const p = T(u, v); g.push(SP(t0 + k * .12, t0 + .16 + k * .12, [[p[0] - 6, p[1]], [p[0] + 6, p[1] + 4]], { r: r * h, amount: 5 }, o.hand)); }); return g; }
+
+// a single-stroke alphabet, poured letter by letter
+const LET = { o: [[[.62, .66], [.5, .42], [.3, .38], [.12, .52], [.1, .76], [.26, .95], [.48, .92], [.62, .72], [.6, .5]], .78], n: [[[.08, .4], [.08, .95]], [[.08, .58], [.3, .4], [.5, .48], [.54, .95]], .72],
+  e: [[[.12, .68], [.56, .62], [.5, .44], [.3, .38], [.13, .54], [.12, .8], [.3, .95], [.56, .84]], .72], s: [[[.56, .46], [.36, .36], [.15, .45], [.2, .62], [.44, .69], [.53, .82], [.34, .95], [.12, .86]], .68],
+  d: [[[.56, .5], [.36, .38], [.13, .54], [.12, .8], [.3, .95], [.56, .8]], [[.57, .14], [.58, .95]], .78], ' ': [.42] };
+function word(str, t0, dur, x, y, size, r) { const strokes = []; let px = x; for (const ch of str) { const L = LET[ch]; for (const st of L.slice(0, -1)) strokes.push(st.map(([u, v]) => [px + u * size, y + v * size])); px += L[L.length - 1] * size; }
+  const total = strokes.reduce((a, s) => a + sandPath(s).len, 0); let t = t0; return strokes.map(s => { const d = dur * sandPath(s).len / total, g = G.pour(t, t + d, s, { r, amount: 2.8 }); t += d + .05; return g; }); }
+
+// ===================== THE PERFORMANCE =====================
+const RAIN = Array.from({ length: 16 }, (_, k) => { const x = 990 + (k * 211) % 340, t = 3.6 + (k % 8) * .11 + (k / 16) * .5; return G.fly(t, t + .38, [[x, 1500], [x - 16, 1880 + (k % 3) * 70]], { r: 6, seed: k + 5, land: { r: 7, amount: 1.4 } }); });
+const LEAVES = Array.from({ length: 18 }, (_, k) => { const c = UT.crown[k % 8], p = TT(TX, 820)(c[0], c[1]), t = 19.7 + k * .12, x1 = 1450 + (k * 337) % 950; return G.fly(t, t + 1.5 + (k % 4) * .22, [[p[0], p[1]], [lerp(p[0], x1, .5), p[1] + 120 + (k % 3) * 60], [x1, GY - 6 + (k % 4) * 26]], { r: 5.5, wob: 16, seed: k + 20, land: { r: 7, amount: 2.4 } }); });
+const SNOW = Array.from({ length: 46 }, (_, k) => { const x = 300 + (k * 419) % 2400, t = 24.2 + (k % 11) * .13 + (k / 46) * 1.7; return G.fly(t, t + 1.7 + (k % 3) * .32, [[x, 480], [x + 50, 1100], [x - 40, 1740 + (k % 4) * 60]], { r: 6, light: true, wob: 26, seed: k + 60, land: null }); });
+const MOON = circlePts(2250, 780, 116, 24), POD = tip(TX, 820, 1);
+const GEST = [
+  // the seed, macro
+  SP(.15, 1.1, row(1950, 860, 1460, 6, 22), { r: 120, amount: 1.5 }), SP(1.05, 1.75, row(2060, 1450, 870, 5, 18), { r: 130, amount: 1.7 }),
+  G.fly(1.95, 2.6, [[1116, 1470], [1134, 1660], [1150, 1836]], { r: 10, wob: 7, seed: 3, land: { r: 11, amount: 3.4 } }),
+  P(2.85, 3.4, [[1150, 1832], [1165, 1845], [1160, 1866], [1141, 1868], [1135, 1848], [1150, 1832]], { r: 5.5, amount: 3 }),
+  G.finger(3.4, 3.62, circlePts(1150, 1850, 46, 18), { r: 13, strength: .85 }),
+  RAIN, SP(3.95, 4.6, row(1960, 940, 1420, 5, 12), { r: 110, amount: 2.4 }), SP(4.6, 5.1, row(2080, 1410, 930, 4, 14), { r: 120, amount: 2.6 }),
+  // roots
+  G.finger(5.3, 6.0, [[1150, 1860], [1145, 1932], [1153, 2004], [1140, 2078]], { r: 6 }), G.finger(6.0, 6.5, [[1148, 1938], [1098, 1996], [1062, 2068]], { r: 5 }),
+  G.finger(6.5, 7.0, [[1151, 1968], [1208, 2024], [1236, 2096]], { r: 5 }), G.finger(7.0, 7.4, [[1146, 2012], [1118, 2076], [1124, 2144]], { r: 4 }),
+  // the sprout
+  P(7.6, 8.3, [[1150, 1850], [1155, 1792], [1148, 1742]], { r: 7.5, amount: 2.8 }), P(8.3, 8.6, [[1150, 1756], [1110, 1730], [1084, 1738]], { r: 9, amount: 2.5 }), P(8.6, 8.9, [[1152, 1748], [1192, 1722], [1218, 1730]], { r: 9, amount: 2.5 }),
+  // the land
+  SP(9.1, 10.1, row(1922, -120, 3120, 9, 16), { r: 170, amount: 2.1 }), SP(10.1, 11.0, row(2120, 3120, -120, 8, 24), { r: 210, amount: 2.3 }), SP(11.0, 11.7, row(2420, -120, 3120, 7, 30), { r: 250, amount: 2.5 }),
+  SP(11.7, 12.3, row(1806, 240, 2900, 9, 16), { r: 52, amount: 1.5 }),
+  // the tree
+  growTree(12.4, TX, 820, { dur: 4.4 }),
+  P(17.1, 17.5, circlePts(1880, 1090, 104, 22, -1.2), { r: 8, amount: 2.6 }), Array.from({ length: 8 }, (_, k) => { const a = k / 8 * TAU + .2; return P(17.5 + k * .05, 17.54 + k * .05, [[1880 + Math.cos(a) * 140, 1090 + Math.sin(a) * 140], [1880 + Math.cos(a) * 196, 1090 + Math.sin(a) * 196]], { r: 6, amount: 2.4 }); }),
+  [[520, 1880], [700, 1890], [1620, 1884], [1860, 1892]].map(([x, y], k) => P(18.1 + k * .13, 18.2 + k * .13, [[x, y], [x + 18, y - 44], [x + 44, y - 18], [x + 66, y - 52]], { r: 4, amount: 2.2 })),
+  // autumn: the wind takes the crown away, leaves fall
+  G.wind(19.4, 22.2, { box: [TX - 520, 780, TX + 1700, 1620], feather: 300, vx: 900, vy: -60, strength: .085, lift: .85, turb: .8 }),
+  G.wind(20.2, 22.2, { box: [TX + 260, 620, 3200, 1560], feather: 420, vx: 1300, vy: -90, strength: .17, lift: .55, turb: 1.2 }), LEAVES,
+  // winter
+  [[360, 1], [620, -1], [880, 1], [1130, -1], [1370, 1], [1580, -1]].map(([y, d], k) => SP(22.4 + k * .42, 22.82 + k * .42, row(y, d > 0 ? -220 : 3220, d > 0 ? 3220 : -220, 8, 16), { r: 240, amount: 13 })),
+  G.fill(24.8, 25.5, MOON, { tool: 'finger', r: 22, spacing: 24 }), P(25.5, 25.8, circlePts(2314, 748, 74, 18), { r: 32, amount: 5 }),
+  SNOW, G.palm(25.9, 26.6, [[-100, 1902], [900, 1892], [1900, 1906], [3100, 1894]], { r: 90, strength: .8, streaks: .3, keep: .5 }),
+  UT.br.map((b, k) => G.finger(26.6 + k * .14, 26.7 + k * .14, b.map(p => TT(TX, 820)(p[0] - .012, p[1] - .015)), { r: 4.5, strength: .9 })),
+  // spring
+  P(27.2, 27.5, [[POD[0], POD[1]], [POD[0] + 16, POD[1] + 10]], { r: 9, amount: 3.2 }),
+  G.fly(27.9, 30.3, [[POD[0], POD[1]], [1430, 1020], [1830, 880], [2090, 1280], [SX, GY - 16]], { r: 11, wob: 30, seed: 9, land: { r: 11, amount: 3.4 } }),
+  G.wind(27.9, 29.9, { box: [TX - 200, 560, 3000, 1760], feather: 360, vx: 820, vy: -60, strength: .1, lift: .5, turb: .9 }),
+  G.palm(27.9, 28.5, row(420, 3220, -220, 5, 26), { r: 300, strength: .97, streaks: .3, keep: .05 }), G.palm(28.5, 29.0, row(980, -220, 3220, 5, 30), { r: 330, strength: .97, streaks: .3, keep: .05 }), G.palm(29.0, 29.5, row(1480, 3220, -220, 5, 30), { r: 330, strength: .97, streaks: .3, keep: .05 }),
+  G.palm(29.5, 30.1, row(1930, -220, 3220, 5, 24), { r: 300, strength: .97, streaks: .35, keep: .05 }),
+  SP(30.6, 31.4, row(1930, -120, 3120, 8, 14), { r: 150, amount: 2.4 }), SP(31.4, 32.1, row(2170, 3120, -120, 7, 22), { r: 200, amount: 2.5 }), SP(32.1, 32.8, row(2480, -120, 3120, 6, 30), { r: 240, amount: 2.6 }),
+  // the forest answers
+  growTree(31.5, SX, 700, { dur: 2.6 }),
+  [[1620, 520], [760, 590], [1930, 400], [430, 470], [2560, 560], [1150, 640], [2830, 430], [180, 360], [1400, 300]].map(([x, h], k) => growTree(32.9 + k * .27, x, h, { dur: 2.1, hand: null })),
+  [[300, 1886], [980, 1892], [1760, 1884], [2400, 1894], [2760, 1888], [620, 1898]].map(([x, y], k) => P(35.0 + k * .1, 35.1 + k * .1, [[x, y], [x + 16, y - 40], [x + 40, y - 16], [x + 62, y - 46]], { r: 4, amount: 2.2 }, null)),
+  // two words
+  word('one seed', 34.7, 1.8, 830, 560, 210, 12),
+];
+const PRO = 5.6;                                                   // the prologue, in film seconds; the story starts after it
+GEST.flat(Infinity).forEach(g => { g.t0 += PRO; g.t1 += PRO; });
+// the prologue: a tree of light taken out of dark sand, then wiped away
+const PT = TT(TX, 900), LUX = (t0, t1, pts, r) => G.finger(t0, t1, pts, { r, strength: .9 });
+const PRO_SNOW = Array.from({ length: 26 }, (_, k) => { const x = 380 + (k * 373) % 1560, t = .5 + (k % 9) * .31 + (k / 26) * .6; return G.fly(t, t + 2.1 + (k % 3) * .3, [[x, 640], [x + 40, 1200], [x - 30, 1880 + (k % 4) * 60]], { r: 6.5, light: true, wob: 24, seed: k + 140, land: null }); });
+const LEAFS = [[-.30, -.74], [-.36, -.66], [-.22, -.80], [-.14, -.90], [-.24, -.97], [-.06, -1.02], [.08, -.93], [.16, -1.02], [.24, -.92], [.33, -.84], [.40, -.76], [.28, -.72], [-.40, -.72], [.02, -.82], [-.1, -.76], [.36, -.92]];
+const PROLOGUE = [
+  LUX(.04, .5, UT.trunk.map(p => PT(...p)), 17),
+  UT.br.map((b, k) => LUX(.66 + k * .21, .85 + k * .21, b.map(p => PT(...p)), k < 2 ? 12 : 10)),
+  UT.tw.map((b, k) => LUX(1.52 + k * .09, 1.59 + k * .09, b.map(p => PT(...p)), 8)),
+  LEAFS.map(([u, v], k) => { const p = PT(u, v); return G.dab(1.92 + k * .04, p[0] + (k % 3 - 1) * 14, p[1] + (k % 2) * 12, { r: 9 + (k % 3) * 3 }); }),
+  [[[0, .03], [.02, .16], [-.03, .3]], [[0, .07], [-.12, .19], [-.21, .33]], [[.01, .09], [.14, .21], [.21, .35]]].map((b, k) => LUX(2.6 + k * .13, 2.71 + k * .13, b.map(p => PT(...p)), 8.5)),
+  G.finger(3.02, 3.42, spiralPts(1720, 990, 88, 3.4, 22), { r: 15, keep: .35 }),
+  [[560, 900], [800, 740], [1480, 800], [1930, 1210], [470, 1260], [1320, 690]].map(([x, y], k) => G.dab(3.44 + k * .05, x, y, { r: 6 + (k % 3) * 2 })),
+  PRO_SNOW,
+  [760, 1280, 1800, 2320].map((y, k) => G.palm(3.85 + k * .31, 4.14 + k * .31, row(y, k % 2 ? 2620 : -320, k % 2 ? -320 : 2620, 5, 18), { r: 340, strength: .985, streaks: .25, keep: .03 })),
+];
+sandFilm({ gestures: [GEST, PROLOGUE], N: 1300, world: WORLD, init: sandCover({ box: [220, 560, 2100, 2460], amount: 1.9, grain: .7, feather: 170 }) });
+
+// ===================== CAMERA, LIGHT, BIRDS =====================
+const CAM = [[0, TX, 1800, 420], [2.7, TX, 1790, 390], [4.2, TX, 1840, 470], [5.8, TX, 1926, 560], [7.4, TX, 1836, 590], [9.1, TX, 1790, 720], [12.2, TX, 1600, 1180], [15.6, TX, 1456, 1520], [17.6, 1290, 1426, 1680], [19.6, 1360, 1410, 1740],
+  [22.5, 1430, 1390, 1820], [24.8, 1540, 1320, 2000], [26.8, 1400, 1410, 1760], [28.6, 1500, 1330, 2460], [30.4, 2070, 1560, 1520], [32.0, 2090, 1510, 1620], [34.0, 1820, 1420, 2260], [36.2, 1500, 1300, 2760], [40, 1500, 1300, 2760]];
+const TINT = [[0, 1.02, .98, .92], [9, 1.04, 1, .94], [15, 1.08, 1.02, .9], [18.8, 1.1, .98, .82], [20.9, 1.14, .88, .62], [22.6, .7, .74, .95], [24.2, .38, .46, .86], [26.6, .58, .66, .94], [28.8, 1.0, .98, .92], [34, 1.06, 1, .9], [40, 1.06, 1, .9]];
+const FLASH = [[20.0, 20.16], [20.38, 20.46]];
+const FLOCKS = [{ t0: 17.2, t1: 19.6, x0: 300, x1: 2500, y: 1300, h: 215, amp: 40, off: 0 }, { t0: 17.9, t1: 20.3, x0: 90, x1: 2250, y: 1080, h: 160, amp: 30, off: 5 },
+  { t0: 36.1, t1: 39.6, x0: 150, x1: 3000, y: 940, h: 190, amp: 46, off: 2 }, { t0: 36.9, t1: 39.9, x0: -40, x1: 2700, y: 720, h: 140, amp: 34, off: 6 }];
+function birds(tau, i) { const heap = [];
+  for (const b of FLOCKS) { if (tau < b.t0 || tau > b.t1) continue; const u = (tau - b.t0) / (b.t1 - b.t0), x = lerp(b.x0, b.x1, u), y = b.y + Math.sin(u * 9 + b.off) * b.amp, s = b.h / CLIPS.pigeons.h, pose = rotoPose('pigeons', i + b.off);
+    for (const c0 of pose.outer) if (c0.length > 10) heap.push(c0.map(q => [x + q[0] * s, y + q[1] * s])); }
+  return heap.length ? sandLive([], 6, null, heap) : null; }
+
+// the card the hand leaves on the glass at the end
+const tfm = (x, y, rot) => (px, py) => { const ca = Math.cos(rot), sa = Math.sin(rot); return [x + px * ca - py * sa, y + px * sa + py * ca]; };
+const dot = (d, x, y, r, col) => d.mark((c, k) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, r * k, 0, TAU); c.fill(); }, .05);
+function card(c, tau, i) { const t0 = 36.9; if (tau < t0) return; usePalette(makePalette({ ink: '#2a1a0c', accents: ['#a8341f', '#2f6db0', '#e0a526', '#4c9a6a'] }, 'doodlePastel'));
+  const drop = easeOut(sm(t0, t0 + .3, tau, t => t)), T2 = tfm(770, 940 + (1 - drop) * 34, -.045 + (1 - drop) * .07), M2 = pts => pts.map(p => T2(p[0], p[1])), crd = M2([[-222, -66], [222, -66], [222, 66], [-222, 66]]), X = (u, v) => T2(-162 + u * 68, v * 68);
+  c.save(); c.globalAlpha = .34 * drop; c.fillStyle = '#1a0d05'; c.fill(polyPath(M2([[-214, -56], [232, -56], [232, 78], [-214, 78]]))); c.restore();
+  c.save(); c.globalAlpha = drop; c.fillStyle = '#eddcb8'; c.fill(polyPath(crd)); c.restore();
+  pen(c, tau, i, t0 + .28, 61, d => { d.line(crd, { close: true, w: 3, smooth: false, speed: 4200 }).line([X(-.5, -.5), X(-.2, -.5), X(.5, .5), X(.2, .5)], { close: true, w: 3.6, smooth: false, speed: 1500 }).line([X(.46, -.5), X(.07, -.06)], { w: 3.6 }).line([X(-.07, .06), X(-.46, .5)], { w: 3.6 });
+    dot(d, ...T2(0, -50), 5.5, PAL.accents[0]); d.mark((c, k) => { c.save(); c.translate(...T2(-108, 19)); c.rotate(-.045); handText(c, HANDLE.slice(0, Math.ceil(HANDLE.length * k)), 0, 0, { size: 53, ink: PAL.ink, ink2: null }); c.restore(); }, .42); }, { still: true }); }
+
+const PCAM = [[0, TX, 1470, 1440], [3.6, TX, 1500, 1300], [4.95, TX, 1560, 1460], [PRO, ...CAM[0].slice(1)]];
+const PTINT = [[0, .78, .86, 1.14], [3.7, .8, .88, 1.16], [5.0, .96, .94, .95], [PRO, ...TINT[0].slice(1)]];
+function film(c, tau, i) { const st = tau - PRO, v = st < 0 ? key(tau, PCAM) : key(st, CAM); sandLook(v[0], v[1], v[2]); let t = st < 0 ? key(tau, PTINT) : key(st, TINT);
+  for (const [a, b] of FLASH) if (st >= a && st <= b) { const k = 1 - (st - a) / (b - a); t = [lerp(t[0], 1.85, k), lerp(t[1], 1.78, k), lerp(t[2], 1.66, k)]; }
+  sandTint(t); sandFrame(c, tau, birds(st, i)); card(c, st, i); }
+
+// ===================== SCORE =====================
+function storyScore(ac, t0, master) { const hz = (o, s) => pentHz(o, s, 174.6);
+  const key2 = (t, f, g = .16, d = 2.4) => { note(ac, master, f, t0, t, d, 'sine', g); note(ac, master, f * 2, t0, t, d * .55, 'triangle', g * .16); note(ac, master, f * 3, t0, t, d * .28, 'sine', g * .05); };
+  const sr = ac.sampleRate, nb = ac.createBuffer(1, sr * 2, sr), ch = nb.getChannelData(0), r = rng(5); for (let q = 0; q < ch.length; q++) ch[q] = r() * 2 - 1;
+  const noise = (a, b, lvl, freq, Q = .8) => { const src = ac.createBufferSource(); src.buffer = nb; src.loop = true; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = Q; const e = ac.createGain();
+    e.gain.setValueAtTime(0, t0 + a); e.gain.linearRampToValueAtTime(lvl, t0 + a + Math.min(.25, (b - a) / 2)); e.gain.setValueAtTime(lvl, t0 + b - .05); e.gain.linearRampToValueAtTime(0, t0 + b + .2); src.connect(f); f.connect(e); e.connect(master); src.start(t0 + a); src.stop(t0 + b + .3); };
+  // the room: a slow pentatonic piano, one chord per season
+  const S = [[.6, 0, 0], [2.0, 0, 2], [3.2, 0, 4], [5.4, 1, 0], [6.8, 0, 4], [8.0, 1, 1], [9.2, 1, 0], [10.6, 1, 2], [12.4, 1, 4], [13.8, 2, 0], [15.2, 1, 4], [16.4, 2, 1], [17.6, 2, 2], [18.6, 2, 0]];
+  S.forEach(([t, o, s]) => key2(t, hz(o, s))); [[.6, -1, 0], [5.4, -1, 2], [9.2, -1, 0], [13.8, -1, 4], [17.6, -1, 2]].forEach(([t, o, s]) => key2(t, hz(o, s), .12, 5));
+  for (let k = 0; k < 16; k++) noiseBurst(ac, master, t0, 3.7 + k * .1, .04, .1, k + 3);                                        // rain
+  noise(19.4, 22.1, .3, 700, .5); noise(19.8, 22.0, .16, 2600, .4);                                                             // wind
+  [[20.02, .5], [20.4, .34]].forEach(([t, g]) => { noiseBurst(ac, master, t0, t, .5, g, 7); note(ac, master, 48, t0, t, .8, 'sawtooth', g * .7); note(ac, master, 36, t0, t, 1.2, 'sine', g * .8); });   // thunder
+  [[19.6, 1, 3], [20.8, 1, 1], [21.8, 0, 4]].forEach(([t, o, s]) => key2(t, hz(o, s), .15, 2.6));
+  [[23.0, 0, 0], [24.4, 0, 2], [25.8, 0, 1], [26.4, -1, 4]].forEach(([t, o, s]) => key2(t, hz(o, s), .13, 4.4));                // winter
+  for (let k = 0; k < 10; k++) key2(24.6 + k * .28, hz(2 + (k % 2), (k * 3) % 5), .05, 1.4);                                    // snow
+  [[27.4, 1, 0], [28.2, 1, 2], [29.2, 1, 4], [30.2, 2, 0], [31.2, 2, 2]].forEach(([t, o, s]) => key2(t, hz(o, s), .16, 2.6));
+  for (let k = 0; k < 20; k++) { const t = 31.9 + k * .19; key2(t, hz(1 + Math.floor(k / 7), [0, 2, 4, 2, 3, 4, 2][k % 7]), .11 + k * .004, 1.8); }      // the forest rising
+  [[34.6, 0, 0], [34.6, 1, 0], [34.6, 1, 2], [34.6, 1, 4], [34.6, 2, 0]].forEach(([t, o, s]) => key2(t, hz(o, s), .15, 4.2));
+  [[36.4, 2, 2], [37.1, 2, 4], [37.8, 3, 0]].forEach(([t, o, s]) => key2(t, hz(o, s), .14, 3)); [[38.4, 0, 0], [38.4, 1, 2], [38.4, 2, 0]].forEach(([t, o, s]) => key2(t, hz(o, s), .13, 2.6)); }
+
+function score(ac, t0, dest) { const master = ac.createGain(); master.gain.value = .58; master.connect(dest); const hz = (o, s) => pentHz(o, s, 174.6);
+  const sr = ac.sampleRate, nb = ac.createBuffer(1, sr * 2, sr), ch = nb.getChannelData(0), r = rng(5); for (let q = 0; q < ch.length; q++) ch[q] = r() * 2 - 1;
+  const noise = (a, b, lvl, freq, Q = .8) => { const src = ac.createBufferSource(); src.buffer = nb; src.loop = true; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = Q; const e = ac.createGain();
+    e.gain.setValueAtTime(0, t0 + a); e.gain.linearRampToValueAtTime(lvl, t0 + a + Math.min(.25, (b - a) / 2)); e.gain.setValueAtTime(lvl, t0 + b - .05); e.gain.linearRampToValueAtTime(0, t0 + b + .2); src.connect(f); f.connect(e); e.connect(master); src.start(t0 + a); src.stop(t0 + b + .3); };
+  for (const g of SAND.gestures) { if (g.tool === 'none' || g.tool === 'wind' || g.tool === 'fly') continue; noise(g.t0, Math.max(g.t1, g.t0 + .06), g.tool === 'wipe' ? (g.r > 40 ? .2 : .11) : g.tool === 'pour' ? .075 : .055, g.tool === 'wipe' ? (g.r > 40 ? 1800 : 3600) : 5200); }
+  // the prologue: a low cold drone under the drawing, glass notes for the stars, a breath for the wipe
+  note(ac, master, hz(-2, 0), t0, .05, 4.6, 'sine', .16); note(ac, master, hz(-1, 2), t0, .05, 4.4, 'sine', .07);
+  [[.2, 1, 0], [.9, 1, 2], [1.6, 1, 4], [2.3, 2, 1], [2.9, 2, 0]].forEach(([t, o, s]) => { note(ac, master, hz(o, s), t0, t, 2.2, 'sine', .12); note(ac, master, hz(o + 1, s), t0, t, 1.1, 'triangle', .02); });
+  for (let k = 0; k < 8; k++) note(ac, master, hz(3, (k * 2) % 5), t0, 3.18 + k * .05, .9, 'sine', .035);
+  noise(3.8, 5.1, .12, 900, .5);
+  storyScore(ac, t0 + PRO, master); }
+
+defineFilm({ timeline: [{ name: 'sand', dur: 40 + PRO, fn: film }], score, format: { ar: '1:1' } });
+</script>

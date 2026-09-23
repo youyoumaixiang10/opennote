@@ -1,0 +1,258 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>A small decision · pencil animation study</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="../assets/core.js"></script>
+<script src="../assets/studio.js"></script>
+<script src="../assets/cels.js"></script>
+<script>
+'use strict';
+// A sparrow considers the next perch. Six seconds, drawn poses held on an
+// exposure sheet. Original point drawings; no photos, sprites or joint rig.
+// Nine whole-body keys + assisted, explicitly spaced inbetweens. These are
+// programmatically authored drawings, not scans made by a human animator.
+const LOOK = new URLSearchParams(location.search).get('look') || 'pencil';
+if (!['pencil','ink'].includes(LOOK)) throw new Error('Use --look pencil or ink');
+const pressure = [[0,.1],[.12,.8],[.4,1],[.73,.65],[1,.05]];
+const K = {
+ rest: {
+  crown:[[-51,-124],[-38,-163],[-6,-186],[34,-193],[66,-184],[82,-163]],
+  back:[[-50,-127],[-81,-107],[-105,-67],[-113,-26]],
+  breast:[[84,-137],[95,-106],[95,-64],[79,-23],[46,5],[3,18],[-47,5]],
+  wing:[[-49,-111],[-86,-79],[-81,-41],[-46,-3],[7,4],[28,-20],[8,-78],[-23,-105]],
+  tail:[[-97,-41],[-137,-4],[-188,22],[-163,26],[-195,44],[-141,34],[-80,-3]],
+  cheek:[[74,-154],[52,-155],[26,-138],[18,-121],[39,-106],[74,-116]],
+  beak:[[81,-163],[117,-147],[85,-139]],
+  eye:[[57,-167],[64,-169],[69,-165],[66,-159],[59,-159],[57,-167]],
+  legA:[[-27,10],[-30,40],[-18,64],[-22,75]], legB:[[29,8],[32,37],[45,64],[42,75]],
+  footA:[[-32,79],[-23,74],[-9,73],[1,79]],footB:[[28,79],[40,74],[54,73],[63,79]],
+ },
+ listen: {
+  crown:[[-45,-133],[-32,-175],[2,-202],[41,-209],[75,-193],[91,-168]],
+  back:[[-45,-135],[-77,-112],[-100,-68],[-110,-25]],
+  breast:[[91,-144],[99,-111],[98,-66],[80,-24],[47,5],[3,17],[-47,5]],
+  wing:[[-45,-116],[-84,-80],[-80,-41],[-47,-3],[7,4],[27,-22],[10,-82],[-20,-109]],
+  tail:[[-96,-40],[-140,-6],[-192,12],[-168,18],[-201,33],[-144,29],[-80,-3]],
+  cheek:[[81,-159],[61,-164],[31,-146],[24,-128],[45,-112],[82,-121]],
+  beak:[[90,-168],[124,-160],[94,-144]],
+  eye:[[65,-176],[72,-178],[77,-174],[74,-168],[67,-168],[65,-176]],
+ },
+ lean: {
+  crown:[[-42,-117],[-17,-158],[22,-180],[61,-179],[91,-159],[100,-132]],
+  back:[[-42,-119],[-79,-99],[-104,-58],[-113,-19]],
+  breast:[[93,-104],[96,-79],[82,-43],[63,-10],[29,12],[-7,22],[-52,9]],
+  wing:[[-50,-99],[-86,-69],[-80,-32],[-47,5],[7,8],[30,-16],[13,-68],[-20,-96]],
+  tail:[[-97,-30],[-148,-12],[-200,-5],[-176,5],[-204,17],[-146,25],[-80,1]],
+  cheek:[[89,-130],[70,-143],[39,-129],[30,-108],[44,-91],[78,-95]],
+  beak:[[100,-132],[122,-107],[92,-105]],
+  eye:[[79,-147],[86,-146],[90,-140],[85,-136],[79,-138],[79,-147]],
+  legA:[[-32,16],[-40,40],[-18,64],[-22,75]],legB:[[26,17],[22,42],[45,64],[42,75]],
+ },
+ crouch: {
+  crown:[[-41,-92],[-11,-125],[31,-142],[76,-134],[106,-111],[111,-85]],
+  back:[[-41,-94],[-80,-76],[-110,-37],[-120,-5]],
+  breast:[[103,-61],[98,-33],[78,-4],[47,17],[9,30],[-26,31],[-66,16]],
+  wing:[[-51,-77],[-91,-46],[-83,-12],[-48,17],[8,20],[38,-2],[18,-46],[-19,-75]],
+  tail:[[-108,-13],[-155,-7],[-210,-17],[-185,-2],[-210,3],[-153,19],[-85,13]],
+  cheek:[[100,-85],[79,-104],[47,-95],[36,-75],[52,-57],[87,-58]],
+  beak:[[111,-85],[140,-61],[105,-60]],
+  eye:[[90,-103],[97,-102],[101,-96],[96,-92],[90,-94],[90,-103]],
+  legA:[[-42,26],[-53,47],[-18,64],[-22,75]],legB:[[18,27],[12,53],[45,64],[42,75]],
+ },
+ push: {
+  crown:[[-3,-125],[21,-163],[61,-179],[100,-172],[122,-148],[124,-122]],
+  back:[[-4,-126],[-40,-97],[-70,-52],[-99,-3]],
+  breast:[[117,-99],[106,-62],[77,-30],[42,-9],[4,8],[-30,17],[-64,8]],
+  wing:[[-19,-123],[-65,-110],[-69,-66],[-53,-18],[0,4],[29,-26],[18,-86],[-1,-116]],
+  tail:[[-82,-21],[-122,15],[-178,47],[-151,45],[-175,64],[-122,53],[-57,11]],
+  cheek:[[115,-122],[96,-138],[64,-128],[53,-107],[68,-90],[102,-95]],
+  beak:[[124,-122],[155,-102],[119,-99]],
+  eye:[[104,-140],[111,-140],[115,-134],[110,-130],[104,-132],[104,-140]],
+  legA:[[-25,13],[-22,35],[-18,64],[-22,75]],legB:[[23,0],[29,27],[45,64],[42,75]],
+ },
+ air: {
+  crown:[[-22,-153],[-10,-187],[22,-210],[56,-214],[84,-196],[97,-174]],
+  back:[[-21,-155],[-56,-125],[-81,-80],[-93,-40]],
+  breast:[[98,-151],[110,-121],[110,-80],[92,-44],[58,-21],[13,-14],[-33,-28]],
+  wing:[[-16,-151],[-70,-210],[-126,-224],[-100,-155],[-62,-95],[-11,-61],[6,-108],[-7,-140]],
+  tail:[[-77,-66],[-128,-37],[-176,-30],[-151,-16],[-177,-8],[-122,-10],[-55,-30]],
+  cheek:[[89,-168],[66,-174],[39,-156],[31,-138],[50,-124],[83,-133]],
+  beak:[[97,-174],[133,-158],[101,-151]],
+  eye:[[72,-183],[79,-185],[84,-181],[81,-175],[74,-175],[72,-183]],
+  legA:[[-21,-22],[-38,-2],[-10,13],[-17,24]],legB:[[30,-18],[20,4],[47,11],[41,25]],
+  footA:[[-27,28],[-17,22],[-2,17],[4,20]],footB:[[28,28],[40,22],[54,17],[60,20]],
+ },
+ reach: {
+  crown:[[-32,-162],[-21,-195],[11,-216],[48,-219],[78,-204],[91,-181]],
+  back:[[-32,-164],[-66,-139],[-89,-95],[-95,-55]],
+  breast:[[90,-155],[103,-124],[103,-82],[86,-46],[53,-23],[8,-15],[-40,-30]],
+  wing:[[-31,-151],[-77,-135],[-88,-98],[-67,-43],[-20,-30],[18,-65],[5,-122],[-11,-146]],
+  tail:[[-81,-73],[-128,-51],[-178,-54],[-157,-41],[-184,-37],[-128,-23],[-61,-35]],
+  cheek:[[82,-174],[62,-179],[31,-163],[23,-144],[44,-128],[78,-138]],
+  beak:[[91,-181],[127,-164],[94,-155]],
+  eye:[[65,-192],[72,-193],[77,-188],[73,-182],[66,-184],[65,-192]],
+  legA:[[-26,-24],[-14,10],[6,40],[3,55]],legB:[[22,-23],[34,8],[57,34],[54,53]],
+  footA:[[-8,60],[3,54],[17,49],[29,53]],footB:[[40,59],[52,53],[66,48],[77,52]],
+ },
+ land: {
+  crown:[[-38,-106],[-20,-143],[13,-165],[53,-162],[82,-142],[95,-119]],
+  back:[[-38,-108],[-79,-89],[-104,-48],[-113,-10]],
+  breast:[[92,-94],[99,-68],[88,-34],[62,-6],[26,18],[-15,26],[-58,14]],
+  wing:[[-46,-99],[-91,-76],[-97,-34],[-62,8],[-8,17],[23,-17],[13,-70],[-19,-96]],
+  tail:[[-98,-24],[-146,-16],[-201,-27],[-174,-10],[-202,-5],[-146,18],[-78,6]],
+  cheek:[[83,-119],[62,-136],[34,-120],[24,-101],[40,-84],[76,-88]],
+  beak:[[95,-119],[125,-96],[91,-95]],
+  eye:[[72,-137],[79,-137],[84,-132],[80,-126],[73,-129],[72,-137]],
+  legA:[[-33,18],[-36,41],[-18,64],[-22,75]],legB:[[18,22],[22,48],[45,64],[42,75]],
+ },
+ settle: {
+  crown:[[-52,-131],[-39,-171],[-7,-195],[32,-203],[64,-190],[82,-166]],
+  back:[[-51,-134],[-83,-108],[-106,-65],[-112,-25]],
+  breast:[[84,-140],[95,-110],[95,-66],[78,-24],[44,4],[1,17],[-47,5]],
+  wing:[[-50,-115],[-86,-79],[-81,-41],[-46,-3],[7,4],[28,-20],[8,-79],[-23,-108]],
+  tail:[[-97,-41],[-136,-5],[-187,20],[-162,24],[-194,41],[-141,33],[-80,-3]],
+  cheek:[[74,-158],[52,-160],[26,-142],[18,-125],[39,-109],[74,-119]],
+  beak:[[82,-166],[118,-152],[85,-141]],
+  eye:[[56,-174],[63,-176],[68,-172],[65,-166],[58,-166],[56,-174]],
+ }
+};
+// Fixed ground contacts are copied as drawing landmarks; no rotated limb pieces.
+for (const p of Object.values(K)) for (const id of ['legA','legB','footA','footB']) p[id] ??= K.rest[id];
+const raw = p => {
+ const strokes=[];
+ const add=(id,points,width=1.7,opacity=1,extra={})=>strokes.push({id,points,width,opacity,pressure,...extra});
+ // The branch sits behind the feet. Legs are put down before the breast marks.
+ for(const id of ['legA','legB']) add(id,p[id],2,.85,{corner:.9});
+ for(const id of ['footA','footB']) {
+  add(id,p[id],2.1,.95,{corner:1});
+  const a=p[id]; add(id+'/backtoe',[[a[1][0],a[1][1]+1],[a[1][0]-8,a[1][1]+10],[a[1][0]-13,a[1][1]+8]],1.3,.8);
+  add(id+'/claw',[[a[3][0]-2,a[3][1]-2],[a[3][0]+2,a[3][1]+3],[a[3][0],a[3][1]+5]],1.1,.8);
+ }
+ add('tail',p.tail,1.9,1,{corner:.8});
+ for(let i=0;i<9;i++) {
+  const u=i/9, a=p.tail[0],b=p.tail[6],tip=p.tail[4],edge=p.tail[2];
+  add('tail/shaft/'+i,[[lerp(a[0],b[0],u),lerp(a[1],b[1],u)],[lerp(a[0],tip[0],.5)+u*12,lerp(a[1],tip[1],.5)-u*5],[lerp(edge[0],tip[0],u)+8,lerp(edge[1],tip[1],u)]],.7+(i%3)*.16,.65);
+ }
+ add('back',p.back,2,.95);add('crown',p.crown,1.9,.95);
+ add('throat/edge',p.breast.slice(0,3),1.6,.8);
+ add('breast/edge',p.breast.slice(2,5),1.35,.72);
+ add('belly/edge',p.breast.slice(4),1.45,.8);
+ // Sparse second passes are separately authored gestures, not doubled everywhere.
+ add('back/search',p.back.slice(1).map(([x,y],i)=>[x-2-i*.2,y+3]),.75,.25);
+ add('crown/search',p.crown.slice(1,5).map(([x,y])=>[x+1.5,y-2]),.7,.24);
+ add('wing/shoulder',p.wing.slice(0,3),1.25,.7);
+ // Overlapping, tapered feathers. Their tips and shafts are distinct strokes;
+ // short barbs describe volume without tracing a nest of identical contours.
+ const A=p.wing[1],B=p.wing[6],tips=motionPath(p.wing.slice(2,6));
+ for(let i=0;i<9;i++) {
+  const u=(i+.4)/9, a=[lerp(A[0],B[0],u),lerp(A[1],B[1],u)],
+    b=tips.at(u).p,
+    m=[lerp(a[0],b[0],.6)-3,lerp(a[1],b[1],.6)];
+  add('feather/'+i,[a,m,b,[lerp(b[0],a[0],.17)+3,lerp(b[1],a[1],.17)]],1.15,.88);
+  for(let j=0;j<7;j++) {
+   const v=.18+j*.10,x=lerp(a[0],b[0],v)-Math.sin(v*Math.PI)*4,y=lerp(a[1],b[1],v);
+   add('feather/'+i+'/barb/'+j,[[x-3,y-6],[x+1,y],[x+4,y+4]],.45+(j%3)*.16,.30+(i%3)*.08);
+  }
+ }
+ for(let i=0;i<35;i++) {
+  const u=(i+.5)/35,a=p.wing[0],b=p.wing[7],x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u);
+  const reach=10+hash(i,7)*22;
+  add('shoulder/down/'+i,[[x-4,y+5],[x-8,y+reach*.6],[x-3,y+reach]],.7,.28+hash(i,9)*.24);
+ }
+ for(let i=0;i<30;i++) {
+  const u=(i+.5)/30, a=p.breast[2],b=p.breast[5],x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u);
+  const jitter=(hash(i,13)-.5)*7, len=8+hash(i,8)*11;
+  add('belly/'+i,[[x-5-u*14+jitter,y-len-5],[x+3-u*8+jitter,y-len*.6],[x+6-u*5+jitter,y-3]],.6+(i%4)*.14,.35+(i%3)*.08);
+ }
+ for(let i=0;i<46;i++) {
+  const u=hash(i,29),v=hash(i,30),a=p.breast[1],b=p.breast[4],x=lerp(a[0],b[0],u)-10-v*20,y=lerp(a[1],b[1],u);
+  add('breast/down/'+i,[[x-4,y-3],[x,y+3],[x+2,y+6+v*4]],.45+v*.7,.17+u*.25);
+ }
+ add('cheek',p.cheek,1,.50);
+ // Short facial feathers preserve the pale cheek and eye socket.
+ for(let i=0;i<39;i++) {
+  const u=i/39, a=p.cheek[3],b=p.cheek[5],x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u)+(hash(i,17)-.5)*6;
+  add('bib/'+i,[[x,y-4],[x+2,y+3],[x+4,y+7+(1-u)*6]],.85,.42+hash(i,14)*.35);
+ }
+ for(let i=0;i<17;i++) {
+  const u=i/17,a=p.crown[1],b=p.crown[4],x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u)-Math.sin(u*Math.PI)*15;
+  add('cap/'+i,[[x-2,y+3],[x+1,y+8+hash(i,21)*4],[x+6,y+9]],.75,.35);
+ }
+ for(let i=0;i<40;i++) {
+  const u=hash(i,41),v=hash(i,42),a=p.crown[1],b=p.crown[4],x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u)-Math.sin(u*Math.PI)*12+v*14;
+  add('cap/down/'+i,[[x,y],[x+5,y+4],[x+10,y+6]],.6,.22+v*.12);
+ }
+ add('beak',p.beak,2,.96,{corner:.7});
+ add('beak/seam',[p.beak[0].map((v,j)=>v+(j?11:1)),p.beak[1]],.9,.9);
+ add('eye',p.eye,2.1,1);
+ const e=p.eye,ex=e.slice(0,5).reduce((a,q)=>a+q[0],0)/5+.7,ey=e.slice(0,5).reduce((a,q)=>a+q[1],0)/5;
+ for(let i=0;i<4;i++){
+  const r=2.5-i*.6;
+  add('pupil/'+i,[[ex-r,ey],[ex,ey-r],[ex+r,ey],[ex,ey+r],[ex-r,ey]],1.2,1,{pressure:[[0,1],[1,1]]});
+ }
+ add('eye/brow',[[e[0][0]-5,e[0][1]-1],[e[1][0],e[1][1]-4],[e[2][0]+5,e[2][1]-1]],.8,.6);
+ return {strokes};
+};
+const D={}, entries=[], placements={};
+const put=(id,cel,frames,x=0,y=0)=>{D[id]=compileCel(cel,{id});placements[id]=[x,y];entries.push({id,frames});};
+const keyRaw=Object.fromEntries(Object.entries(K).map(([id,p])=>[id,raw(p)]));
+put('rest',keyRaw.rest,16);
+function passage(a,b,spacing,frames=2,from=[0,0],to=from) {
+ for(const [i,u] of spacing.entries()) {
+  const id=a+'-'+b+'-'+i;
+  put(id,inbetweenCel(keyRaw[a],keyRaw[b],u),frames,lerp(from[0],to[0],u),lerp(from[1],to[1],u));
+ }
+}
+passage('rest','listen',[.16,.48,.82]);put('listen',keyRaw.listen,12);
+passage('listen','lean',[.15,.43,.72,.92]);put('lean',keyRaw.lean,8);
+passage('lean','crouch',[.12,.36,.65,.86]);put('crouch',keyRaw.crouch,3);
+passage('crouch','push',[.30,.75],1);put('push',keyRaw.push,1);
+// During flight the drawing spacing follows a short arc. Root placement is part
+// of each exposed drawing; there is no continuous slide under a held pose.
+passage('push','air',[.35,.7],1,[0,0],[42,-48]);put('air',keyRaw.air,2,42,-48);
+passage('air','reach',[.25,.55,.80],2,[42,-48],[100,-10]);put('reach',keyRaw.reach,1,100,-10);
+passage('reach','land',[.55],1,[100,-10],[118,0]);put('land',keyRaw.land,3,118,0);
+passage('land','settle',[.13,.40,.7,.90],2,[118,0]);put('settle',keyRaw.settle,6,118,0);
+passage('settle','rest',[.24,.58,.86],2,[118,0]);put('rest-after',keyRaw.rest,13,118,0);
+// Blink is a replacement cel: closed eyelid replaces the entire eye construction.
+const blink=raw(K.rest);blink.strokes=blink.strokes.filter(s=>!s.id.startsWith('pupil/')&&s.id!=='eye');
+blink.strokes.push({id:'closed-lid',points:[[55,-164],[61,-161],[67,-163],[72,-167]],width:1.8,pressure});
+put('blink',blink,3,118,0);put('last',keyRaw.rest,29,118,0);
+const SHEET=exposureSheet(entries,D);
+
+const branch={strokes:[]};
+function line(id,points,width,opacity=.7){branch.strokes.push({id,points,width,opacity,pressure});}
+line('branch/top',[[-365,91],[-210,87],[-55,78],[90,77],[260,65],[369,31]],2.2,.85);
+line('branch/base',[[-365,106],[-210,102],[-54,91],[90,89],[260,77],[372,39]],1.4,.65);
+line('twig',[[-178,94],[-238,56],[-271,5],[-295,-30]],1.8,.6);
+line('twig/side',[[-254,32],[-289,22],[-323,4]],.85,.45);
+line('twig/right',[[224,73],[284,99],[318,105],[352,125]],1.1,.65);
+line('bud',[[-294,-30],[-301,-49],[-295,-61],[-286,-52],[-288,-41],[-294,-30]],1.1,.55);
+line('leaf/l',[[311,104],[317,69],[347,55],[340,82],[327,97],[311,104]],1.5,.65);
+line('leaf/vein',[[315,101],[330,82],[343,61]],.8,.5);
+for(let i=0;i<8;i++){const t=i/8;line('leaf/hatch/'+i,[[317+t*19,95-t*30],[326+t*13,92-t*28]],.65,.45);}
+for(let i=0;i<62;i++){const x=-355+i*11.5,y=92-(x+200)*.026-(x>200?(x-200)*.24:0);line('bark/'+i,[[x,y],[x+9,y-.8],[x+14,y-2.5]],.55+(i%5)*.11,.24+(i%3)*.09);}
+const BRANCH=compileCel(branch,{id:'unchanging-branch'});
+// Render a finite set of drawing cels once per output scale. No frame-number
+// seeds, random paper shake, camera noise or endless re-hatching during holds.
+const sprites=new Map();
+function sprite(id){
+ const cacheKey=LOOK+'/'+S+'/'+id;
+ if(!sprites.has(cacheKey)){
+  const canvas=document.createElement('canvas');canvas.width=Math.ceil(800*S*1.9);canvas.height=Math.ceil(550*S*1.9);
+  const g=canvas.getContext('2d');g.scale(S*1.9,S*1.9);g.translate(370,330);
+  drawCel(g,id==='branch'?BRANCH:D[id],{material:LOOK,color:LOOK==='pencil'?'#423930':'#302c29'});
+  sprites.set(cacheKey,canvas);
+ }
+ return sprites.get(cacheKey);
+}
+function shot(c,t){
+ paper(c,'#f5f0e5',null,87);
+ const q=SHEET.at(t), [x,y]=placements[q.id];
+ c.save();c.translate(CX-25,CY+178);
+ const draw=(id,dx=0,dy=0)=>{const s=sprite(id);c.drawImage(s,dx-370*1.9,dy-330*1.9,s.width/S,s.height/S);};
+ draw('branch');draw(q.id,x*1.9,y*1.9);c.restore();
+}
+defineFilm({palette:{...PALETTES.pencilMinimal,paper:'#f5f0e5'},format:{ar:'16:9',width:1920},fps:24,timeline:[{name:'a-small-decision',dur:SHEET.duration,fn:shot}]});
+</script>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>workshop — a point-and-click screen</title>
+<style>
+  /* Nothing on screen but the drawing; the title lives in <title> only. */
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #14141a; }
+  canvas#c { display: block; touch-action: none; user-select: none; -webkit-user-select: none; cursor: default; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../assets/core.js"></script>
+<script src="workshop-photos.js"></script>
+<script src="workshop.js"></script>
+</body>
+</html>

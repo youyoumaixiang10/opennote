@@ -1,0 +1,96 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>one year</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script src="../assets/sand.js"></script>
+<script>
+'use strict';
+// ============================================================
+// ONE YEAR. Method: sand on a light table. One take, no cuts: a bed of sand is poured, swept, combed and drawn in,
+// and a tree goes through its year. Nothing is redrawn; every picture is made out of the one before it.
+// Square only. 12 fps on twos; the sand itself is stepped at 48 Hz.
+// t      what the hand does                                         what it becomes
+// 0.2    sprinkles sand over the whole table, more at the bottom    earth and a dull sky
+// 4.2    sweeps the sky with the palm                               spring light, a ridge for the horizon
+// 7.0    pours a trunk, branches, twigs; wipes a sun                the tree
+// 11.0   sprinkles a crown, flicks birds                            summer
+// 14.6   thins the crown with fingertips, drops leaves              autumn
+// 18.6   sprinkles the sky dark, wipes a moon and its bite, dabs    winter night, snow on the branches and the ground
+//        snow, clears the ground, draws snow along the branches
+// 25.0   sweeps the whole table clean                               nothing
+// 27.0   pours a ground line, a sprout, and two words               one year
+// 31.0   lays a card on the glass                                   the author
+// ============================================================
+const HANDLE = '@superalesha';
+let T = 0; const go = (dur, make, gap = .08) => { const g = make(T, T + dur); T += dur + gap; return g; }, at = t => { T = t; return []; };
+const row = (y, dir, wob = 36) => Array.from({ length: 10 }, (_, k) => [dir > 0 ? -80 + k * 140 : 1160 - k * 140, y + Math.sin(k * 1.1 + y) * wob]);
+const hillY = x => 800 - 46 * Math.exp(-Math.pow((x - 440) / 300, 2));
+const horizon = (dy, dir = 1) => { const p = Array.from({ length: 13 }, (_, k) => [-100 + k * 107, hillY(-100 + k * 107) + dy]); return dir > 0 ? p : p.reverse(); };
+const TRUNK = [[434, 806], [440, 710], [430, 620], [442, 528]], BR = [[[436, 650], [384, 570], [332, 486]], [[440, 606], [512, 524], [574, 452]], [[438, 548], [402, 474], [388, 402]], [[442, 528], [472, 446], [502, 384]]],
+  TW = [[[332, 486], [290, 452]], [[574, 452], [624, 430]], [[388, 402], [362, 350]], [[502, 384], [524, 334]], [[384, 570], [340, 560]], [[512, 524], [560, 520]]], CROWN = [[332, 470, 66], [392, 386, 66], [450, 350, 70], [512, 372, 66], [578, 440, 62], [450, 452, 70], [380, 506, 56], [524, 486, 56], [300, 520, 44], [610, 500, 44]];
+// a single-stroke alphabet for pouring words: points in a unit box, x advance in the last element
+const LETTERS = { o: [[[.62, .66], [.5, .42], [.3, .38], [.12, .52], [.1, .76], [.26, .95], [.48, .92], [.62, .72], [.6, .5]], .78], n: [[[.08, .4], [.08, .95]], [[.08, .58], [.3, .4], [.5, .48], [.54, .95]], .74], e: [[[.12, .68], [.56, .62], [.5, .44], [.3, .38], [.13, .54], [.12, .8], [.3, .95], [.56, .84]], .74],
+  y: [[[.06, .4], [.3, .9]], [[.56, .4], [.3, .9], [.14, 1.34]], .72], a: [[[.56, .52], [.36, .38], [.13, .54], [.12, .8], [.3, .95], [.56, .8]], [[.57, .4], [.58, .95]], .78], r: [[[.08, .4], [.08, .95]], [[.08, .6], [.28, .42], [.5, .46]], .6], ' ': [.5] };
+function word(str, x, y, size, dur) { const strokes = []; let px = x; for (const ch of str) { const L = LETTERS[ch]; for (const st of L.slice(0, -1)) strokes.push(st.map(([u, v]) => [px + u * size, y + v * size])); px += L[L.length - 1] * size; } const total = strokes.reduce((a, s) => a + sandPath(s).len, 0); return strokes.map(s => go(dur * sandPath(s).len / total, (a, b) => G.pour(a, b, s, { r: 5.5, amount: 2.6 }), .04)); }
+
+const snowOn = p => p.map(([x, y]) => [x - 7, y - 10]), disc = (cx, cy, r) => circlePts(cx, cy, r, 20);
+const GESTURES = [
+  at(.2), [110, 330, 550, 770, 990].map((y, k) => go(.46, (a, b) => G.sprinkle(a, b, row(y, k % 2 ? -1 : 1), { r: 240, amount: 1.5 }), .03)), go(.66, (a, b) => G.sprinkle(a, b, row(935, 1, 14), { r: 170, amount: 2.6 }), .1),
+  // spring: light in the sky; the last sweep leaves its ridge on the horizon, a soft pass breaks up the ridge between the two
+  go(.85, (a, b) => G.palm(a, b, row(205, 1, 26), { r: 195, strength: .84, streaks: .5, keep: .3 })), go(.95, (a, b) => G.palm(a, b, horizon(-198, -1), { r: 190, strength: .84, streaks: .5, keep: .55 }), .15),
+  // the tree, then the sun
+  go(.7, (a, b) => G.pour(a, b, TRUNK, { r: 15, amount: 2.6 })), BR.map((p, k) => go(.36, (a, b) => G.pour(a, b, p, { r: k < 2 ? 9.5 : 7.5, amount: 2.4 }))), TW.map(p => go(.13, (a, b) => G.pour(a, b, p, { r: 5, amount: 2.2 }), .03)),
+  go(.55, (a, b) => G.pour(a, b, circlePts(830, 225, 50, 22, -1.2), { r: 4.6, amount: 2.4 }), .04), Array.from({ length: 8 }, (_, k) => { const a0 = k / 8 * TAU + .2; return go(.07, (a, b) => G.pour(a, b, [[830 + Math.cos(a0) * 72, 225 + Math.sin(a0) * 72], [830 + Math.cos(a0) * 104, 225 + Math.sin(a0) * 104]], { r: 3.6, amount: 2.4 }), .02); }), at(T + .2),
+  // summer: a crown, three birds
+  CROWN.map(([x, y, r]) => go(.17, (a, b) => G.sprinkle(a, b, [[x - 8, y], [x + 8, y + 4]], { r, amount: 6 }), .03)), at(T + .1),
+  [[700, 480], [790, 420], [880, 500]].map(([x, y]) => [go(.09, (a, b) => G.pour(a, b, [[x - 30, y - 18], [x - 12, y - 14], [x, y]], { r: 3.2, amount: 2.4 }), .02), go(.09, (a, b) => G.pour(a, b, [[x, y], [x + 14, y - 16], [x + 32, y - 20]], { r: 3.2, amount: 2.4 }), .06)]), at(T + .45),
+  // autumn: the crown thins out under the fingertips, leaves come down and pile up at the foot of the tree
+  [[340, 470], [400, 392], [462, 348], [520, 380], [580, 448], [452, 456], [386, 512], [530, 492], [310, 520], [606, 498], [430, 400], [492, 430], [360, 430], [556, 410], [420, 490], [476, 376]].map(([x, y], k) => go(.07, (a, b) => G.dab(a, 450 + (x - 450) * 1.22 + (k % 3 - 1) * 8, 432 + (y - 432) * 1.2 + (k % 2) * 10, { r: 13 + (k % 3) * 4 }), .03)),
+  [[650, 560], [300, 620], [720, 650], [250, 700], [610, 700], [330, 760], [690, 760], [560, 640], [210, 600], [760, 720], [380, 690], [520, 770]].map(([x, y]) => go(.07, (a, b) => G.pour(a, b, [[x, y], [x + 9, y + 7]], { r: 5.5, amount: 2.6 }), .03)),
+  go(.5, (a, b) => G.sprinkle(a, b, [[380, 800], [500, 804]], { r: 70, amount: 5 }), .4),
+  go(.7, (a, b) => G.palm(a, b, [[760, 120], [850, 230], [960, 330], [1200, 420]], { r: 95, strength: .97, streaks: .2, keep: .15 }), .1),
+  // winter: a dark sky, a moon with a bite out of it, snow in the air, on the ground and along the branches
+  [130, 340, 545, 240, 450].map((y, k) => go(.5, (a, b) => G.sprinkle(a, b, row(y, k % 2 ? -1 : 1, 20), { r: 235, amount: 5.5 }), .03)),
+  go(.75, (a, b) => G.finger(a, b, spiralPts(232, 214, 58, 3.2, 20).reverse(), { r: 16 })), go(.55, (a, b) => G.fill(a, b, disc(282, 184, 40), { r: 9, amount: 3 })),
+  [[480, 120], [640, 90], [760, 200], [900, 110], [980, 260], [690, 330], [560, 250], [860, 380], [120, 420], [210, 560], [990, 480], [90, 120], [400, 60], [780, 520], [940, 640], [150, 700], [640, 470], [300, 330]].map(([x, y], k) => go(.06, (a, b) => G.dab(a, x, y, { r: k % 3 ? 4.2 : 6.5 }), .025)),
+  go(.95, (a, b) => G.palm(a, b, [[-100, 948], [300, 934], [700, 952], [1180, 934]], { r: 108, strength: .96, streaks: .25, keep: .45 })), [BR[0], BR[1], BR[2], BR[3]].map(p => go(.26, (a, b) => G.finger(a, b, snowOn(p), { r: 3.6 }), .04)), at(T + .7),
+  // the table is swept clean
+  [150, 420, 690, 960].map((y, k) => go(.66, (a, b) => G.palm(a, b, row(y, k % 2 ? -1 : 1, 30), { r: 215, strength: .985, streaks: .3, keep: .05 }), .04)), at(T + .15),
+  // and it starts again
+  go(.6, (a, b) => G.pour(a, b, [[330, 842], [450, 832], [600, 846], [760, 836]], { r: 6, amount: 2.4 })), go(.4, (a, b) => G.pour(a, b, [[540, 838], [547, 770], [538, 708]], { r: 6, amount: 2.4 })), go(.2, (a, b) => G.pour(a, b, [[532, 724], [508, 706], [488, 708]], { r: 12, amount: 2.4 })), go(.2, (a, b) => G.pour(a, b, [[548, 712], [574, 690], [598, 688]], { r: 12, amount: 2.4 }), .2),
+  word('one year', 318, 884, 88, 2.5), at(T + .3),
+];
+const CARD_T = T; GESTURES.push(G.move(CARD_T - .1, CARD_T + .9, [[1200, 700], [930, 330], [800, 250]], { hand: 'palm' }), G.move(CARD_T + .95, CARD_T + 1.7, [[800, 250], [1000, 500], [1300, 900]], { hand: 'palm' }));
+sandFilm({ gestures: GESTURES });
+const END = CARD_T + 3.6;
+
+// the card the hand leaves on the glass: paper on a light table is not white, it glows
+const tfm = (x, y, rot) => (px, py) => { const ca = Math.cos(rot), sa = Math.sin(rot); return [x + px * ca - py * sa, y + px * sa + py * ca]; };
+function cardOnGlass(c, tau, i) { const t0 = CARD_T + .85; if (tau < t0) return; usePalette(makePalette({ ink: '#2a1a0c', accents: ['#a8341f', '#2f6db0', '#e0a526', '#4c9a6a'] }, 'doodlePastel')); const drop = easeOut(sm(t0, t0 + .25, tau, t => t)), T2 = tfm(800, 250 + (1 - drop) * 30, -.05 + (1 - drop) * .08), M2 = pts => pts.map(p => T2(p[0], p[1])), crd = M2([[-222, -66], [222, -66], [222, 66], [-222, 66]]), X = (u, v) => T2(-162 + u * 68, v * 68);
+  c.save(); c.globalAlpha = .35 * drop; c.fillStyle = '#1a0d05'; c.fill(polyPath(M2([[-214, -56], [232, -56], [232, 78], [-214, 78]]))); c.restore(); c.save(); c.globalAlpha = drop; c.fillStyle = '#e7d3ae'; c.fill(polyPath(crd)); c.restore();
+  pen(c, tau, i, t0 + .25, 61, d => { d.line(crd, { close: true, w: 3, smooth: false, speed: 2600 }).line([X(-.5, -.5), X(-.2, -.5), X(.5, .5), X(.2, .5)], { close: true, w: 3.6, smooth: false, speed: 900 }).line([X(.46, -.5), X(.07, -.06)], { w: 3.6 }).line([X(-.07, .06), X(-.46, .5)], { w: 3.6 });
+    d.mark((c, k) => { c.save(); c.translate(...T2(-108, 19)); c.rotate(-.05); handText(c, HANDLE.slice(0, Math.ceil(HANDLE.length * k)), 0, 0, { size: 53, ink: PAL.ink, ink2: null }); c.restore(); }, .55); }, { still: true }); }
+
+// ===================== SCORE =====================
+// a slow piano over the year, and the sand itself: every gesture hisses for as long as it lasts
+function score(ac, t0, dest) { const master = ac.createGain(); master.gain.value = .6; master.connect(dest); const hz = (o, s) => pentHz(o, s, 174.6), key = (t, f, g = .16, d = 2.2) => { note(ac, master, f, t0, t, d, 'sine', g); note(ac, master, f * 2, t0, t, d * .6, 'triangle', g * .16); note(ac, master, f * 3, t0, t, d * .3, 'sine', g * .05); };
+  const sr = ac.sampleRate, nb = ac.createBuffer(1, sr * 2, sr), ch = nb.getChannelData(0), r = rng(5); for (let i = 0; i < ch.length; i++) ch[i] = r() * 2 - 1;
+  for (const g of SAND.gestures) { if (g.tool === 'none') continue; const src = ac.createBufferSource(); src.buffer = nb; src.loop = true; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = g.tool === 'wipe' ? (g.r > 40 ? 1800 : 3600) : 5200; f.Q.value = .8; const e = ac.createGain(), lvl = g.tool === 'wipe' ? (g.r > 40 ? .22 : .12) : g.tool === 'pour' ? .07 : .05, a = t0 + g.t0, b = t0 + Math.max(g.t1, g.t0 + .06);
+    e.gain.setValueAtTime(0, a); e.gain.linearRampToValueAtTime(lvl, a + Math.min(.08, (b - a) / 2)); e.gain.setValueAtTime(lvl, b - .02); e.gain.linearRampToValueAtTime(0, b + .12); src.connect(f); f.connect(e); e.connect(master); src.start(a); src.stop(b + .2); }
+  const S = [[.4, 0, 0], [1.6, 0, 2], [2.8, 0, 4], [4.0, 1, 0], [5.2, 0, 4], [6.2, 1, 1], [7.0, 1, 0], [7.8, 1, 2], [8.6, 1, 4], [9.4, 2, 0], [10.2, 1, 4], [11.0, 2, 1], [11.8, 2, 2], [12.6, 2, 0], [13.4, 1, 4], [14.2, 2, 2], [15.0, 2, 4],
+    [16.0, 1, 3], [17.0, 1, 1], [18.0, 1, 0], [19.0, 0, 3], [20.0, 0, 4], [21.2, 0, 1], [22.4, 2, 3], [23.4, 2, 1], [24.4, 3, 0], [25.4, 2, 3], [26.4, 2, 1], [27.6, 1, 0], [28.6, 0, 0]];
+  S.forEach(([t, o, s2]) => key(t, hz(o, s2))); [[.4, -1, 0], [4.0, -1, 0], [7.0, -1, 2], [10.2, -1, 0], [13.4, -1, 4], [16.0, -1, 3], [19.0, -1, 1], [22.4, -1, 3], [25.4, -1, 1]].forEach(([t, o, s2]) => key(t, hz(o, s2), .12, 4));
+  const tail = CARD_T - 7; [[0, 0, 0], [.9, 0, 2], [1.8, 0, 4], [2.7, 1, 0], [3.6, 1, 2], [4.8, 1, 4], [6.0, 2, 0], [7.6, 1, 0], [7.6, 1, 2], [7.6, 1, 4], [7.6, 2, 0]].forEach(([t, o, s2]) => key(tail + t, hz(o, s2), .15, 2.6)); }
+
+function sSand(c, tau, i) { sandAdvance(tau); sandRender(c); resetT(c); cardOnGlass(c, tau, i); resetT(c); sandHand(c, tau); resetT(c); }
+const TIMELINE = [{ name: 'sand', dur: Math.ceil((END + 1) * 2) / 2, fn: sSand }];
+defineFilm({ timeline: TIMELINE, score, format: { ar: '1:1' } });
+</script>
