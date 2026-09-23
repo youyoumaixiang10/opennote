@@ -1,0 +1,165 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>four looks</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script>
+'use strict';
+// ============================================================
+// FOUR LOOKS. One subject, a paper boat, drawn through the four palettes and
+// finishes of the reference films, with the devices each film is known for:
+//   riso      seed dot, crayon ripples, iris, a 4-cards-per-second montage of
+//             printed plates, the badge gallery
+//   screen    flat shapes under a dot screen, day and night, the boat constant
+//   pencil    torn sections, a wall of squiggle text, pressed plants, a thread,
+//             a dark section with dotted arcs and dot fireworks
+//   ink       the fruit-fly look: hatched ground, construction lines, scribble
+//   sign-off  hand lettering in two inks with two dots
+// Beat sheet
+// t      dur   scene       look     what happens
+// 0.0    2.0   intro       riso     dot, ripples every 4 drawn frames, iris opens on card 1
+// 2.0    2.0   montage     riso     8 cards, 0.25 s each, dot stays
+// 4.0    1.5   gallery     riso     cards as badges on rings, then everything shrinks to the dot
+// 5.5    2.5   sea         screen   boat on a lake by day, cut to night at 1.5
+// 8.0    2.5   page        pencil   text wall, sticky note, pink section rises, plants, dark section
+// 10.5   1.5   ink         ink      boat on a hatched peach with guides and scribble
+// 12.0   1.5   signoff     riso     letters appear, two dots
+// ============================================================
+
+// Designed for 1:1 with literal centres (540, 540); render it square.
+// ---------- the puppet: a paper boat ----------
+const HULL = [[-78, 0], [78, 0], [52, 44], [-52, 44]], SAIL = [[0, -84], [-46, 0], [46, 0]];
+const BOAT = { hull: polyPath(HULL), sail: polyPath(SAIL) };
+function drawBoat(c, mode, pose, seed) {
+  const ink = mode !== 'blueprint', line = ink ? PAL.ink : PAL.chalk;
+  c.save(); c.rotate(pose.tilt || 0); c.lineJoin = 'round'; c.lineCap = 'round';
+  if (ink) for (const [k, box] of [['sail', [-50, -88, 100, 92]], ['hull', [-82, -2, 164, 50]]]) { c.fillStyle = PAL.light; c.fill(BOAT[k]); surface(c, BOAT[k], box, { seed: seed + k.length, density: .16, color: PAL.inks[0], gap: 7, len: 12, alpha: .22, grain: 30, cell: 8 }); }
+  c.strokeStyle = line; c.lineWidth = ink ? 2.6 : 2.4; wob(c, HULL, 1.6, seed + 1, true); wob(c, SAIL, 1.6, seed + 2, true);
+  c.save(); c.setLineDash([7, 6]); c.lineWidth = 1.6; wob(c, [[0, -84], [0, 44]], 1, seed + 3); c.restore();
+  if (ink && pose.note) squiggleText(c, -44, 16, 88, 3, { seed: seed + 4, lineH: 9, amp: 2.5, width: 1, color: PAL.ink });
+  c.restore();
+}
+
+// ---------- riso cards: each card draws three plates (blue, pink, yellow) in black on white ----------
+function risoCard(c, draw, o = {}) {
+  const inks = o.inks || PAL.inks.slice(0, 3), angles = o.angles || [.26, 1.31, 0], cell = o.cell || 7; paper(c);
+  inks.forEach((ink, k) => { const P = plate(), g = P.getContext('2d'); g.fillStyle = '#000'; g.strokeStyle = '#000'; g.lineWidth = 6; draw(g, k); printPlate(c, P, { cell, ink, angle: angles[k], seed: 30 + k }); });
+}
+const gray = v => `rgb(${255 - v * 255 | 0},${255 - v * 255 | 0},${255 - v * 255 | 0})`;   // plate coverage 0..1 -> grey
+const radial = (g, x, y, r0, r1, c0, c1) => { const gr = g.createRadialGradient(x, y, r0, x, y, r1); gr.addColorStop(0, c0); gr.addColorStop(1, c1); return gr; };
+const linear = (g, y0, y1, c0, c1) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, c0); gr.addColorStop(1, c1); return gr; };
+const CARDS = [
+  (c) => risoCard(c, (g, k) => { // sun over the sea
+    if (k === 0) { g.fillStyle = linear(g, 0, 600, gray(.02), gray(.35)); g.fillRect(0, 0, W, 600); g.fillStyle = '#fff'; g.beginPath(); g.arc(540, 430, 150, 0, TAU); g.fill(); g.fillStyle = gray(.85); g.fillRect(0, 600, W, 480); }
+    if (k === 1) { g.fillStyle = radial(g, 540, 430, 60, 520, gray(.9), gray(0)); g.fillRect(0, 0, W, 600); }
+    if (k === 2) { g.fillStyle = gray(.95); g.beginPath(); g.arc(540, 430, 150, 0, TAU); g.fill(); g.fillStyle = gray(.4); g.fillRect(0, 600, W, 480); } }),
+  (c) => risoCard(c, (g, k) => { // lighthouse
+    if (k === 0) { g.fillStyle = gray(.15); g.fillRect(0, 0, W, 700); g.fillStyle = '#fff'; g.fillRect(460, 240, 160, 470); g.fillStyle = gray(.8); g.fillRect(0, 700, W, 380); for (let i = 0; i < 5; i += 2) { g.fillStyle = gray(.9); g.fillRect(470, 250 + i * 90, 140, 90); } }
+    if (k === 1) { g.fillStyle = linear(g, 0, 700, gray(.55), gray(0)); g.fillRect(0, 0, W, 700); g.fillStyle = '#fff'; g.fillRect(460, 240, 160, 470); for (let i = 1; i < 5; i += 2) { g.fillStyle = gray(.9); g.fillRect(470, 250 + i * 90, 140, 90); } }
+    if (k === 2) { g.fillStyle = gray(.9); g.beginPath(); g.moveTo(540, 200); g.lineTo(1080, 40); g.lineTo(1080, 330); g.closePath(); g.fill(); g.beginPath(); g.moveTo(540, 200); g.lineTo(0, 60); g.lineTo(0, 320); g.closePath(); g.fill(); g.fillRect(500, 180, 80, 70); } }),
+  (c) => risoCard(c, (g, k) => { // big moon
+    if (k === 0) { g.fillStyle = gray(.9); g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.beginPath(); g.arc(540, 420, 300, 0, TAU); g.fill(); }
+    if (k === 1) { g.fillStyle = radial(g, 540, 420, 300, 520, gray(.6), gray(0)); g.fillRect(0, 0, W, H); }
+    if (k === 2) { g.fillStyle = gray(.7); g.beginPath(); g.arc(540, 420, 300, 0, TAU); g.fill(); g.fillStyle = gray(.3); for (const [x, y, r] of [[470, 350, 40], [600, 480, 60], [520, 560, 25]]) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } } }),
+  (c) => risoCard(c, (g, k) => { // the wave
+    if (k === 0) { g.fillStyle = gray(.9); g.beginPath(); g.moveTo(0, 1080); g.lineTo(0, 500); g.bezierCurveTo(300, 380, 700, 120, 860, 260); g.bezierCurveTo(900, 330, 760, 400, 700, 380); g.bezierCurveTo(820, 480, 1080, 560, 1080, 700); g.lineTo(1080, 1080); g.closePath(); g.fill(); g.fillStyle = '#fff'; for (let i = 0; i < 12; i++) { g.beginPath(); g.arc(700 + i * 28, 300 + Math.sin(i) * 30, 14 + (i % 3) * 5, 0, TAU); g.fill(); } }
+    if (k === 1) { g.fillStyle = linear(g, 0, 700, gray(.8), gray(0)); g.fillRect(0, 0, W, 700); }
+    if (k === 2) { g.fillStyle = radial(g, 200, 160, 40, 300, gray(.9), gray(0)); g.fillRect(0, 0, W, 500); } }),
+  (c) => risoCard(c, (g, k) => { // city lights
+    const r = rng(5); if (k === 0) { g.fillStyle = gray(.85); g.fillRect(0, 0, W, H); g.fillStyle = gray(.98); for (let b = 0; b < 9; b++) g.fillRect(b * 120, 360 + (r() * 300 | 0), 110, 800); }
+    if (k === 2) { g.fillStyle = gray(.95); for (let b = 0; b < 9; b++) for (let y = 400; y < 1000; y += 46) for (let x = 0; x < 3; x++) if (r() < .55) g.fillRect(b * 120 + 14 + x * 32, y, 20, 26); g.beginPath(); g.arc(900, 160, 60, 0, TAU); g.fill(); }
+    if (k === 1) { g.fillStyle = radial(g, 900, 160, 60, 300, gray(.6), gray(0)); g.fillRect(600, 0, 480, 400); } }),
+  (c) => risoCard(c, (g, k) => { // mountains at dusk
+    const ridge = (y, a, w) => { g.beginPath(); g.moveTo(0, 1080); g.lineTo(0, y); for (let x = 0; x <= 1080; x += 20) g.lineTo(x, y - Math.abs(Math.sin(x / w) * a) - Math.sin(x / 37) * 12); g.lineTo(1080, 1080); g.closePath(); g.fill(); };
+    if (k === 0) { g.fillStyle = gray(.45); ridge(620, 220, 260); g.fillStyle = gray(.9); ridge(780, 160, 170); }
+    if (k === 1) { g.fillStyle = linear(g, 0, 700, gray(.1), gray(.75)); g.fillRect(0, 0, W, 700); g.fillStyle = '#fff'; ridge(620, 220, 260); }
+    if (k === 2) { g.fillStyle = gray(.95); g.beginPath(); g.arc(760, 420, 90, 0, TAU); g.fill(); g.fillStyle = linear(g, 300, 700, gray(0), gray(.7)); g.fillRect(0, 300, W, 400); } }),
+  (c) => risoCard(c, (g, k) => { // rain and a rainbow
+    const r = rng(9); if (k === 0) { g.fillStyle = gray(.8); g.fillRect(0, 700, W, 380); g.strokeStyle = gray(.7); g.lineWidth = 3; for (let i = 0; i < 160; i++) { const x = r() * W, y = r() * 700; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 12, y + 60); g.stroke(); } g.lineWidth = 26; g.strokeStyle = gray(.9); g.beginPath(); g.arc(540, 760, 330, Math.PI, TAU); g.stroke(); }
+    if (k === 1) { g.lineWidth = 26; g.strokeStyle = gray(.9); g.beginPath(); g.arc(540, 760, 385, Math.PI, TAU); g.stroke(); }
+    if (k === 2) { g.lineWidth = 26; g.strokeStyle = gray(.9); g.beginPath(); g.arc(540, 760, 358, Math.PI, TAU); g.stroke(); g.fillStyle = linear(g, 0, 600, gray(.3), gray(0)); g.fillRect(0, 0, W, 600); } }),
+  (c) => risoCard(c, (g, k) => { // a ringed planet
+    const r = rng(11); if (k === 0) { g.fillStyle = gray(.92); g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.beginPath(); g.arc(560, 520, 220, 0, TAU); g.fill(); for (let i = 0; i < 90; i++) { g.beginPath(); g.arc(r() * W, r() * H, 2 + r() * 3, 0, TAU); g.fill(); } g.strokeStyle = '#fff'; g.lineWidth = 22; g.beginPath(); g.ellipse(560, 520, 420, 110, -.35, 0, TAU); g.stroke(); }
+    if (k === 1) { g.fillStyle = radial(g, 480, 440, 40, 280, gray(.95), gray(.3)); g.beginPath(); g.arc(560, 520, 220, 0, TAU); g.fill(); g.strokeStyle = gray(.8); g.lineWidth = 18; g.beginPath(); g.ellipse(560, 520, 420, 110, -.35, 0, TAU); g.stroke(); }
+    if (k === 2) { g.fillStyle = gray(.6); g.beginPath(); g.ellipse(560, 520, 220, 60, 0, 0, TAU); g.fill(); } }),
+];
+
+// ---------- scenes ----------
+function sceneIntro(c, tau, i) {
+  usePalette('risoPop'); paper(c);
+  for (let b = 0; b * 4 / 12 <= tau; b++) { const r = (tau - b * 4 / 12) * 260; if (r > 8 && r < 900) crayon(c, ellPts(540, 540, r, r, 0, Math.max(48, r / 5 | 0)), b % 2 ? PAL.accents[0] : PAL.accents[1], 4, 40 + b, true); }
+  const p = sm(1.3, 2.0, tau, easeOut), R = 30 + p * 380;
+  if (p > 0) { iris(c, 540, 540, R, cc => CARDS[0](cc, 0, i)); c.strokeStyle = PAL.ink; c.lineWidth = 3; wob(c, ellPts(540, 540, R, R, 0, 100), 2, 41, true); }
+  seedDot(c, 540, 540, 10);
+}
+function sceneMontage(c, tau, i) { usePalette('risoPop'); montage(c, CARDS, tau, .25, i); seedDot(c, 540, 540, 10); }
+function sceneGallery(c, tau, i) {
+  usePalette('risoPop'); paper(c); dotScreen(c, rectPath(0, 0, W, H), [0, 0, W, H], { cell: 9, color: PAL.inks[2], density: .16, angle: .26, jitter: .3, seed: 50 });
+  badges(c, CARDS, { progress: sm(0, .5, tau, easeOut), scale: 1 - sm(1.0, 1.5, tau, easeIn) * .98, seed: 51 });
+  seedDot(c, 540, 540, 10);
+}
+function sceneSea(c, tau, i) {
+  usePalette('screenSea'); const nightMode = tau >= 1.5;
+  if (!nightMode) { paper(c);
+    const sun = circPath(760, 200, 70); c.fillStyle = PAL.fills[5]; c.fill(sun); dotScreen(c, sun, [690, 130, 140, 140], { cell: 6, color: PAL.blush, density: .35, seed: 60 });
+    const m = polyPath([[0, 520], [180, 380], [330, 470], [480, 360], [640, 470], [800, 390], [1080, 500], [1080, 560], [0, 560]]); c.fillStyle = PAL.fills[2]; c.fill(m); dotScreen(c, m, [0, 360, 1080, 200], { cell: 6, color: PAL.fills[1], density: .45, seed: 61 });
+    const band = rectPath(0, 545, W, 90); c.fillStyle = PAL.fills[5]; c.fill(band); dotScreen(c, band, [0, 545, W, 90], { cell: 6, color: PAL.fills[4], density: .6, seed: 62 });
+    const r = rng(63); c.strokeStyle = PAL.ink; c.lineWidth = 2; for (let k = 0; k < 90; k++) { const x = r() * W; wob(c, [[x, 640], [x + (r() - .5) * 20, 560 + r() * 40]], 2, 64 + k); }
+    const water = rectPath(0, 632, W, 450); c.fillStyle = PAL.fills[0]; c.fill(water); dotScreen(c, water, [0, 632, W, 450], { cell: 6, color: PAL.fills[7], density: .4, seed: 65 });
+  } else { night(c, PAL.night, 66); const moon = circPath(720, 170, 60); c.fillStyle = PAL.light; c.fill(moon); dotScreen(c, moon, [660, 110, 120, 120], { cell: 5, color: PAL.chalkDim, density: .3, seed: 67 });
+    const hill = polyPath([[600, 640], [780, 420], [1080, 380], [1080, 640]]); c.fillStyle = PAL.fills[7]; c.fill(hill); c.fillStyle = PAL.fills[7]; c.fillRect(830, 380, 60, 60); c.beginPath(); c.moveTo(825, 380); c.lineTo(860, 345); c.lineTo(895, 380); c.fill();
+    const glow = circPath(860, 420, 90); dotScreen(c, glow, [770, 330, 180, 180], { cell: 5, color: PAL.fills[5], density: (x, y) => 1 - Math.hypot(x - 860, y - 420) / 90, seed: 68 }); c.fillStyle = PAL.fills[5]; c.fillRect(850, 405, 20, 22);
+    const water = rectPath(0, 632, W, 450); c.fillStyle = PAL.fills[7]; c.fill(water); dotScreen(c, water, [0, 632, W, 450], { cell: 6, color: PAL.fills[0], density: .25, seed: 69 });
+  }
+  const r2 = rng(70); c.strokeStyle = nightMode ? PAL.chalkDim : PAL.light; c.lineWidth = 2; for (let k = 0; k < 40; k++) { const x = r2() * W, y = 660 + r2() * 400, L = 20 + r2() * 60; c.beginPath(); c.moveTo(x, y); c.lineTo(x + L, y); c.stroke(); }
+  c.save(); c.translate(540, 700 + Math.round(Math.sin(tau * 3) * 4)); c.scale(1.1, 1.1); drawBoat(c, 'ink', { tilt: Math.sin(tau * 3) * .04, note: true }, 71); c.restore();
+}
+function scenePage(c, tau, i) {
+  usePalette('pencilMinimal'); paper(c);
+  squiggleText(c, 80, 90, 920, 6, { seed: 80, lineH: 26, amp: 5, color: PAL.shade });
+  handText(c, 'what i keep', 80, 300, { size: 26, ink: PAL.ink, ink2: null });
+  stickyNote(c, 720, 250, 120, 81, (c, s) => { c.strokeStyle = PAL.ink; c.lineWidth = 1; c.beginPath(); for (let a = 0; a < 22; a += .2) c.lineTo(s / 2 + Math.cos(a) * a * 1.9, s / 2 + Math.sin(a) * a * 1.9); c.stroke(); });
+  const y1 = lerp(1100, 620, sm(0, .8, tau)); section(c, y1, PAL.fills[0], 82);
+  if (y1 < 1000) { plant(c, 180, 1085, 120, 4, 83, { leaf: PAL.accents[0], flower: PAL.accents[1] }); plant(c, 900, 1085, 100, 4, 84, { leaf: PAL.accents[0], flower: PAL.accents[1] }); plant(c, 560, 1085, 90, 3, 85, { leaf: PAL.accents[0], flower: PAL.accents[1] }); }
+  const y2 = lerp(1100, 700, sm(1.4, 2.0, tau)); if (y2 < 1080) { section(c, y2, PAL.night, 86); for (let k = 1; k <= 5; k++) dottedArc(c, 540, 960, 40 + k * 42, PAL.chalkDim, 87 + k); dotBurst(c, 260, 940, 90, 12, PAL.accents[3], 93); dotBurst(c, 860, 900, 70, 10, PAL.accents[1], 94); c.save(); c.translate(540, 940); c.scale(.55, .55); drawBoat(c, 'blueprint', {}, 95); c.restore(); }
+  thread(c, 540, 96, PAL.accents[0]);
+}
+function sceneInk(c, tau, i) {
+  usePalette('paperInk'); paper(c); cam(c, 540, 520, lerp(1.1, 1.2, sm(0, 1.5, tau)));
+  const ground = circPath(560, 1000, 700), gbox = [-140, 300, 1400, 1400]; c.fillStyle = PAL.fills[0]; c.fill(ground);
+  c.save(); c.clip(ground); hatch(c, circPath(300, 580, 420), [-120, 160, 840, 840], { angle: .8, gap: 6, len: 16, jitter: 6, color: PAL.light, alpha: .6, width: 1.4, seed: 100 }); hatch(c, circPath(820, 1150, 620), [200, 530, 1240, 1240], { angle: -.6, gap: 5, len: 18, jitter: 5, color: PAL.blush, alpha: .38, seed: 101 }); c.restore();
+  grain(c, ground, gbox, 7000, PAL.shade, .35, 102, 2); c.strokeStyle = PAL.ink; c.lineWidth = 3; c.globalAlpha = .85; wob(c, ellPts(560, 1000, 700, 700, 0, 120), 2.5, 103, true); c.globalAlpha = 1;
+  c.save(); c.translate(540, 440); c.rotate(-.1); c.scale(1.9, 1.9); construction(c, 0, -10, 110, 104); drawBoat(c, 'ink', { note: true }, 105); scribble(c, BOAT.hull, 0, 22, { seed: 106, amp: 5 }); c.restore();
+  if (pulse(i, 9)) speedLines(c, 440, 470, Math.PI, 107 + i, 5, .4);
+}
+function sceneSignoff(c, tau, i) { usePalette('risoPop'); paper(c); ripples(c, 540, 540, [260, 330, 400], alpha(PAL.accents[1], .35), 110, 3); signOff(c, 'four looks', 'one core', { y: 500, size: 96, progressA: sm(0, .6, tau), progressB: sm(.6, 1.2, tau) }); }
+
+// ---------- score ----------
+function score(ac, t0, dest) {
+  const master = ac.createGain(); master.gain.value = .6; master.connect(dest); const r = rng(7);
+  for (let t = 0; t < 2; t += 1 / 3) note(ac, master, pentHz(1, r() * 5 | 0), t0, t, .3, 'triangle', .15);
+  for (let k = 0; k < 8; k++) note(ac, master, pentHz(1 + (k % 2), k), t0, 2 + k * .25, .22, 'square', .07);
+  note(ac, master, pentHz(0, 0), t0, 4, 1.2, 'sine', .25); note(ac, master, pentHz(1, 2), t0, 4.5, .8, 'sine', .15);
+  for (let t = 5.5; t < 8; t += .5) note(ac, master, pentHz(0, r() * 5 | 0), t0, t, .6, 'triangle', .14);
+  for (let t = 8; t < 10.5; t += .75) note(ac, master, pentHz(-1, r() * 5 | 0), t0, t, .9, 'sine', .12);
+  for (let t = 10.5; t < 12; t += .5) note(ac, master, pentHz(0, r() * 5 | 0), t0, t, .6, 'triangle', .15);
+  note(ac, master, pentHz(0, 0), t0, 12, 1.4, 'sine', .25); note(ac, master, pentHz(0, 2), t0, 12.6, 1.0, 'sine', .18);
+}
+
+defineFilm({ palette: 'risoPop', timeline: [
+  { name: 'intro',   dur: 2.0, fn: sceneIntro },
+  { name: 'montage', dur: 2.0, fn: sceneMontage },
+  { name: 'gallery', dur: 1.5, fn: sceneGallery },
+  { name: 'sea',     dur: 2.5, fn: sceneSea },
+  { name: 'page',    dur: 2.5, fn: scenePage },
+  { name: 'ink',     dur: 1.5, fn: sceneInk },
+  { name: 'signoff', dur: 1.5, fn: sceneSignoff },
+], score });
+</script>

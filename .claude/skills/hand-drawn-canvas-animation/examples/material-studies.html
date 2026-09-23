@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8"><title>Material studies — sand and folded paper</title>
+<style>body{margin:0;background:#24232a;color:#ddd;font:13px system-ui;display:grid;justify-items:center}canvas{width:min(100vw,1100px);height:auto}.bar{display:flex;gap:12px;padding:14px}input{width:230px}</style>
+<canvas id="c"></canvas>
+<script src="../assets/core.js"></script><script src="../assets/sand.js"></script><script src="../assets/paper3d.js"></script>
+<script>
+// Two close-ups: a finger displaces sand and leaves ridges; a sheet curls while
+// its projected shadow follows. These are material QA scenes, with no soundtrack.
+usePalette(makePalette({paper:'#e8dec9',paperBand:null},'paperInk'));
+sandFilm({N:360,world:1600,hand:true,init:sandCover({box:[160,120,1420,1460],amount:1.4,grain:.35,feather:170}),gestures:[
+ G.finger(.5,2.2,[[400,980],[520,830],[650,870],[740,680],[860,745],[1040,550],[1200,630]],{r:21,keep:1}),
+ G.pour(2.5,3.3,[[620,600],[780,580],[940,650]],{r:16,amount:1.1})
+]});
+const paperColors={sheet:'#f0e5cc',line:'#52524c',leaf:'#6b8973',flower:'#b76d5d'};
+function pageArt(g,w,h,back=false){g.fillStyle=back?'#e7d7b7':paperColors.sheet;g.fillRect(0,0,w,h);g.strokeStyle='#ddd0b5';g.lineWidth=.6;for(let i=0;i<170;i++){const r=rng(i+4);g.beginPath();const x=r()*w,y=r()*h;g.moveTo(x,y);g.lineTo(x+10+r()*18,y+3);g.stroke();}g.strokeStyle=paperColors.line;g.lineWidth=1.3;g.beginPath();g.ellipse(w*.5,h*.56,w*.28,h*.32,.1,0,TAU);g.stroke();for(let k=0;k<6;k++){g.save();g.translate(w*.5,h*.57);g.rotate(k*TAU/6);g.fillStyle=back?paperColors.flower:paperColors.leaf;g.beginPath();g.ellipse(0,-h*.18,w*.07,h*.15,.35,0,TAU);g.fill();g.restore();}}
+const sheetL=tex3(440,610,(g,w,h)=>pageArt(g,w,h)),sheetR=tex3(440,610,(g,w,h)=>pageArt(g,w,h,true));
+const cover=tex3(440,610,(g,w,h)=>{g.fillStyle='#507269';g.fillRect(0,0,w,h);g.strokeStyle='#d8bd83';g.lineWidth=3;g.strokeRect(25,25,w-50,h-50);});
+const sprout=tex3(140,240,(g,w,h)=>{g.strokeStyle='#47624e';g.lineWidth=5;g.beginPath();g.moveTo(w/2,h);g.quadraticCurveTo(w/2-22,h*.6,w/2,h*.18);g.stroke();for(let k=0;k<3;k++){g.fillStyle=paperColors.leaf;g.beginPath();g.ellipse(w/2+(k%2?23:-22),h*(.25+k*.22),34,15,k%2?-.6:.6,0,TAU);g.fill();}});
+const book=book3({PW:440,PD:610,cover,spreads:[{left:sheetL,right:sheetR,pieces:[{base:[[170,80],[310,80]],h:240,sheet:sprout,lean:80}]},{left:sheetR,right:sheetL,pieces:[{base:[[-310,120],[-170,120]],h:240,sheet:sprout,lean:84}]}]});
+function sandShot(c,t){const u=sm(0,4,t,easeInOutSine);sandLook(800,790,lerp(1440,970,u));sandFrame(c,t);}
+function paperShot(c,t){paper(c,'#d7c6a7',null);cam3({eye:[-180+120*sm(0,4,t),980,1180],target:[0,40,0],f:1400});book.draw(c,{turn:1+sm(.4,3.5,t,easeInOutSine)});}
+defineFilm({timeline:[{name:'sand displacement',dur:4,fn:sandShot},{name:'paper curl',dur:4,fn:paperShot}],format:{ar:'16:9',width:1920},fps:24});
+</script>

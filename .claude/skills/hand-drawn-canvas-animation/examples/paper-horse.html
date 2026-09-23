@@ -1,0 +1,145 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>the paper horse</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script src="../assets/paper3d.js"></script>
+<script src="../assets/sand.js"></script>
+<script src="../assets/roto.js"></script>
+<script src="gallop-clips.js"></script>
+<script src="night-shift-photos.js"></script>
+<script>
+'use strict';
+// ============================================================
+// THE PAPER HORSE. All three methods in one story.
+//   paper in space   a pop-up book on a table: cover, three spreads, leaves that turn, pieces that rise, a camera that flies
+//   found motion     the horse and the pigeons move the way Muybridge's animals moved (his zoopraxiscope drawings, 1893, public domain)
+//   sand             one page of the book is a light table; the camera dives into it and a hand works the sand in one take
+// and the earlier ones: brush, wash, gouache, handwriting, cut-out museum photos (The Met, Open Access, CC0) standing on the table.
+// Square only, 12 fps on twos.
+// t      what happens
+// 0.0    the shut book; 2.6 the cover opens
+// 4.4    spread 1: a racetrack, the paper horse runs laps across the gutter and back
+// 12.4   the leaf turns; spread 2: he stands on the left page, the right page is a light table full of dark sand
+// 15.6   the camera rises over the glass and dives in; 17.0 the sand fills the frame: a hand sweeps a sky, pours a sun,
+//        the horse runs through the sand, the hand writes "go"
+// 28.0   back above the book; 29.4 the leaf turns; spread 3: sky, pigeons, and the horse goes along the front edge and off the page
+// 36.6   he lands on the table and runs past a lit lantern and a sandglass; 42 the book shuts, a card lies by the lantern
+// ============================================================
+const HANDLE = '@superalesha', PW = 460, PD = 620, INK = '#2b2018', SEPIA = '#b98457', GOLD = '#e3c477';
+const BASE = makePalette({ paper: '#f1e8d2', ink: INK, light: '#fffaf0', shade: '#7a6a58', fills: ['#5f9a78', '#4f8a6a', '#7fb58f', '#f3d98b', '#e9a15f', '#8fb4d6'], accents: ['#c8473f', '#2f6db0', '#e0a526', '#4c9a6a'] }, 'doodlePastel');
+const dot = (d, x, y, r, col) => d.mark((c, k) => { c.fillStyle = col || PAL.ink; c.beginPath(); c.arc(x, y, r * k, 0, TAU); c.fill(); }, .05);
+const ink = (g, seed, build) => pen(g, 99, 0, -9, seed, build, { still: true });
+const K = (t, a, b, e = easeIO) => sm(a, b, t, e);
+const T_SAND = 17.0, T_BACK = 28.0, SIM0 = 11.0;          // the sand is full frame between these; the bed's own clock = film time - SIM0
+
+// ===================== THE SAND PERFORMANCE (bed clock) =====================
+let TT = 0; const go = (dur, make, gap = .08) => { const g = make(TT, TT + dur); TT += dur + gap; return g; }, at = t => { TT = t; return []; };
+const row = (y, dir, wob = 30) => Array.from({ length: 10 }, (_, k) => [dir > 0 ? -80 + k * 140 : 1160 - k * 140, y + Math.sin(k * 1.1 + y) * wob]);
+const LET = { g: [[[.56, .5], [.36, .38], [.13, .54], [.12, .8], [.3, .95], [.56, .8]], [[.57, .4], [.58, 1.12], [.42, 1.32], [.16, 1.24]], .8], o: [[[.62, .66], [.5, .42], [.3, .38], [.12, .52], [.1, .76], [.26, .95], [.48, .92], [.62, .72], [.6, .5]], .78] };
+const RUN0 = 8.4, RUN1 = 12.4, SANDH = 330, SANDY = 1010, runX = s => lerp(-260, 1360, clamp((s - RUN0) / (RUN1 - RUN0), 0, 1));
+sandFilm({ gestures: [ at(.2), [110, 330, 550, 770, 990].map((y, k) => go(.46, (a, b) => G.sprinkle(a, b, row(y, k % 2 ? -1 : 1), { r: 240, amount: 1.6 }), .03)), go(.6, (a, b) => G.sprinkle(a, b, row(900, 1, 12), { r: 200, amount: 5 })), go(.5, (a, b) => G.sprinkle(a, b, row(980, -1, 12), { r: 170, amount: 4 })),
+  at(6.3), go(.9, (a, b) => G.palm(a, b, row(200, 1, 26), { r: 200, strength: .86, streaks: .5, keep: .3 })), go(.9, (a, b) => G.palm(a, b, Array.from({ length: 12 }, (_, k) => [1170 - k * 115, 470 + Math.sin(k * .8) * 34]), { r: 170, strength: .86, streaks: .5, keep: .6 }), .12),
+  go(.5, (a, b) => G.pour(a, b, circlePts(800, 240, 52, 22, -1.2), { r: 4.8, amount: 2.4 }), .04), Array.from({ length: 8 }, (_, k) => { const a0 = k / 8 * TAU + .2; return go(.06, (a, b) => G.pour(a, b, [[800 + Math.cos(a0) * 76, 240 + Math.sin(a0) * 76], [800 + Math.cos(a0) * 110, 240 + Math.sin(a0) * 110]], { r: 3.8, amount: 2.4 }), .02); }),
+  // hoof prints, laid down as he passes
+  Array.from({ length: 11 }, (_, k) => { const s = RUN0 + .35 + k * .33; return G.dab(s, runX(s) - 60 + (k % 2) * 40, SANDY + 6 + (k % 3) * 5, { r: 7, hand: null }); }),
+  at(12.7), [['g', 650], ['o', 760]].map(([ch, x]) => LET[ch].slice(0, -1).map(st => go(.34, (a, b) => G.finger(a, b, st.map(([u, v]) => [x + u * 130, 800 + v * 130]), { r: 8 }), .05))) ] });
+const horsePolys = (pose, x, y, h) => { const cl = CLIPS.horse, s = h / cl.h; return rotoPose('horse', pose).outer.map(c0 => c0.map(q => [x + q[0] * s, y + q[1] * s])); };
+const horseLines = (pose, x, y, h) => { const s = h / CLIPS.horse.h; return rotoPose('horse', pose).lines.map(l => ({ w: l.w * s * 1.25, p: l.p.map(q => [x + q[0] * s, y + q[1] * s]) })); };
+const sandLiveAt = (sim, i) => sim > RUN0 && sim < RUN1 + .2 ? sandLive(horsePolys(i, runX(sim), SANDY, SANDH), 7, horseLines(i, runX(sim), SANDY, SANDH)) : null;
+
+// ===================== SHEETS =====================
+let SH = null, BOOK = null;
+function paperGrain(g, w, h, seed, n = 500) { const r = rng(seed); g.fillStyle = 'rgba(90,70,40,.07)'; for (let k = 0; k < n; k++) g.fillRect(r() * w, r() * h, 1 + r() * 1.6, 1 + r() * 1.6); }
+function pageBase(g, w, h, side, tint) { g.fillStyle = tint || BASE.paper; g.fillRect(0, 0, w, h); paperGrain(g, w, h, side === 'L' ? 3 : 4); const gr = g.createLinearGradient(side === 'L' ? w : 0, 0, side === 'L' ? w - 90 : 90, 0); gr.addColorStop(0, 'rgba(60,40,20,.32)'); gr.addColorStop(1, 'rgba(60,40,20,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(90,70,40,.28)'; g.lineWidth = 1.2; g.strokeRect(16, 16, w - 32, h - 32); }
+const say = (g, tau, t0, lines) => lines.forEach(([str, x, y, size, dt], k) => pen(g, tau, 0, t0 + (dt ?? k * .8), 70 + k, d => d.text(str, x, y, { size: size || 48, ink: INK, ink2: null }), { speed: 900 }));
+// the racetrack is printed across both pages: an oval of sand round a green
+function trackArt(g, side) { const ox = side === 'L' ? PW : 0, E = (rx, rz) => { const p = new Path2D(); p.ellipse(ox, 296, rx, rz, 0, 0, TAU); return p; }; g.save(); wash(g, E(404, 204), '#d9b98a', { al: .85, off: 0, seed: 3 }); g.fillStyle = BASE.paper; g.fill(E(200, 78)); wash(g, E(200, 78), '#8fbf8a', { al: .75, off: 0, seed: 4 });
+  g.setLineDash([16, 12]); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 3; g.stroke(E(302, 141)); g.setLineDash([]); g.strokeStyle = alpha(INK, .7); g.lineWidth = 2.4; g.stroke(E(404, 204)); g.stroke(E(200, 78)); g.restore(); }
+function buildSheets() { usePalette(BASE); const S0 = {};
+  S0.table = tex3(1600, 1200, (g, w, h) => { g.fillStyle = '#6a4930'; g.fillRect(0, 0, w, h); const r = rng(9); for (let x = 0; x < w; x += 200) { g.fillStyle = `rgba(${40 + r() * 30 | 0},${25 + r() * 16 | 0},10,.${2 + (r() * 3 | 0)})`; g.fillRect(x, 0, 200, h); g.fillStyle = 'rgba(25,12,4,.55)'; g.fillRect(x - 1.5, 0, 3, h); }
+    g.strokeStyle = 'rgba(30,15,5,.22)'; g.lineWidth = 1.4; for (let k = 0; k < 260; k++) { const x = r() * w, y = r() * h, l = 60 + r() * 260; g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x + 6, y + l * .3, x - 6, y + l * .6, x + 3, y + l); g.stroke(); } }, 1);
+  S0.cover = tex3(PW + 16, PD + 16, (g, w, h) => { g.fillStyle = '#2f4a3c'; g.fillRect(0, 0, w, h); const r = rng(4); g.fillStyle = 'rgba(255,255,255,.035)'; for (let k = 0; k < 2600; k++) g.fillRect(r() * w, r() * h, 2, 1);
+    ink(g, 11, d => d.line([[30, 30], [w - 30, 30], [w - 30, h - 30], [30, h - 30]], { close: true, smooth: false, w: 4, color: GOLD }).line([[44, 44], [w - 44, 44], [w - 44, h - 44], [44, h - 44]], { close: true, smooth: false, w: 1.8, color: GOLD }));
+    roto(g, 'horse', 5, { x: w / 2, y: 420, h: 250, fill: null, ink: GOLD, weight: 1.1 }); handText(g, 'the paper', w / 2, 140, { size: 70, ink: GOLD, ink2: null, align: 'center' }); handText(g, 'horse', w / 2, 540, { size: 84, ink: GOLD, ink2: null, align: 'center' }); }, 2);
+  const arch = (w, h, fill) => { const p = new Path2D(); p.moveTo(0, h); p.lineTo(0, 190); p.bezierCurveTo(0, 40, 160, 0, w / 2, 0); p.bezierCurveTo(w - 160, 0, w, 40, w, 190); p.lineTo(w, h); p.closePath(); return p; };
+  S0.stand = tex3(880, 400, (g, w, h) => { const p = arch(w, h); g.fillStyle = '#cfe3f1'; g.fill(p); g.save(); g.clip(p); wash(g, rectPath(-20, h - 150, w + 40, 200), '#a9c7a0', { al: .8, off: 0, seed: 3 });
+    ink(g, 13, d => { d.line([[40, 150], [w / 2, 96], [w - 40, 150]], { w: 2.6 }); for (let k = 0; k < 15; k++) { const u = (k + .5) / 15, x = lerp(40, w - 40, u), y = 150 - Math.sin(u * Math.PI) * 54, f = [[x - 16, y + 2], [x + 16, y + 2], [x, y + 40]]; d.wash(polyPath(f), BASE.accents[k % 4], { al: .95, off: 1 }).line(f, { close: true, smooth: false, w: 2 }); }
+      for (let k = 0; k < 22; k++) { const x = 60 + k * 36 + (k % 3) * 4, y = h - 118 - (k % 2) * 26; d.fill(circPath(x, y, 13), '#fffaf0').line(ellPts(x, y, 13, 13, 0, 8), { close: true, w: 2 }).line([[x - 12, y + 14], [x, y + 40], [x + 12, y + 14]], { w: 2 }); } }); g.restore(); g.strokeStyle = INK; g.lineWidth = 4; g.stroke(p); }, 2);
+  S0.pine = [0, 1].map(v => tex3(180, 370, (g, w, h) => ink(g, 21 + v, d => { const col = BASE.fills[v], tr = [[w / 2 - 12, h - 70], [w / 2 + 12, h - 70], [w / 2 + 12, h], [w / 2 - 12, h]]; d.fill(polyPath(tr), '#a9805a').line(tr, { close: true, smooth: false, w: 3 });
+      [[10, 300, 90], [26, 210, 72], [44, 130, 54]].forEach(([top, bot, half], k) => { const P = [[w / 2, top], [w / 2 + half * .45, lerp(top, bot, .55)], [w / 2 + half, bot], [w / 2 + half * .4, bot - 12], [w / 2, bot + 4], [w / 2 - half * .4, bot - 12], [w / 2 - half, bot], [w / 2 - half * .45, lerp(top, bot, .55)]]; d.fill(polyPath(P), '#f6f1e2').wash(polyPath(P), col, { al: .9, off: 2, seed: 30 + k + v }).line(P, { close: true, smooth: false, w: 3.4 }); }); }), 2));
+  S0.fence = tex3(360, 50, (g, w, h) => ink(g, 25, d => { d.fill(rectPath(0, 8, w, 9), '#fffaf0').fill(rectPath(0, 28, w, 9), '#fffaf0').line([[0, 8], [w, 8]], { w: 2 }).line([[0, 17], [w, 17]], { w: 2 }).line([[0, 28], [w, 28]], { w: 2 }).line([[0, 37], [w, 37]], { w: 2 }); for (let x = 12; x < w; x += 48) d.fill(rectPath(x - 5, 0, 10, h), '#fffaf0').line([[x - 5, 0], [x + 5, 0], [x + 5, h], [x - 5, h]], { close: true, smooth: false, w: 2 }); }), 2);
+  S0.horse = tex3(340, 280, null, 2); S0.horseStill = tex3(340, 280, (g, w, h) => roto(g, 'horse', 2, { x: w / 2, y: h - 8, h: 240, wash: SEPIA, seed: 5 }), 2);
+  S0.sky = tex3(880, 470, (g, w, h) => { const p = arch(w, h); g.fillStyle = '#d7e8f5'; g.fill(p); g.save(); g.clip(p); wash(g, rectPath(-20, h - 120, w + 40, 160), '#f3d98b', { al: .45, off: 0, seed: 3 });
+    ink(g, 27, d => { d.wash(circPath(650, 150, 60), '#f3c25a', { al: .9, off: 3 }).line(ellPts(650, 150, 60, 60, 0, 14), { close: true, w: 3.4 }); for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; d.line([[650 + Math.cos(a) * 80, 150 + Math.sin(a) * 80], [650 + Math.cos(a) * 108, 150 + Math.sin(a) * 108]], { w: 3, color: BASE.accents[2] }); } }); g.restore(); g.strokeStyle = INK; g.lineWidth = 4; g.stroke(p); }, 2);
+  S0.cloud = [0, 1].map(v => tex3(260, 420, (g, w, h) => ink(g, 35 + v, d => { const Kp = [[-1, .3], [-.8, -.15], [-.35, -.2], [-.1, -.6], [.4, -.55], [.6, -.15], [1, -.05], [1.05, .3]].map(p => [w / 2 + p[0] * 110, 90 + p[1] * 80]); d.fill(splinePath(Kp), '#fffdf7').line(Kp, { close: true, w: 3.4 }); const st = [[w / 2 - 4, 112], [w / 2 + 4, 112], [w / 2 + 4, h], [w / 2 - 4, h]]; d.fill(polyPath(st), '#efe6cf').line(st, { close: true, smooth: false, w: 1.6 }); }), 2));
+  S0.birds = [0, 1, 2].map(() => tex3(300, 520, null, 2));
+  S0.pageL = [0, 1, 2].map(() => tex3(PW, PD, null, 2)); S0.pageR = [0, 1, 2].map(() => tex3(PW, PD, null, 2)); S0.sandCv = document.createElement('canvas'); S0.sandCv.width = S0.sandCv.height = 800;
+  S0.lantern = tex3(190, 380, (g, w, h) => photo(g, place('lantern', { x: w / 2, y: h, h: 376, pivot: [.5, 1] }), { shadow: 0 }), 2); S0.glass = tex3(170, 320, (g, w, h) => photo(g, place('hourglass', { x: w / 2, y: h, h: 316, pivot: [.5, 1] }), { shadow: 0 }), 2);
+  S0.card = tex3(444, 132, (g, w, h) => { g.fillStyle = '#fffdf7'; g.fillRect(0, 0, w, h); ink(g, 41, d => { const X = (u, v) => [60 + u * 68, 66 + v * 68]; d.line([[2, 2], [w - 2, 2], [w - 2, h - 2], [2, h - 2]], { close: true, smooth: false, w: 3.2 }).line([X(-.5, -.5), X(-.2, -.5), X(.5, .5), X(.2, .5)], { close: true, smooth: false, w: 3.6 }).line([X(.46, -.5), X(.07, -.06)], { w: 3.6 }).line([X(-.07, .06), X(-.46, .5)], { w: 3.6 }); dot(d, w / 2, 16, 5.5, BASE.accents[0]); }); handText(g, HANDLE, 114, 86, { size: 53, ink: INK, ink2: null }); }, 2);
+  return S0; }
+const LAP = 5.2, trackAt = t => { const th = Math.PI / 2 - (t - 4.6) / LAP * TAU; return { x: 302 * Math.cos(th), z: -14 + 141 * Math.sin(th), right: Math.sin(th) > 0 }; };
+let HORSE_PIECE = null;
+function build() { SH = buildSheets(); HORSE_PIECE = { base: [[-170, 194], [170, 194]], h: 280, sheet: SH.horse, mesh: 8 };
+  BOOK = book3({ PW, PD, cover: SH.cover, board: '#2f4a3c', spreads: [
+    { left: SH.pageL[0], right: SH.pageR[0], pieces: [ { base: [[-440, -285], [440, -285]], h: 400, sheet: SH.stand, mesh: 12 }, { base: [[-452, -215], [-272, -215]], h: 370, sheet: SH.pine[0] }, { base: [[270, -215], [450, -215]], h: 370, sheet: SH.pine[1] }, HORSE_PIECE ] },
+    { left: SH.pageL[1], right: SH.pageR[1], pieces: [ { base: [[-400, -20], [-60, -20]], h: 280, sheet: SH.horseStill } ] },
+    { left: SH.pageL[2], right: SH.pageR[2], pieces: [ { base: [[-440, -285], [440, -285]], h: 470, sheet: SH.sky, mesh: 12 }, { base: [[-420, -190], [-160, -190]], h: 420, sheet: SH.cloud[0] }, { base: [[150, -130], [410, -130]], h: 380, sheet: SH.cloud[1] },
+        { base: [[-300, -90], [0, -90]], h: 520, sheet: SH.birds[0] }, { base: [[60, -30], [360, -30]], h: 440, sheet: SH.birds[1] }, { base: [[-440, 40], [-140, 40]], h: 360, sheet: SH.birds[2] } ] } ] }); }
+
+// ===================== THE FILM =====================
+const WIN = [230, 0, -50];                                   // the middle of the light table on the right page
+function camAt(t) { const P = [[0, [300, 840, 760], [236, 10, 30]], [2.6, [262, 760, 650], [236, 10, 30]], [4.6, [-260, 900, 1200], [0, 120, -30]], [9.0, [260, 840, 1090], [0, 130, -20]], [12.4, [60, 960, 1260], [0, 130, -30]], [14.2, [-120, 940, 1200], [40, 80, -30]], [15.6, [60, 900, 1080], [150, 40, -40]],
+    [T_SAND, [WIN[0], 566, WIN[2] + 2], [WIN[0], 8, WIN[2]]], [T_BACK, [WIN[0], 566, WIN[2] + 2], [WIN[0], 8, WIN[2]]], [29.6, [0, 1000, 1280], [0, 150, -40]], [31.4, [-200, 900, 1200], [0, 190, -40]], [35.0, [160, 800, 1150], [60, 160, 0]], [36.8, [560, 760, 1120], [520, 90, 120]],
+    [39.2, [1080, 640, 1060], [1040, 110, 60]], [41.6, [1300, 620, 1020], [1240, 100, 40]], [43.6, [900, 1180, 1420], [800, 30, 60]], [47, [880, 1100, 1340], [800, 30, 60]]];
+  let eye = P[0][1], tg = P[0][2]; for (let k = 0; k + 1 < P.length; k++) if (t >= P[k][0]) { const u = easeIO(clamp((t - P[k][0]) / (P[k + 1][0] - P[k][0]), 0, 1)); eye = V3.lerp(P[k][1], P[k + 1][1], u); tg = V3.lerp(P[k][2], P[k + 1][2], u); } return { eye, target: tg, f: 1500, up: [0, .45, -1] }; }
+const freeQuad = (sheet, x, y, z, w, h) => [[x - w / 2, y + h, z], [x + w / 2, y + h, z], [x + w / 2, y, z], [x - w / 2, y, z]];
+function standOnTable(c, sheet, x, z, w, h, y = 0, al = .34) { const Q = freeQuad(sheet, x, y, z, w, h), g = shadowsBegin(); g.setTransform(c.getTransform()); shadow3(g, sheet, Q, [0, 0, 0], [0, 1, 0], null, 1); shadowsEnd(c, al); quad3(c, sheet, Q, { n: 8, dark: shadeOf(Q) * .8 }); return Q; }
+
+function film(c, tau, i) { if (!BOOK) build(); usePalette(BASE); const sim = tau - SIM0;
+  if (tau >= T_SAND && tau < T_BACK) { sandFrame(c, sim, sandLiveAt(sim, i)); return; }                     // inside the light table
+  const turn = tau < 2.6 ? 0 : tau < 4.4 ? K(tau, 2.6, 4.4) : tau < 12.4 ? 1 : tau < 14.2 ? 1 + K(tau, 12.4, 14.2) : tau < 29.4 ? 2 : tau < 31.2 ? 2 + K(tau, 29.4, 31.2) : tau < 42.4 ? 3 : 3 - 3 * K(tau, 42.4, 45.2);
+  // sheets that change
+  SH.pageL[0].redraw((g, w, h) => { pageBase(g, w, h, 'L'); trackArt(g, 'L'); say(g, tau, 5.2, [['There was a paper horse', 30, 552, 41], ['who ran in circles.', 30, 596, 41]]); }); SH.pageR[0].redraw((g, w, h) => { pageBase(g, w, h, 'R'); trackArt(g, 'R'); say(g, tau, 8.4, [['Every page', 150, 552, 41], ['was the same page.', 150, 596, 41]]); });
+  if (turn > 0 && turn < 2.2) { const p = trackAt(tau), lap = tau > 4.6; HORSE_PIECE.base = [[p.x - 170, p.z], [p.x + 170, p.z]]; SH.horse.redraw((g, w, h) => roto(g, 'horse', lap ? i : 2, { x: w / 2, y: h - 8, h: 240, wash: SEPIA, flip: !p.right, seed: 5 })); }
+  if (turn > 1 && turn < 3) { sandAdvance(Math.max(0, sim)); const gs = SH.sandCv.getContext('2d'); gs.putImageData(sandImage(800, 800, null), 0, 0);
+    SH.pageL[1].redraw((g, w, h) => { pageBase(g, w, h, 'L'); say(g, tau, 14.5, [['So he dreamed', 40, 420, 50], ['of a place', 40, 476, 50], ['with no edges.', 40, 532, 50]]); });
+    SH.pageR[1].redraw((g, w, h) => { pageBase(g, w, h, 'R', '#e9dfc8'); g.fillStyle = '#3a2a1c'; g.fillRect(18, 48, 424, 424); g.drawImage(SH.sandCv, 30, 60, 400, 400); g.strokeStyle = INK; g.lineWidth = 3; g.strokeRect(18, 48, 424, 424); handText(g, 'light table', 150, 530, { size: 34, ink: alpha(INK, .6), ink2: null }); }); }
+  if (turn > 2) { SH.pageL[2].redraw((g, w, h) => { pageBase(g, w, h, 'L', '#eef3ea'); wash(g, rectPath(16, 470, w - 16, 134), '#a9c7a0', { al: .6, off: 0, seed: 7 }); say(g, tau, 31.8, [['And one night', 36, 250, 52], ['he simply', 36, 310, 52], ['kept going.', 36, 370, 52]]); }); SH.pageR[2].redraw((g, w, h) => { pageBase(g, w, h, 'R', '#eef3ea'); wash(g, rectPath(0, 470, w - 16, 134), '#a9c7a0', { al: .6, off: 0, seed: 8 }); });
+    SH.birds.forEach((sh, k) => sh.redraw((g, w, h) => roto(g, 'pigeons', i + k * 4, { x: w / 2, y: 250 + Math.sin(tau * 2 + k * 2) * 12, h: 230, wash: BASE.fills[5], seed: 31 + k }))); }
+  // the room
+  resetT(c); c.fillStyle = '#120c09'; c.fillRect(0, 0, W, H); cam3(camAt(tau)); quad3(c, SH.table, [[-2300, -2, -1900], [3400, -2, -1900], [3400, -2, 1550], [-2300, -2, 1550]], { n: 18, dark: .12 });
+  { const g = shadowsBegin(); g.setTransform(c.getTransform()); const x0 = -(PW + 14) * Math.min(1, turn); shadow3(g, SH.card, [[x0 - 10, 60, -PD / 2 - 14], [PW + 24, 60, -PD / 2 - 14], [PW + 24, 60, PD / 2 + 14], [x0 - 10, 60, PD / 2 + 14]], [0, -1, 0], [0, 1, 0], null, 1); shadowsEnd(c, .38); }
+  standOnTable(c, SH.glass, 1330, -150, 170, 320); standOnTable(c, SH.lantern, 1010, -190, 190, 380);
+  BOOK.draw(c, { turn });
+  if (turn > 1.5 && turn < 2.5) { const m = proj3([WIN[0], 12, WIN[2]]); resetT(c); glow(c, m[0], m[1], 330, '#ffd9a0', .35); }
+  // he leaves the book: along the front edge of spread 3, off the page, across the table
+  if (tau > 33.4 && tau < 42.2) { const u = (tau - 33.4), x = -620 + u * 270, onPage = x < 470, leap = clamp((x - 430) / 230, 0, 1), y = (onPage ? 12 : 0) * (1 - leap) + Math.sin(leap * Math.PI) * 120, z = 236 - clamp((x - 600) / 900, 0, 1) * 150;
+    SH.horse.redraw((g, w, h) => roto(g, 'horse', leap > 0 && leap < 1 ? 10 : i, { x: w / 2, y: h - 8, h: 240, wash: SEPIA, seed: 5 })); const Q = freeQuad(SH.horse, x, y, z, 340, 280), gsh = shadowsBegin(); gsh.setTransform(c.getTransform()); shadow3(gsh, SH.horse, Q, [0, onPage && leap < .5 ? 12 : 0, 0], [0, 1, 0], null, 1); shadowsEnd(c, .3); quad3(c, SH.horse, Q, { n: 8, dark: shadeOf(Q) * .6 }); }
+  if (tau > 43.2) { const a = K(tau, 43.6, 44.6, easeOut), cx = 960 + (1 - a) * 900, cz = 300, rot = -.12, w = 222, h = 66, ca = Math.cos(rot), sa = Math.sin(rot), P = [[-w, -h], [w, -h], [w, h], [-w, h]].map(([x, z]) => [cx + x * ca - z * sa, 1.5, cz + x * sa + z * ca]); const g = shadowsBegin(); g.setTransform(c.getTransform()); shadow3(g, SH.card, P.map(p => [p[0], 14, p[2]]), [0, 0, 0], [0, 1, 0], null, 1); shadowsEnd(c, .3); quad3(c, SH.card, P, { n: 6, dark: .05 }); }
+  // the lamp over the table, the lantern's own light
+  resetT(c); const vg = c.createRadialGradient(CX - 60, CY - 40, 260, CX, CY, 860); vg.addColorStop(0, 'rgba(10,5,0,0)'); vg.addColorStop(1, 'rgba(10,5,0,.5)'); c.fillStyle = vg; c.fillRect(0, 0, W, H);
+  { const ln = proj3([1014, 145, -188]), fk = 1 + Math.sin(i * 1.9) * .06; if (ln[2] > 40) { glow(c, ln[0], ln[1], 260 * fk, '#ffcf70', .5); glow(c, ln[0], ln[1], 70 * fk, '#fff1c0', .9); } } }
+
+// ===================== SCORE =====================
+function score(ac, t0, dest) { const master = ac.createGain(); master.gain.value = .5; master.connect(dest); const hz = (o, s) => pentHz(o, s, 196), box = (t, f, g = .17, d = 1.2) => { note(ac, master, f, t0, t, d, 'sine', g); note(ac, master, f * 2, t0, t, d * .5, 'triangle', g * .2); };
+  const hoof = (t, g) => { noiseBurst(ac, master, t0, t, .05, g, 3); note(ac, master, 70, t0, t, .09, 'sine', g * 1.3); }, stride = (t, g) => { hoof(t, g); hoof(t + .11, g * .8); hoof(t + .24, g); }, swish = (t, d, g) => { for (let k = 0; k < 6; k++) noiseBurst(ac, master, t0, t + k * d / 6, d / 3, g * (.5 + .5 * Math.sin(k / 5 * Math.PI)), 3 + k); };
+  const mel = [0, 2, 4, 2, 3, 4, 2, 0, 1, 2, 4, 3, 2, 1, 0, 2]; for (let k = 0; k < 34; k++) { const t = .3 + k * .5; if (t > 16.6) break; box(t, hz(1 + (k % 8 > 5 ? 1 : 0), mel[k % 16]), .14); if (k % 4 === 0) box(t, hz(0, mel[k % 16]), .1, 1.8); }
+  swish(2.7, 1.4, .12); swish(12.5, 1.5, .14); swish(29.5, 1.5, .14); swish(42.1, 2.0, .14); for (let t = 4.7; t < 12.2; t += 1) stride(t, .13); for (let t = 33.5; t < 42; t += 1) stride(t, t > 36.6 ? .18 : .13);
+  // the sand: a hiss for every gesture, a low piano under it, the horse's hooves dull in the sand
+  const sr = ac.sampleRate, nb = ac.createBuffer(1, sr * 2, sr), ch = nb.getChannelData(0), r = rng(5); for (let q = 0; q < ch.length; q++) ch[q] = r() * 2 - 1;
+  for (const g of SAND.gestures) { const a = t0 + g.t0 + SIM0, b = t0 + Math.max(g.t1, g.t0 + .06) + SIM0; if (g.tool === 'none' || g.t0 + SIM0 < T_SAND - .1 || g.t0 + SIM0 > T_BACK) continue; const src = ac.createBufferSource(); src.buffer = nb; src.loop = true; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = g.tool === 'wipe' ? (g.r > 40 ? 1800 : 3600) : 5200; f.Q.value = .8; const e = ac.createGain(), lvl = g.tool === 'wipe' ? (g.r > 40 ? .22 : .12) : .07;
+    e.gain.setValueAtTime(0, a); e.gain.linearRampToValueAtTime(lvl, a + Math.min(.08, (b - a) / 2)); e.gain.setValueAtTime(lvl, b - .02); e.gain.linearRampToValueAtTime(0, b + .12); src.connect(f); f.connect(e); e.connect(master); src.start(a); src.stop(b + .2); }
+  [[17.2, 0, 0], [18.4, 0, 2], [19.6, 0, 4], [20.8, 1, 0], [22.0, 1, 2], [23.2, 1, 4], [24.4, 2, 0], [25.6, 1, 4], [26.8, 2, 2]].forEach(([t, o, s]) => box(t, hz(o - 1, s), .16, 2.6)); for (let t = RUN0 + SIM0 + .1; t < RUN1 + SIM0; t += 1) stride(t, .1);
+  const m2 = [0, 2, 4, 5, 4, 2, 4, 7, 5, 4, 2, 4]; for (let k = 0; k < 24; k++) { const t = 29.6 + k * .5; if (t > 41.4) break; box(t, hz(1 + Math.floor(m2[k % 12] / 5), m2[k % 12] % 5), .15); if (k % 2 === 0) note(ac, master, hz(-1, [0, 3, 4, 0][k / 2 % 4 | 0]), t0, t, .45, 'sawtooth', .05); }
+  [[36.7, 2, 0], [36.9, 2, 2], [37.1, 3, 0]].forEach(([t, o, s]) => box(t, hz(o, s), .2, .8)); [[44.4, 0, 0], [44.4, 1, 0], [44.4, 1, 2], [44.4, 1, 4], [45.4, 2, 0], [45.9, 2, 2]].forEach(([t, o, s]) => box(t, hz(o, s), .17, 2.4)); }
+
+defineFilm({ timeline: [{ name: 'book', dur: 47, fn: film }], score, format: { ar: '1:1' } });
+</script>

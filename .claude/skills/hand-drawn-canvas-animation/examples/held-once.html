@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>someone held this once</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="../assets/core.js"></script>
+<script src="held-once-photos.js"></script>
+<script>
+'use strict';
+// ============================================================
+// SOMEONE HELD THIS ONCE. The doodle look: five museum objects nobody uses any more,
+// and a hedgehog who uses them anyway, because he is expecting someone.
+// Photos: The Metropolitan Museum of Art, Open Access (CC0). Credits and sources are in held-once-photos.js.
+//
+// Subject: old things get their purpose back when someone small needs them.
+// Anchor: the red scarf. Format 1:1, drawn 12 fps, output 24 fps.
+// t      dur   scene     paper   object -> becomes            what changes                                   sound
+// 0.0    3.6   tea       rose    teapot -> a teapot, at last   two cups, the pot tips, only one guest         music box, pour
+// 3.6    3.4   wait      mint    watch -> the whole day        a drawn hand goes round, sun sets, he nods off tick tick
+// 7.0    3.6   sail      sky     violin -> a boat              sheet-music sail, waves over the hull, a light low notes, gulls
+// 10.6   4.2   light     night   lantern -> a lighthouse       it lights, stars, the friend walks in          bell, two voices
+// 14.8   3.6   two       peach   cup -> a bath for two         both inside the cup behind the rim, steam      music box
+// 18.4   3.6   end       sand    -                             five prints on a line, sign-off                last chord
+// ============================================================
+
+// ===================== PUPPETS =====================
+const tf = (x, y, s, rot = 0, dir = 1) => (px, py) => { const X = px * s * dir, Y = py * s, ca = Math.cos(rot), sa = Math.sin(rot); return [x + X * ca - Y * sa, y + X * sa + Y * ca]; };
+const M = (T, pts) => pts.map(p => T(p[0], p[1]));
+const dot = (d, x, y, r, col) => d.mark((c, k) => { c.fillStyle = col || PAL.ink; c.beginPath(); c.arc(x, y, r * k, 0, TAU); c.fill(); }, .05);
+
+// hedgehog: about 2.4 s wide and 1.7 s tall, faces +x when dir = 1. o.hand = [x, y] in frame units reaches an arm there.
+function hog(d, x, y, s, o = {}) { const { dir = 1, rot = 0, scarf = PAL.accents[0], eye = 'happy', hand = null, body = PAL.light, quills = '#b78d63', w = 3.6 } = o, T = tf(x, y, s, rot, dir);
+  const B = [[-1, .15], [-.85, -.5], [-.3, -.92], [.35, -.85], [.8, -.45], [1.32, -.04], [.85, .35], [.5, .62], [-.4, .68], [-.9, .5]];
+  const Q = [[-1, .15], [-.85, -.5], [-.3, -.92], [.35, -.85], [.72, -.52], [.42, -.22], [.18, .12], [-.12, .47], [-.9, .5]];
+  d.fill(splinePath(M(T, B)), body).wash(splinePath(M(T, Q)), quills, { al: .75, off: 3 }).line(M(T, B), { close: true, w });
+  d.line(M(T, [[.72, -.52], [.42, -.22], [.18, .12], [-.12, .47]]), { w: w * .8 });
+  const sp = []; for (let k = 0; k < 11; k++) { const a = Math.PI * (1.08 + k * .105), cx = -.1 + Math.cos(a) * 1.0, cy = -.08 + Math.sin(a) * .88; sp.push(M(T, [[cx * .97, cy * .97], [cx * 1.22 - .08, cy * 1.22]])); }
+  d.lines(sp, { w: w * .85, dur: .05, stagger: .025 });
+  d.lines([[[-.45, -.35], [-.55, -.5]], [[-.1, -.45], [-.18, -.62]], [[-.55, .05], [-.68, -.08]], [[-.2, -.05], [-.3, -.2]], [[.15, -.4], [.1, -.57]]].map(p => M(T, p)), { w: w * .7, dur: .04, stagger: .02 });
+  d.line(M(T, [[.3, -.52], [.4, -.74], [.54, -.54]]), { w: w * .8 });
+  if (eye === 'happy') d.line(M(T, [[.64, -.14], [.74, -.25], [.84, -.14]]), { w: w * .85 }); else if (eye === 'sleep') d.line(M(T, [[.64, -.2], [.74, -.12], [.84, -.2]]), { w: w * .85 }); else dot(d, ...T(.74, -.18), s * .075);
+  dot(d, ...T(1.32, -.04), s * .1); d.wash(ellPath(...T(.62, .1), s * .17, s * .1), PAL.blush, { al: .8, off: 1 });
+  d.lines([[[-.45, .66], [-.47, .86], [-.25, .86]], [[.3, .6], [.3, .86], [.52, .86]]].map(p => M(T, p)), { w: w * .85 });
+  if (scarf) { const S1 = [[.16, .1], [.5, .28], [.88, .34], [.84, .5], [.45, .47], [.1, .3]], S2 = [[.2, .28], [-.2, .38], [-.5, .22], [-.46, .46], [-.15, .56], [.2, .44]];
+    d.wash(splinePath(M(T, S2)), scarf, { al: .95, off: 2 }).wash(splinePath(M(T, S1)), scarf, { al: .95, off: 2 }).line(M(T, S2), { close: true, w: w * .7 }).line(M(T, S1), { close: true, w: w * .7 }); }
+  if (hand) { const a = T(.5, .3), m = [(a[0] + hand[0]) / 2 + 6 * dir, (a[1] + hand[1]) / 2 + 10]; d.line([a, m, hand], { w: w * .9 }); dot(d, hand[0], hand[1], s * .09); }
+  return d; }
+function bird(d, x, y, s, o = {}) { const { dir = 1, rot = 0, col = PAL.fills[1] } = o, T = tf(x, y, s, rot, dir), B = [[-.9, -.2], [-.3, -.8], [.5, -.75], [.85, -.35], [.5, .1], [-.4, .1]];
+  d.fill(splinePath(M(T, B))).wash(splinePath(M(T, B)), col, { al: .7, off: 2 }).line(M(T, B), { close: true, w: 3 }).line(M(T, [[.85, -.42], [1.2, -.32], [.85, -.22]]), { w: 2.6 }).line(M(T, [[-.5, -.35], [-.1, -.05], [.25, -.4]]), { w: 2.6 });
+  dot(d, ...T(.5, -.48), s * .09); d.lines([[[-.1, .1], [-.1, .4]], [[.2, .1], [.2, .4]]].map(p => M(T, p)), { w: 2.4, dur: .04 }); return d; }
+function sun(d, x, y, r, col = PAL.fills[2]) { d.wash(circPath(x, y, r), col, { al: .85, off: 3 }).line(ellPts(x, y, r, r, 0, 12), { close: true, w: 3.2 });
+  d.lines(Array.from({ length: 9 }, (_, k) => { const a = k / 9 * TAU + .2; return [[x + Math.cos(a) * r * 1.35, y + Math.sin(a) * r * 1.35], [x + Math.cos(a) * r * 1.8, y + Math.sin(a) * r * 1.8]]; }), { w: 3, dur: .05, stagger: .03, color: PAL.accents[2] }); return d; }
+function cloud(d, x, y, s, col) { const K = [[-1, .3], [-.8, -.15], [-.35, -.2], [-.1, -.6], [.4, -.55], [.6, -.15], [1, -.05], [1.05, .3]].map(p => [x + p[0] * s, y + p[1] * s]); d.fill(splinePath(K), col || PAL.light, { al: .9 }).line(K, { close: true, w: 3 }); return d; }
+const heartPts = (x, y, s) => Array.from({ length: 18 }, (_, k) => { const a = k / 18 * TAU; return [x + s * 16 * Math.pow(Math.sin(a), 3) / 16, y - s * (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16]; });
+function heart(d, x, y, s, col = PAL.accents[0]) { const p = heartPts(x, y, s); d.wash(polyPath(p), col, { al: .9, off: 2 }).line(p, { close: true, w: 3 }); return d; }
+function sparkle(d, x, y, s, col) { d.lines([[[x - s, y], [x + s, y]], [[x, y - s], [x, y + s]], [[x - s * .5, y - s * .5], [x + s * .5, y + s * .5]], [[x + s * .5, y - s * .5], [x - s * .5, y + s * .5]]], { w: 2.4, dur: .04, stagger: .02, color: col }); return d; }
+function teacup(d, x, y, s, col = PAL.fills[1]) { const B = [[-1, -.6], [1, -.6], [.75, .25], [.4, .6], [-.4, .6], [-.75, .25]].map(p => [x + p[0] * s, y + p[1] * s]);
+  d.fill(polyPath(B)).wash(polyPath(B), col, { al: .55, off: 3 }).line([B[0], B[5], B[4], B[3], B[2], B[1]], { w: 3.2 }).line(ellPts(x, y - .6 * s, s, s * .16, 0, 10), { close: true, w: 2.8 }).line([[x + .85 * s, y - .3 * s], [x + 1.4 * s, y - .25 * s], [x + 1.3 * s, y + .2 * s], [x + .7 * s, y + .3 * s]], { w: 3 }); return d; }
+function musicNote(d, x, y, s, col) { d.mark((c, k) => { c.save(); c.translate(x, y); c.rotate(-.4); c.fillStyle = col || PAL.ink; c.beginPath(); c.ellipse(0, 0, s * .42 * k, s * .3 * k, 0, 0, TAU); c.fill(); c.restore(); }, .05).line([[x + s * .36, y - s * .1], [x + s * .4, y - s * 1.3], [x + s * .9, y - s * .95]], { w: 2.8, color: col }); return d; }
+const ground = (d, y, x0 = 60, x1 = W - 60) => d.line([[x0, y + 3], [lerp(x0, x1, .3), y - 2], [lerp(x0, x1, .65), y + 4], [x1, y]], { w: 3.4 });
+
+// ===================== SCENES =====================
+// Order inside a scene: backdrop, doodles that go behind the object, the photo, doodles on it, photoFront for anything inside it.
+// pen() from the core: one hand drawing one thing. Several pens run at once, each with its own start, so the frame fills from many sides.
+
+function sceneTea(c, tau, i) { usePalette(pastel('rose')); backdrop(c);
+  const tip = sm(2.0, 2.5, tau), pl = place('teapot', { x: 690, y: 704, h: 320, pivot: [.4, 1], rot: -.36 * tip + (tau > 2.5 ? Math.sin(tau * 9) * .006 : 0) });
+  pen(c, tau, i, .2, 1, d => ground(d, 706), { speed: 2800, still: true }); photo(c, pl, { ground: 706 });
+  pen(c, tau, i, .4, 40, d => { sun(d, 930, 150, 48); cloud(d, 560, 130, 60); cloud(d, 330, 215, 40); });
+  const cupA = on(place('teapot', { x: 690, y: 704, h: 320, pivot: [.4, 1], rot: -.36 }), .005, .27)[0] - 12;
+  pen(c, tau, i, .5, 3, d => { teacup(d, cupA, 664, 42); teacup(d, cupA - 125, 664, 42, PAL.fills[0]); });
+  pen(c, tau, i, .9, 5, d => hog(d, 88, 644, 54, { dir: 1, eye: tau > 2.6 ? 'happy' : 'dot', w: 4.2 }));
+  // the bird does the lifting: it rides above the handle on a string and the pot tips under it
+  const h0 = on(pl, .86, .1), flap = Math.sin(i * 2.4) * 10, by = h0[1] - 170 - tip * 10;
+  pen(c, tau, i, 1.3, 7, d => { bird(d, h0[0] + 8, by, 34, { dir: -1 }); d.line([[h0[0] + 6, by + 14], [h0[0] - 4, (by + h0[1]) / 2], h0], { w: 2.4 }); d.lines([[[h0[0] - 6, by - 26], [h0[0] - 22, by - 52 - flap]], [[h0[0] + 22, by - 28], [h0[0] + 40, by - 52 - flap]]], { w: 3 }); });
+  if (tau > 2.4) { const s0 = on(pl, .005, .27); pen(c, tau, i, 2.4, 9, d => d.line([s0, [s0[0] - 10, s0[1] + 50], [cupA, 640]], { w: 6, color: '#a9642c', dur: .2 }), { still: true }); }
+  pen(c, tau, i, 2.7, 11, d => { d.lines([[[cupA - 12, 600], [cupA - 24, 572], [cupA - 6, 546], [cupA - 18, 518]], [[cupA + 16, 600], [cupA + 28, 572], [cupA + 12, 548], [cupA + 24, 520]]], { w: 2.8 }); heart(d, cupA - 125, 575, 26); });
+  pen(c, tau, i, 2.8, 13, d => d.text('for two', 70, 400, { size: 80 })); }
+
+function sceneWait(c, tau, i) { usePalette(pastel('mint')); backdrop(c); const day = sm(.9, 3.0, tau, t => t), pl = place('watch', { x: 540, y: 625, h: 610 });
+  pen(c, tau, i, .2, 8, d => { d.line([[40, 810], [200, 752], [390, 800]], { w: 3.4 }).line([[700, 800], [880, 745], [1045, 810]], { w: 3.4 });
+    d.line([[760, 1020], [850, 940], [800, 870], [900, 800]], { w: 2.6, color: PAL.shade }).line([[806, 1020], [900, 945], [850, 875], [934, 808]], { w: 2.6, color: PAL.shade });
+    d.lines([[[934, 808], [934, 735]], [[934, 738], [992, 750], [934, 768]]], { w: 3.2 }); }, { speed: 2400, still: true });
+  // the sun crosses the sky while the drawn hand goes round once
+  const sa = lerp(-2.6, -.35, day), sx = 540 + Math.cos(sa) * 470, sy = 800 + Math.sin(sa) * 620; pen(c, tau, i, .5, 9, d => sun(d, sx, sy, 42, day > .8 ? PAL.fills[4] : PAL.fills[2]), { still: true });
+  photo(c, pl); const top = on(pl, .5, .015), sleepy = tau > 2.75;
+  pen(c, tau, i, .45, 5, d => hog(d, top[0] - 8, top[1] - 42 + (sleepy ? 5 : 0), 60, { dir: 1, rot: sleepy ? .17 : 0, eye: sleepy ? 'sleep' : 'dot', w: 4.2 }));
+  const hub = on(pl, .49, .652), ha = -Math.PI / 2 + day * TAU, R = pl.w * .36;
+  if (tau > .95) { brush(c, [hub, [hub[0] + Math.cos(ha) * R, hub[1] + Math.sin(ha) * R]], { w: 7, color: PAL.accents[0], seed: 2, p: sm(.95, 1.1, tau), amp: .5 }); c.fillStyle = PAL.accents[0]; c.beginPath(); c.arc(hub[0], hub[1], 10, 0, TAU); c.fill(); }
+  pen(c, tau, i, 1.2, 15, d => d.lines([[[270, 570], [247, 620], [270, 670]], [[235, 550], [205, 620], [235, 690]], [[810, 570], [833, 620], [810, 670]], [[845, 550], [875, 620], [845, 690]]], { w: 3.2, stagger: .08 }));
+  pen(c, tau, i, 1.5, 17, d => d.text('tick', 120, 480, { size: 56 }).text('tick', 850, 490, { size: 56 }));
+  pen(c, tau, i, 2.1, 19, d => d.text('soon?', 730, 340, { size: 76 }));
+  if (sleepy) pen(c, tau, i, 2.8, 21, d => d.text('z', top[0] - 130, top[1] - 120, { size: 48 }).text('z', top[0] - 175, top[1] - 170, { size: 62 })); }
+
+function sceneSail(c, tau, i) { usePalette(pastel('sky')); backdrop(c); const bob = Math.sin(tau * 2.2) * 7, pl = place('violin', { x: 610 - tau * 16, y: 640 + bob, h: 820, rot: -Math.PI / 2 + Math.sin(tau * 2.2 + 1) * .018 }), y0 = 738;
+  pen(c, tau, i, .3, 21, d => { cloud(d, 900, 150, 62); cloud(d, 210, 110, 44); });
+  pen(c, tau, i, 1.6, 23, d => d.line([[40, y0], [84, y0 - 62], [136, y0]], { w: 3.2 }).line([[86, y0 - 62], [86, y0 - 112]], { w: 3.2 }), { still: true }); if (tau > 2.0) { glow(c, 86, y0 - 118, 70 * sm(2.0, 2.3, tau), '#ffb84a', 1); c.fillStyle = '#ffd36b'; c.beginPath(); c.arc(86, y0 - 118, 6, 0, TAU); c.fill(); }
+  // mast, sail and sailor ride on the photo: every point comes from on(pl, u, v), so they bob with it. u > 1 is above the deck.
+  const mastTop = on(pl, 2.75, .66), sail = [[2.62, .652], [2.56, .56], [2.44, .475], [1.9, .44], [1.36, .465], [1.28, .56], [1.22, .652], [1.9, .66]].map(([u, v]) => on(pl, u, v));
+  pen(c, tau, i, .35, 4, d => d.line([on(pl, .78, .66), mastTop], { w: 4.6 }), { still: true }); photo(c, pl, { shadow: 0 });
+  pen(c, tau, i, .6, 4, d => { d.fill(splinePath(sail), PAL.light).line(sail, { close: true, w: 3.8 }); for (let k = 0; k < 5; k++) d.line([on(pl, 2.2 - k * .09, .635), on(pl, 2.18 - k * .09, .56), on(pl, 2.2 - k * .09, .49)], { w: 1.8, dur: .05, color: PAL.shade });
+    [[1.93, .61], [2.02, .575], [1.84, .54], [2.11, .515], [1.6, .58], [1.52, .53]].forEach(([u, v]) => musicNote(d, ...on(pl, u, v), 15)); const fl = [mastTop, on(pl, 2.62, .585), on(pl, 2.5, .66)]; d.wash(polyPath(fl), PAL.accents[0], { al: .95, off: 1 }).line(fl, { close: true, w: 2.8 }); });
+  const seat = on(pl, 1.0, .86); pen(c, tau, i, 1.0, 6, d => { hog(d, seat[0] + 10, seat[1] - 40, 58, { dir: -1, rot: pl.rot + Math.PI / 2, hand: on(pl, 1.12, .965), w: 4.2 }); d.line([on(pl, 1.5, .93), on(pl, -.55, 1.05)], { w: 3.6, color: '#7a5433' }); });
+  // the sea is drawn over the hull
+  const top = Array.from({ length: 19 }, (_, k) => [k * 60, y0 + Math.sin(k * 1.3 + tau * 3) * 7]), body = polyPath([...spline(top, 8), [W, H], [0, H]]);
+  pen(c, tau, i, .15, 12, d => { d.fill(body, tint(PAL.paper, .35), { al: .9, dur: .4 }).wash(body, PAL.fills[1], { al: .42, off: 0, rim: false, dur: .4 }); [[830, .13], [930, .15]].forEach(([y, al], k) => d.wash(polyPath([...spline(Array.from({ length: 10 }, (_, j) => [j * 125 - 20, y + Math.sin(j * 1.7 + k * 2) * 14]), 10), [W + 20, H], [-20, H]]), PAL.fills[1], { al, off: 6, rim: false, seed: 60 + k, dur: .5 })); d.line(top, { w: 3.6, color: PAL.accents[1] });
+    for (let r = 0; r < 4; r++) for (let k = 0; k < 6; k++) { const x = -60 + k * 215 + (r % 2) * 100 - ((tau * 30) % 215) * (r % 2 ? 1 : .5), y = 815 + r * 66; d.line([[x, y], [x + 28, y - 16], [x + 56, y], [x + 84, y - 12]], { w: 2.8, color: PAL.accents[1], dur: .04 }); } }, { speed: 2800, still: true });
+  pen(c, tau, i, .7, 14, d => { for (let k = 0; k < 19; k++) { const p = on(pl, -.12, .41 + k * .034), r = 13 + (k * 7 % 3) * 4, y = y0 + 6 + Math.sin(k * 2.1 + tau * 4) * 3; d.fill(circPath(p[0], y, r), PAL.light, { al: .97 }); if (k % 2) d.line([[p[0] - r * .7, y - r * .5], [p[0], y - r], [p[0] + r * .7, y - r * .5]], { w: 2.2, color: PAL.accents[1], dur: .03 }); } }, { still: true });
+  pen(c, tau, i, 2.3, 15, d => d.text('almost', 170, 470, { size: 66 })); }
+
+function sceneLight(c, tau, i) { usePalette(pastel('lilac')); backdrop(c); const pl = place('lantern', { x: 290, y: 912, h: 740, pivot: [.5, 1] }), lit = sm(1.0, 1.25, tau), fl = on(pl, .52, .62);
+  photo(c, pl); nightfall(c, .86);
+  const fk = 1 + Math.sin(i * 1.9) * .06; glow(c, fl[0], fl[1], 560 * lit * fk, '#ffcf70', .55); glow(c, fl[0], fl[1], 160 * lit * fk, '#fff1c0', 1);
+  usePalette(chalkPalette());
+  pen(c, tau, i, .1, 1, d => ground(d, 912, 440), { speed: 2800, still: true });
+  pen(c, tau, i, 1.3, 31, d => { [[620, 150, 13], [480, 90, 9], [760, 300, 9], [1000, 330, 10], [980, 90, 12], [90, 120, 10], [560, 330, 8]].forEach(([x, y, s]) => sparkle(d, x, y, s, '#ffe9a8'));
+    const mo = [[835, 120], [800, 160], [812, 220], [860, 252], [915, 240], [868, 222], [842, 175]]; d.wash(splinePath(mo), '#ffe08a', { al: .95, off: 0 }).line(mo, { close: true, w: 3.2 }); });
+  const turned = tau > 2.0, match = on(pl, 1.0, .74);
+  pen(c, tau, i, .15, 7, d => { hog(d, 620, 838, 68, { dir: turned ? 1 : -1, hand: tau < 1.5 ? [match[0] + 60, match[1] + 40] : null, eye: tau > 3.0 ? 'happy' : 'dot', w: 4.2 }); if (tau < 1.5) d.line([[match[0] + 60, match[1] + 40], match], { w: 2.8 }); });
+  if (tau > .85 && tau < 1.5) glow(c, match[0], match[1], 44 * sm(.85, 1, tau), '#ffb84a', 1);
+  // the friend walks in, already drawn, along a dotted path
+  const walk = sm(1.8, 3.1, tau, easeOut), fx = lerp(1220, 900, walk), step = walk < 1 ? Math.abs(Math.sin(tau * 11)) * 8 : 0;
+  pen(c, tau, i, -9, 17, d => hog(d, fx, 838 - step, 68, { dir: -1, scarf: '#6fb3ff', eye: walk >= 1 ? 'happy' : 'dot', rot: walk < 1 ? Math.sin(tau * 11) * .05 : 0, w: 4.2 }));
+  pen(c, tau, i, 1.9, 19, d => { for (let k = 0; k < 7; k++) dot(d, 1060 - k * 30, 955 + Math.sin(k) * 7, 3.6, PAL.chalkDim); }, { still: true });
+  pen(c, tau, i, 3.2, 23, d => heart(d, 760, 700 - sm(3.2, 4.2, tau, t => t) * 34, 32, '#ff8da0'));
+  pen(c, tau, i, 3.3, 25, d => d.text('you came', 560, 560, { size: 76, ink: PAL.chalk })); }
+
+function sceneTwo(c, tau, i) { usePalette(pastel('peach')); backdrop(c); const pl = place('cup', { x: 540, y: 905, h: 520, pivot: [.37, 1] });
+  pen(c, tau, i, .2, 1, d => ground(d, 902), { speed: 2800, still: true }); photo(c, pl);
+  pen(c, tau, i, .4, 51, d => { sun(d, 150, 170, 48); cloud(d, 850, 140, 58); });
+  // both sit inside the cup: drawn after the photo, then the front of the cup is laid back over them
+  const up = easeOut(sm(.5, 1.0, tau, t => t)), a = on(pl, .17, .02), b = on(pl, .56, .02), nod = Math.sin(tau * 5) * .05 * sm(2.2, 2.6, tau);
+  pen(c, tau, i, .5, 9, d => hog(d, a[0], a[1] + 70 - up * 70, 70, { dir: 1, eye: 'happy', rot: nod, w: 4.4 }));
+  pen(c, tau, i, .8, 10, d => hog(d, b[0], b[1] + 70 - up * 70, 70, { dir: -1, scarf: '#4f8fe6', eye: 'happy', rot: -nod, w: 4.4 }));
+  const lip = [on(pl, -.02, .075), on(pl, .18, .118), on(pl, .365, .13), on(pl, .55, .118), on(pl, .745, .08)]; photoFront(c, pl, polyPath([...spline(lip, 6), [W, lip[4][1]], [W, H], [0, H], [0, lip[0][1]]]));
+  const mid = on(pl, .365, -.2); pen(c, tau, i, 1.9, 23, d => { d.lines([[[mid[0] - 16, mid[1]], [mid[0] - 30, mid[1] - 36], [mid[0] - 8, mid[1] - 72], [mid[0] - 22, mid[1] - 108]], [[mid[0] + 16, mid[1]], [mid[0] + 30, mid[1] - 36], [mid[0] + 8, mid[1] - 72], [mid[0] + 22, mid[1] - 108]]], { w: 3 }); heart(d, mid[0], mid[1] - 170, 42); });
+  pen(c, tau, i, 1.4, 27, d => bird(d, ...on(pl, .93, .085), 30, { dir: -1 }));
+  pen(c, tau, i, 2.5, 29, d => d.text('for two', 690, 300, { size: 76 }));
+  pen(c, tau, i, 1.2, 33, d => [[110, 902], [200, 902], [935, 902], [1010, 902]].forEach(([x, y], k) => { d.line([[x, y], [x + 4, y - 30], [x - 2, y - 58]], { w: 2.8, color: PAL.accents[3] }); d.wash(circPath(x - 2, y - 68, 14), PAL.fills[k % 2 ? 0 : 2], { al: .95, off: 2 }).line(ellPts(x - 2, y - 68, 13, 13, 0, 8), { close: true, w: 2.6 }); })); }
+
+// five prints on a line, then the sign-off
+const SHOTS = [[sceneTea, 3.55], [sceneWait, 3.35], [sceneSail, 3.55], [sceneLight, 4.15], [sceneTwo, 3.55]], _prints = [];
+function sceneEnd(c, tau, i) { if (!_prints.length) for (const [fn, t] of SHOTS) { const L = layer(); fn(L.getContext('2d'), t, 0); _prints.push(L); }
+  usePalette(pastel('sand')); backdrop(c); const line = doodle({ start: .1, speed: 2400, seed: 2 }); const yAt = x => 330 + Math.sin((x - 40) / 1000 * Math.PI) * 46; line.line(Array.from({ length: 9 }, (_, k) => [40 + k * 125, yAt(40 + k * 125)]), { w: 3 }); line.draw(c, tau);
+  _prints.forEach((L, k) => { const a = sm(.4 + k * .22, .62 + k * .22, tau, easeOut); if (a <= 0) return; const x = 140 + k * 200, y = yAt(x) + 110, s = 168, r = (rng(k + 3)() - .5) * .16 + Math.sin(tau * 2 + k) * .012; c.save(); c.translate(x, y - 100); c.rotate(r); c.translate(0, 100 + (1 - a) * -40); c.globalAlpha = a;
+    c.fillStyle = 'rgba(40,25,10,.18)'; c.fillRect(-s / 2 - 6, -s / 2 - 4, s + 20, s + 44); c.fillStyle = '#fffdf7'; c.fillRect(-s / 2 - 10, -s / 2 - 10, s + 20, s + 44); c.drawImage(L, -s / 2, -s / 2, s, s); c.fillStyle = PAL.accents[k % 4]; c.fillRect(-7, -s / 2 - 22, 14, 26); c.restore(); });
+  signOff(c, 'someone held this once', 'someone still does', { x: CX, y: 720, size: 66, progressA: sm(1.7, 2.5, tau, t => t), progressB: sm(2.6, 3.2, tau, t => t) });
+  pen(c, tau, i, 2.5, 4, d => hog(d, 440, 955, 40, { dir: 1, eye: 'happy' }), { speed: 2600 }); pen(c, tau, i, 2.7, 5, d => hog(d, 640, 955, 40, { dir: -1, scarf: '#4f8fe6', eye: 'happy' }), { speed: 2600 }); pen(c, tau, i, 3.1, 6, d => heart(d, 540, 915, 18)); }
+
+// ===================== SCORE =====================
+function score(ac, t0, dest) { const master = ac.createGain(); master.gain.value = .5; master.connect(dest); const box = (t, o, s, g = .2, d = .9) => { note(ac, master, pentHz(o, s, 261.6), t0, t, d, 'sine', g); note(ac, master, pentHz(o + 1, s, 261.6), t0, t, d * .5, 'triangle', g * .25); };
+  [[.25, 1, 0], [.75, 1, 2], [1.25, 1, 4], [1.75, 2, 0], [2.25, 1, 3], [2.75, 1, 4], [3.0, 2, 1]].forEach(([t, o, s]) => box(t, o, s));                      // tea
+  for (let k = 0; k < 9; k++) noiseBurst(ac, master, t0, 3.75 + k * .333, .03, .16, k + 1); [[4.5, 0, 4], [5.5, 0, 3], [6.5, 0, 1]].forEach(([t, o, s]) => box(t, o, s, .18, 1.4));  // wait
+  [[7.0, 0, 0], [7.5, 0, 2], [8.0, 0, 4], [8.5, 1, 0], [9.0, 1, 2], [9.5, 0, 4], [10.0, 1, 0]].forEach(([t, o, s]) => note(ac, master, pentHz(o - 1, s, 261.6), t0, t, .7, 'sawtooth', .07));   // sail, a bowed line
+  box(11.6, 2, 0, .3, 2.2); box(11.6, 1, 2, .2, 2.2); [[12.5, 1, 0], [13.0, 1, 2], [13.75, 1, 4], [14.0, 2, 0]].forEach(([t, o, s]) => box(t, o, s));                             // the lantern lights
+  [[14.8, 1, 0], [15.3, 1, 2], [15.8, 1, 4], [16.3, 2, 0], [16.8, 2, 2], [17.3, 2, 0], [17.8, 1, 4]].forEach(([t, o, s]) => { box(t, o, s); box(t + .125, o - 1, s, .1); });     // two voices
+  [[18.4, 1, 0], [19.0, 1, 2], [19.6, 1, 4], [20.9, 0, 0], [20.9, 1, 2], [20.9, 2, 0]].forEach(([t, o, s]) => box(t, o, s, .22, 2)); }
+
+// ===================== TIMELINE =====================
+const TIMELINE = [
+  { name: 'tea', dur: 3.6, fn: sceneTea }, { name: 'wait', dur: 3.4, fn: sceneWait }, { name: 'sail', dur: 3.6, fn: sceneSail },
+  { name: 'light', dur: 4.2, fn: sceneLight }, { name: 'two', dur: 3.6, fn: sceneTwo }, { name: 'end', dur: 3.6, fn: sceneEnd },
+];
+defineFilm({ timeline: TIMELINE, score, format: { ar: '1:1' } });
+</script>
