@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "ABeeZee";
+        src: url("fonts/ABeeZee.woff2") format("woff2");
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "Fredoka";
+        src: url("fonts/Fredoka-600.woff2") format("woff2");
+        font-weight: 600;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: #f5eedf;
+      }
+      #root {
+        position: relative; width: 100%; height: 100%; overflow: hidden;
+        background: #f5eedf;
+        font-family: "ABeeZee", sans-serif;
+      }
+      .scene {
+        position: absolute; inset: 0; overflow: hidden;
+        background: #f5eedf;
+      }
+      .page { position: absolute; inset: 0; background: #f5eedf; box-shadow: -30px 0 60px rgba(60, 40, 10, 0.25); }
+      svg.layer { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+
+      /* paper cards: rough paper behind crisp text */
+      .card { position: absolute; display: flex; align-items: center; justify-content: center; }
+      .card .bg { position: absolute; inset: 0; border-radius: 34px; filter: url(#rough); }
+      .card .txt { position: relative; line-height: 1; }
+
+      .day {
+        left: 70px; top: 60px; width: 380px; height: 110px;
+      }
+      .day .bg { background: #ffd34d; }
+      .day .txt { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 64px; color: #5a3410; }
+
+      .word { width: 600px; height: 230px; }
+      .word .bg { background: #fffdf6; box-shadow: 0 10px 0 rgba(90, 60, 20, 0.12); }
+      .word .txt { font-size: 150px; letter-spacing: 2px; }
+
+      .bubble { width: 230px; height: 230px; }
+      .bubble .bg { border-radius: 50%; background: #fffdf6; }
+      .bubble .txt { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 170px; color: #7a4fb0; }
+
+      .dots { position: absolute; display: flex; gap: 26px; }
+      .dots span { display: block; width: 34px; height: 34px; border-radius: 50%; background: #e3d6bd; }
+      .dots span i { display: block; width: 100%; height: 100%; border-radius: 50%; background: #7a4fb0; }
+
+      .badge { width: 170px; height: 170px; }
+      .badge .bg { border-radius: 50%; background: #3e8fd6; }
+      .badge .txt { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 120px; color: #fffdf6; }
+
+      .say { width: 360px; height: 130px; }
+      .say .bg { border-radius: 65px; background: #fffdf6; }
+      .say .txt { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 70px; color: #d8302a; }
+
+      .title-wrap {
+        position: absolute; left: 0; right: 0; top: 150px;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+      }
+      .title-line { display: flex; gap: 34px; }
+      .tw { display: block; font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 150px; line-height: 1.05; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="52" data-width="1920" data-height="1080">
+      <!-- shared SVG defs -->
+      <svg width="0" height="0" style="position:absolute">
+        <defs>
+          <!-- tissue-paper texture: mottled brush streaks laid over each shape's own colour -->
+          <filter id="tex" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006 0.045" numOctaves="4" seed="7" result="n" />
+            <feColorMatrix in="n" type="matrix" values="1.7 0 0 0 -0.35  1.7 0 0 0 -0.35  1.7 0 0 0 -0.35  0 0 0 0 1" result="g" />
+            <feBlend in="g" in2="SourceGraphic" mode="soft-light" result="b" />
+            <feComposite in="b" in2="SourceGraphic" operator="in" result="c" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="2" result="e" />
+            <feDisplacementMap in="c" in2="e" scale="7" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="tex2" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04 0.008" numOctaves="4" seed="21" result="n" />
+            <feColorMatrix in="n" type="matrix" values="1.8 0 0 0 -0.4  1.8 0 0 0 -0.4  1.8 0 0 0 -0.4  0 0 0 0 1" result="g" />
+            <feBlend in="g" in2="SourceGraphic" mode="soft-light" result="b" />
+            <feComposite in="b" in2="SourceGraphic" operator="in" result="c" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="e" />
+            <feDisplacementMap in="c" in2="e" scale="7" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="soft" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.004 0.012" numOctaves="4" seed="11" result="n" />
+            <feColorMatrix in="n" type="matrix" values="1.1 0 0 0 -0.05  1.1 0 0 0 -0.05  1.1 0 0 0 -0.05  0 0 0 0 1" result="g" />
+            <feBlend in="g" in2="SourceGraphic" mode="soft-light" result="b" />
+            <feComposite in="b" in2="SourceGraphic" operator="in" />
+          </filter>
+          <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="9" result="e" />
+            <feDisplacementMap in="SourceGraphic" in2="e" scale="9" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="grain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="4" result="n" />
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.1  0 0 0 0.09 0" />
+          </filter>
+        </defs>
+      </svg>
+
+      <!-- ============ SCENE 1: title (0 - 4.6) ============ -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="4.6" data-track-index="1">
+        <div id="s1-page" class="page">
+          <svg class="layer" viewBox="0 0 1920 1080"><rect width="1920" height="1080" filter="url(#grain)" /></svg>
+          <div class="title-wrap">
+            <div class="title-line">
+              <span class="tw" style="color:#d8302a">The</span>
+              <span class="tw" style="color:#2f8f3f">Hungry</span>
+            </div>
+            <div class="title-line">
+              <span class="tw" style="color:#7a4fb0">Little</span>
+              <span class="tw" style="color:#c3701a">Caterpillar</span>
+            </div>
+          </div>
+          <svg class="layer" viewBox="0 0 1920 1080" id="s1-svg"></svg>
+        </div>
+      </section>
+
+      <!-- ============ SCENE 2: egg, night to day (4 - 15.6) ============ -->
+      <section id="s2" class="scene clip" data-start="4" data-duration="11.6" data-track-index="2">
+        <div id="s2-page" class="page">
+          <svg class="layer" viewBox="0 0 1920 1080" id="s2-svg"></svg>
+          <div id="s2-say" class="card say" style="left:1010px; top:320px"><div class="bg"></div><div class="txt">Hello!</div></div>
+        </div>
+      </section>
+
+      <!-- ============ SCENE 3: Monday, apple (15 - 32.6) ============ -->
+      <section id="s3" class="scene clip" data-start="15" data-duration="17.6" data-track-index="3">
+        <div id="s3-page" class="page">
+          <svg class="layer" viewBox="0 0 1920 1080" id="s3-svg"></svg>
+          <div id="s3-day" class="card day"><div class="bg"></div><div class="txt">Monday</div></div>
+          <div id="s3-q" class="card bubble" style="left:1065px; top:150px"><div class="bg"></div><div class="txt">?</div></div>
+          <div id="s3-dots" class="dots" style="left:1110px; top:410px"><span><i></i></span><span><i></i></span><span><i></i></span></div>
+          <div id="s3-word" class="card word" style="left:880px; top:130px"><div class="bg"></div><div class="txt" style="color:#d8302a">apple</div></div>
+          <div id="s3-badge" class="card badge" style="left:1400px; top:440px"><div class="bg"></div><div class="txt">1</div></div>
+          <div id="s3-say" class="card say" style="left:776px; top:420px"><div class="bg"></div><div class="txt">hungry!</div></div>
+        </div>
+      </section>
+
+      <!-- ============ SCENE 4: Tuesday, pears (32 - 52) ============ -->
+      <section id="s4" class="scene clip" data-start="32" data-duration="20" data-track-index="4">
+        <div id="s4-page" class="page">
+          <svg class="layer" viewBox="0 0 1920 1080" id="s4-svg"></svg>
+          <div id="s4-day" class="card day"><div class="bg" style="background:#ff9fb4"></div><div class="txt">Tuesday</div></div>
+          <div id="s4-q" class="card bubble" style="left:1110px; top:130px"><div class="bg"></div><div class="txt">?</div></div>
+          <div id="s4-dots" class="dots" style="left:1155px; top:390px"><span><i></i></span><span><i></i></span><span><i></i></span></div>
+          <div id="s4-word" class="card word" style="left:925px; top:110px"><div class="bg"></div><div class="txt" style="color:#4f9a2a">pear</div></div>
+          <div id="s4-b1" class="card badge" style="left:1120px; top:370px"><div class="bg"></div><div class="txt">1</div></div>
+          <div id="s4-b2" class="card badge" style="left:1480px; top:370px"><div class="bg"></div><div class="txt">2</div></div>
+          <div id="s4-say" class="card say" style="left:711px; top:420px"><div class="bg"></div><div class="txt">hungry!</div></div>
+        </div>
+      </section>
+
+      <!-- ============ voice-over ============ -->
+      <audio id="vo-title" src="audio/vo/title.wav" data-start="0.7" data-duration="2.1" data-track-index="10"></audio>
+      <audio id="vo-egg" src="audio/vo/egg.wav" data-start="5.0" data-duration="2.1" data-track-index="10"></audio>
+      <audio id="vo-pop" src="audio/vo/pop.wav" data-start="9.2" data-duration="2.65" data-track-index="10"></audio>
+      <audio id="vo-hello" src="audio/vo/hello.wav" data-start="12.3" data-duration="1.9" data-track-index="10"></audio>
+      <audio id="vo-mon" src="audio/vo/mon.wav" data-start="15.6" data-duration="1.75" data-track-index="10"></audio>
+      <audio id="vo-mon_q" src="audio/vo/mon_q.wav" data-start="18.1" data-duration="1.05" data-track-index="10"></audio>
+      <audio id="vo-mon_a" src="audio/vo/mon_a.wav" data-start="21.4" data-duration="1.92" data-track-index="10"></audio>
+      <audio id="vo-apple" src="audio/vo/apple.wav" data-start="23.7" data-duration="0.9" data-track-index="10"></audio>
+      <audio id="vo-one" src="audio/vo/one.wav" data-start="25.0" data-duration="0.82" data-track-index="10"></audio>
+      <audio id="vo-mon_n" src="audio/vo/mon_n.wav" data-start="26.1" data-duration="1.09" data-track-index="10"></audio>
+      <audio id="vo-munch" src="audio/vo/munch.wav" data-start="27.8" data-duration="1.65" data-track-index="10"></audio>
+      <audio id="vo-mon_h" src="audio/vo/mon_h.wav" data-start="29.9" data-duration="1.73" data-track-index="10"></audio>
+      <audio id="vo-tue" src="audio/vo/tue.wav" data-start="32.6" data-duration="1.9" data-track-index="10"></audio>
+      <audio id="vo-tue_q" src="audio/vo/tue_q.wav" data-start="35.2" data-duration="1.05" data-track-index="10"></audio>
+      <audio id="vo-tue_a" src="audio/vo/tue_a.wav" data-start="38.5" data-duration="1.73" data-track-index="10"></audio>
+      <audio id="vo-pear" src="audio/vo/pear.wav" data-start="40.6" data-duration="0.94" data-track-index="10"></audio>
+      <audio id="vo-count" src="audio/vo/count.wav" data-start="41.9" data-duration="1.2" data-track-index="10"></audio>
+      <audio id="vo-one2" src="audio/vo/one2.wav" data-start="43.3" data-duration="0.82" data-track-index="10"></audio>
+      <audio id="vo-two" src="audio/vo/two.wav" data-start="44.5" data-duration="0.9" data-track-index="10"></audio>
+      <audio id="vo-tue_n" src="audio/vo/tue_n.wav" data-start="45.8" data-duration="1.14" data-track-index="10"></audio>
+      <audio id="vo-munch2" src="audio/vo/munch2.wav" data-start="47.3" data-duration="1.65" data-track-index="10"></audio>
+      <audio id="vo-tue_h" src="audio/vo/tue_h.wav" data-start="49.3" data-duration="1.24" data-track-index="10"></audio>
+    </div>
+
+    <script>
+      // ---------- SVG builders (deterministic, no randomness) ----------
+      const SEG_GREENS = ["#3f9b3a", "#6cbf45", "#2e7f3c", "#58b04a", "#3a8d36", "#79c652", "#2f8a40", "#5fb84b"];
+
+      function caterpillar(id, segs = 8) {
+        let s = `<g id="${id}">`;
+        // legs + body segments (tail first so the head sits on top)
+        for (let i = 0; i < segs; i++) {
+          const cx = 40 + i * 62;
+          const r = 50 + (i % 3) * 3;
+          s += `<g class="${id}-seg">`;
+          s += `<rect x="${cx - 18}" y="34" width="13" height="30" rx="6" fill="#5a3418" />`;
+          s += `<rect x="${cx + 8}" y="34" width="13" height="30" rx="6" fill="#5a3418" />`;
+          s += `<circle cx="${cx}" cy="0" r="${r}" fill="${SEG_GREENS[i % SEG_GREENS.length]}" filter="url(#tex)" />`;
+          s += `<path d="M${cx - 20} ${-r + 4} l-4 -14 M${cx} ${-r} l0 -15 M${cx + 20} ${-r + 4} l4 -14" stroke="#e9b23a" stroke-width="3" stroke-linecap="round" />`;
+          s += `</g>`;
+        }
+        const hx = 40 + segs * 62 + 18, hy = -28;
+        s += `<g class="${id}-head">`;
+        s += `<path d="M${hx - 22} ${hy - 58} C ${hx - 40} ${hy - 110}, ${hx - 46} ${hy - 140}, ${hx - 34} ${hy - 160}" stroke="#7a4fb0" stroke-width="16" stroke-linecap="round" fill="none" />`;
+        s += `<path d="M${hx + 14} ${hy - 62} C ${hx + 14} ${hy - 115}, ${hx + 22} ${hy - 145}, ${hx + 40} ${hy - 162}" stroke="#8a5cc4" stroke-width="16" stroke-linecap="round" fill="none" />`;
+        s += `<circle cx="${hx}" cy="${hy}" r="74" fill="#d8302a" filter="url(#tex2)" />`;
+        // eyes
+        s += `<g class="${id}-eyes">`;
+        for (const ex of [hx - 26, hx + 22]) {
+          s += `<ellipse cx="${ex}" cy="${hy - 12}" rx="19" ry="27" fill="#f2d43a" />`;
+          s += `<ellipse cx="${ex}" cy="${hy - 12}" rx="11" ry="17" fill="#2f8f3f" />`;
+          s += `<ellipse cx="${ex + 2}" cy="${hy - 10}" rx="5" ry="8" fill="#16301a" />`;
+          s += `<circle cx="${ex + 5}" cy="${hy - 17}" r="3" fill="#fff" />`;
+        }
+        s += `</g>`;
+        s += `<circle cx="${hx - 2}" cy="${hy + 22}" r="6" fill="#2f8f3f" />`;
+        s += `<path class="${id}-smile" d="M${hx - 26} ${hy + 36} Q ${hx - 2} ${hy + 60} ${hx + 24} ${hy + 36}" stroke="#4a1410" stroke-width="7" stroke-linecap="round" fill="none" />`;
+        s += `<ellipse class="${id}-open" cx="${hx - 1}" cy="${hy + 45}" rx="17" ry="15" fill="#4a1410" opacity="0" />`;
+        s += `<path class="${id}-frown" d="M${hx - 22} ${hy + 50} Q ${hx - 2} ${hy + 34} ${hx + 20} ${hy + 50}" stroke="#4a1410" stroke-width="7" stroke-linecap="round" fill="none" opacity="0" />`;
+        s += `<circle cx="${hx - 44}" cy="${hy + 30}" r="12" fill="#f27a7a" opacity="0.8" />`;
+        s += `<circle cx="${hx + 44}" cy="${hy + 26}" r="12" fill="#f27a7a" opacity="0.8" />`;
+        s += `</g></g>`;
+        return s;
+      }
+
+      const ground = (y = 860) =>
+        `<path d="M-40 ${y + 10} C 300 ${y - 30}, 620 ${y + 20}, 960 ${y - 6} S 1600 ${y - 26}, 1980 ${y + 4} L1980 1100 L-40 1100Z" fill="#8a5a2b" filter="url(#tex2)" />` +
+        `<path d="M-40 ${y + 70} C 400 ${y + 40}, 800 ${y + 90}, 1200 ${y + 60} S 1700 ${y + 50}, 1980 ${y + 80} L1980 1100 L-40 1100Z" fill="#6e4520" filter="url(#tex)" />`;
+
+      const grain = `<rect width="1920" height="1080" filter="url(#grain)" />`;
+
+      function sun(id, cx, cy) {
+        let s = `<g transform="translate(${cx} ${cy})"><g id="${id}"><g class="${id}-rays">`;
+        for (let i = 0; i < 12; i++) {
+          const a = i * 30;
+          s += `<rect x="-14" y="-215" width="28" height="78" rx="8" fill="${i % 2 ? "#f6b52e" : "#ef8a23"}" transform="rotate(${a})" filter="url(#tex)" />`;
+        }
+        s += `</g><circle r="120" fill="#f7a826" filter="url(#tex)" />`;
+        s += `<circle cx="-38" cy="-12" r="9" fill="#7a3d0e" /><circle cx="38" cy="-12" r="9" fill="#7a3d0e" />`;
+        s += `<path d="M-36 30 Q0 62 36 30" stroke="#7a3d0e" stroke-width="8" fill="none" stroke-linecap="round" />`;
+        s += `<circle cx="-62" cy="22" r="13" fill="#f2735a" opacity="0.6" /><circle cx="62" cy="22" r="13" fill="#f2735a" opacity="0.6" />`;
+        s += `</g></g>`;
+        return s;
+      }
+
+      const APPLE = "M0,-62 C 40,-98 112,-64 102,10 C 94,82 42,112 0,92 C -42,112 -94,82 -102,10 C -112,-64 -40,-98 0,-62Z";
+      const PEAR = "M0,-112 C 30,-112 42,-72 46,-42 C 52,-10 96,12 96,62 C 96,118 50,138 0,138 C -50,138 -96,118 -96,62 C -96,12 -52,-10 -46,-42 C -42,-72 -30,-112 0,-112Z";
+
+      // fruit with a bite mask: bites are circles in the mask that grow from r=0
+      function fruit(id, kind, bites) {
+        const body = kind === "apple"
+          ? `<path d="${APPLE}" fill="#d9312b" filter="url(#tex2)" /><path d="M-48 -30 C -60 0, -58 30, -44 52" stroke="#f26a5c" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.7" />`
+          : `<path d="${PEAR}" fill="#9cc63d" filter="url(#tex)" /><path d="M-50 40 C -60 70, -52 100, -36 116" stroke="#c9e06a" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8" />`;
+        const top = kind === "apple" ? -70 : -112;
+        let m = `<mask id="${id}-m" maskUnits="userSpaceOnUse" x="-200" y="-260" width="400" height="460"><rect x="-200" y="-260" width="400" height="460" fill="#fff" />`;
+        bites.forEach((b, i) => (m += `<circle class="${id}-bite" cx="${b[0]}" cy="${b[1]}" r="0" fill="#000" />`));
+        m += `</mask>`;
+        return `<g id="${id}">${m}<g mask="url(#${id}-m)">` +
+          `<rect x="-6" y="${top - 46}" width="13" height="50" rx="6" fill="#6b3f1c" transform="rotate(8)" />` +
+          `<ellipse cx="34" cy="${top - 30}" rx="40" ry="17" fill="#3f9b3a" transform="rotate(-24 34 ${top - 30})" filter="url(#tex)" />` +
+          body + `</g></g>`;
+      }
+
+      // ---------- build scene DOM ----------
+      document.getElementById("s1-svg").innerHTML =
+        ground(900) +
+        `<g transform="translate(-800 815) scale(0.8)"><g id="s1-cat-move">${caterpillar("c1")}</g></g>`;
+
+      document.getElementById("s2-svg").innerHTML =
+        `<rect id="s2-night" width="1920" height="1080" fill="#22386e" filter="url(#soft)" />` +
+        `<g id="s2-stars">` +
+        [[260, 160], [520, 90], [760, 230], [1180, 120], [1450, 260], [380, 380], [1700, 420]]
+          .map(([x, y], i) => `<path d="M${x} ${y - 18} L${x + 6} ${y - 6} L${x + 18} ${y} L${x + 6} ${y + 6} L${x} ${y + 18} L${x - 6} ${y + 6} L${x - 18} ${y} L${x - 6} ${y - 6}Z" fill="#fff3b0" />`).join("") +
+        `</g>` +
+        `<g transform="translate(1560 210)"><g id="s2-moon"><circle r="110" fill="#f7eaa0" filter="url(#tex)" /><circle cx="52" cy="-30" r="100" fill="#22386e" /></g></g>` +
+        sun("s2-sun", 1580, 230) +
+        `<g transform="translate(960 760)"><g id="s2-leaf">` +
+        `<path d="M-620 120 C -420 -170, 300 -230, 640 -40 C 420 210, -300 260, -620 120Z" fill="#3c9a3a" filter="url(#tex)" />` +
+        `<path d="M-600 115 C -200 30, 250 -10, 620 -40" stroke="#2b6e2c" stroke-width="10" fill="none" stroke-linecap="round" />` +
+        `<path d="M-300 70 L-200 -60 M-40 40 L 60 -110 M 220 10 L 300 -90 M-200 80 L-120 170 M 60 45 L 150 150" stroke="#2b6e2c" stroke-width="7" fill="none" stroke-linecap="round" />` +
+        `</g></g>` +
+        `<g transform="translate(1010 590)"><g id="s2-egg"><ellipse rx="52" ry="66" fill="#fbf7e8" stroke="#e8dfc3" stroke-width="4" /><ellipse cx="-16" cy="-22" rx="12" ry="18" fill="#ffffff" /></g></g>` +
+        `<g transform="translate(760 600) scale(0.6)"><g id="s2-cat">${caterpillar("c2", 6)}</g></g>`;
+
+      document.getElementById("s3-svg").innerHTML =
+        grain + ground() +
+        `<g transform="translate(1180 672) scale(1.7)"><g id="s3-apple-in">${fruit("a1", "apple", [[-96, -10], [-92, 40], [-80, -50]])}</g></g>` +
+        `<g transform="translate(60 780)"><g id="s3-cat-move">${caterpillar("c3")}</g></g>`;
+
+      document.getElementById("s4-svg").innerHTML =
+        grain + ground() +
+        `<g transform="translate(1060 694) scale(1.2)"><g id="s4-p1-in">${fruit("p1", "pear", [[-94, 50], [-90, 100], [-70, 10]])}</g></g>` +
+        `<g transform="translate(1420 694) scale(1.2)"><g id="s4-p2-in">${fruit("p2", "pear", [[-10, 60]])}</g></g>` +
+        `<g transform="translate(60 780)"><g id="s4-cat-move">${caterpillar("c4")}</g></g>`;
+
+      // ---------- timeline ----------
+      const tl = gsap.timeline({ paused: true });
+
+      // crawl: segments ripple up and down for `dur` seconds
+      function crawl(id, start, dur, amp = 14) {
+        const segs = document.querySelectorAll("." + id + "-seg");
+        const cycle = 0.5;
+        const reps = Math.max(0, Math.floor(dur / cycle) * 2 - 1);
+        segs.forEach((seg, i) => {
+          tl.to(seg, { y: -amp, duration: cycle / 2, ease: "sine.inOut", yoyo: true, repeat: reps }, start + i * 0.06);
+        });
+        tl.to("#" + id + " ." + id + "-head", { y: -amp * 0.6, duration: cycle / 2, ease: "sine.inOut", yoyo: true, repeat: reps }, start + segs.length * 0.06);
+      }
+      function blink(id, t) {
+        tl.to("." + id + "-eyes", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.08, yoyo: true, repeat: 1 }, t);
+      }
+      function mouth(id, which, t) {
+        for (const m of ["smile", "open", "frown"]) tl.set("." + id + "-" + m, { opacity: m === which ? 1 : 0 }, t);
+      }
+      function popIn(sel, t, from = 0.3) {
+        tl.fromTo(sel, { scale: from, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.2)" }, t);
+      }
+      function popOut(sel, t) {
+        tl.to(sel, { scale: 0.6, opacity: 0, duration: 0.3, ease: "power2.in" }, t);
+      }
+      function pageIn(sel, t) {
+        tl.fromTo(sel, { xPercent: 100 }, { xPercent: 0, duration: 0.6, ease: "power3.inOut" }, t);
+      }
+      // waiting dots: fill one by one during the answer pause
+      function waitDots(sel, t, dur) {
+        popIn(sel, t, 0.6);
+        document.querySelectorAll(sel + " i").forEach((dot, i) => {
+          tl.fromTo(dot, { scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(3)" }, t + 0.2 + (i * (dur - 0.4)) / 3);
+        });
+        popOut(sel, t + dur);
+      }
+      function munch(cat, biteSel, t) {
+        const bites = document.querySelectorAll(biteSel);
+        bites.forEach((b, i) => {
+          mouth(cat, "open", t + i * 0.5);
+          tl.to("#" + cat + " ." + cat + "-head", { x: 14, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.out" }, t + i * 0.5);
+          tl.to(b, { attr: { r: 34 }, duration: 0.18, ease: "back.out(2)" }, t + i * 0.5 + 0.12);
+          mouth(cat, "smile", t + i * 0.5 + 0.3);
+        });
+      }
+
+      // ---- scene 1: title ----
+      document.querySelectorAll(".tw").forEach((w, i) => {
+        tl.fromTo(w, { y: 80, scale: 0.4, opacity: 0, rotation: i % 2 ? 8 : -8 }, { y: 0, scale: 1, opacity: 1, rotation: i % 2 ? -2 : 2, duration: 0.6, ease: "back.out(2)" }, 0.3 + i * 0.25);
+      });
+      tl.fromTo("#s1-cat-move", { x: 0 }, { x: 2050, duration: 4.4, ease: "none" }, 0);
+      crawl("c1", 0, 4.4);
+      blink("c1", 2.2);
+
+      // ---- scene 2: egg, night -> day, hatch ----
+      pageIn("#s2-page", 4.0);
+      tl.fromTo("#s2-egg", { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "bounce.out" }, 4.8);
+      tl.to("#s2-stars path", { scale: 1.35, transformOrigin: "50% 50%", duration: 0.5, yoyo: true, repeat: 5, stagger: 0.15, ease: "sine.inOut" }, 4.6);
+      // day breaks
+      tl.to("#s2-moon", { y: 500, opacity: 0, duration: 1.2, ease: "power2.in" }, 7.4);
+      tl.to("#s2-night, #s2-stars", { opacity: 0, duration: 1.2, ease: "power1.inOut" }, 7.6);
+      tl.fromTo("#s2-sun", { y: 520, opacity: 0 }, { y: 0, opacity: 1, duration: 1.4, ease: "back.out(1.2)" }, 7.8);
+      tl.to(".s2-sun-rays", { rotation: 30, transformOrigin: "50% 50%", duration: 7, ease: "none" }, 8.0);
+      // egg wobble + pop
+      tl.to("#s2-egg", { rotation: 12, transformOrigin: "50% 100%", duration: 0.12, yoyo: true, repeat: 5, ease: "sine.inOut" }, 8.5);
+      tl.to("#s2-egg", { scale: 1.6, opacity: 0, duration: 0.25, ease: "power2.out" }, 9.3);
+      tl.fromTo("#s2-cat", { scale: 0, opacity: 0, transformOrigin: "60% 60%" }, { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(2.4)" }, 9.35);
+      crawl("c2", 10.2, 2.0, 12);
+      tl.to("#s2-cat", { x: 120, duration: 2.0, ease: "power1.inOut" }, 10.2);
+      blink("c2", 11.6);
+      popIn("#s2-say", 12.3);
+      tl.to(".c2-head", { rotation: -8, transformOrigin: "80% 80%", duration: 0.25, yoyo: true, repeat: 3, ease: "sine.inOut" }, 12.4);
+
+      // ---- scene 3: Monday / apple ----
+      pageIn("#s3-page", 15.0);
+      popIn("#s3-day", 15.5);
+      tl.fromTo("#s3-apple-in", { y: -700 }, { y: 0, duration: 0.9, ease: "bounce.out" }, 16.9);
+      crawl("c3", 15.4, 1.8);
+      tl.fromTo("#s3-cat-move", { x: -300 }, { x: 0, duration: 1.8, ease: "power1.out" }, 15.4);
+      // question + think pause
+      popIn("#s3-q", 18.0);
+      tl.to("#s3-q .txt", { rotation: 10, duration: 0.3, yoyo: true, repeat: 5, ease: "sine.inOut" }, 18.6);
+      waitDots("#s3-dots", 19.2, 2.0);
+      blink("c3", 19.6);
+      popOut("#s3-q", 21.2);
+      // answer: word card
+      popIn("#s3-word", 21.6);
+      tl.to("#s3-apple-in", { scale: 1.08, transformOrigin: "50% 100%", duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, 21.6);
+      tl.to("#s3-word .txt", { scale: 1.18, duration: 0.22, yoyo: true, repeat: 1, ease: "power2.out" }, 23.7);
+      // count: one
+      popIn("#s3-badge", 25.0);
+      tl.to("#s3-apple-in", { y: -30, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, 25.0);
+      tl.to("#s3-badge .bg", { scale: 1.12, duration: 0.2, yoyo: true, repeat: 1 }, 26.2);
+      // munch
+      popOut("#s3-word", 27.2);
+      popOut("#s3-badge", 27.2);
+      crawl("c3", 27.0, 0.8);
+      tl.to("#s3-cat-move", { x: 342, duration: 0.8, ease: "power1.inOut" }, 27.0);
+      munch("c3", ".a1-bite", 27.9);
+      tl.to("#s3-apple-in", { scale: 0, opacity: 0, transformOrigin: "50% 100%", duration: 0.4, ease: "back.in(2)" }, 29.6);
+      // still hungry
+      mouth("c3", "frown", 30.0);
+      popIn("#s3-say", 30.2);
+      tl.to("#s3-cat-move", { x: 357, duration: 0.07, yoyo: true, repeat: 7, ease: "none" }, 30.4);
+      blink("c3", 31.4);
+
+      // ---- scene 4: Tuesday / pears ----
+      pageIn("#s4-page", 32.0);
+      popIn("#s4-day", 32.6);
+      crawl("c4", 32.4, 1.8);
+      tl.fromTo("#s4-cat-move", { x: -300 }, { x: 0, duration: 1.8, ease: "power1.out" }, 32.4);
+      tl.fromTo("#s4-p1-in", { y: -700 }, { y: 0, duration: 0.9, ease: "bounce.out" }, 34.0);
+      tl.fromTo("#s4-p2-in", { y: -700 }, { y: 0, duration: 0.9, ease: "bounce.out" }, 34.3);
+      popIn("#s4-q", 35.1);
+      tl.to("#s4-q .txt", { rotation: 10, duration: 0.3, yoyo: true, repeat: 5, ease: "sine.inOut" }, 35.7);
+      waitDots("#s4-dots", 36.2, 2.0);
+      blink("c4", 36.8);
+      popOut("#s4-q", 38.2);
+      popIn("#s4-word", 38.6);
+      tl.to("#s4-word .txt", { scale: 1.18, duration: 0.22, yoyo: true, repeat: 1, ease: "power2.out" }, 40.6);
+      // counting
+      tl.to("#s4-p1-in", { y: -40, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, 43.3);
+      popIn("#s4-b1", 43.3);
+      tl.to("#s4-p2-in", { y: -40, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, 44.5);
+      popIn("#s4-b2", 44.5);
+      tl.to("#s4-b1 .bg, #s4-b2 .bg", { scale: 1.12, duration: 0.2, yoyo: true, repeat: 1 }, 45.8);
+      // munch
+      popOut("#s4-word", 47.0);
+      popOut("#s4-b1", 47.0);
+      popOut("#s4-b2", 47.0);
+      crawl("c4", 46.9, 0.8);
+      tl.to("#s4-cat-move", { x: 245, duration: 0.8, ease: "power1.inOut" }, 46.9);
+      munch("c4", ".p1-bite", 47.6);
+      tl.to(".p2-bite", { attr: { r: 30 }, duration: 0.2, ease: "back.out(2)" }, 48.9);
+      tl.to("#s4-p1-in, #s4-p2-in", { scale: 0, opacity: 0, transformOrigin: "50% 100%", duration: 0.4, stagger: 0.15, ease: "back.in(2)" }, 49.2);
+      mouth("c4", "frown", 49.3);
+      popIn("#s4-say", 49.4);
+      tl.to("#s4-cat-move", { x: 260, duration: 0.07, yoyo: true, repeat: 7, ease: "none" }, 49.7);
+      blink("c4", 50.8);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
