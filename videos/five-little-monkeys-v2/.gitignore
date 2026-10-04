@@ -1,0 +1,7 @@
+snapshots/
+renders/
+assets/units/
+assets/vocal_only.wav
+work-*/
+.*hf-transaction*/
+render.log

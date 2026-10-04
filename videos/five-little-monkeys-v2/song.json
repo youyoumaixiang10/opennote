@@ -1,0 +1,1024 @@
+{
+ "bpm": 112,
+ "beat": 0.5357142857142857,
+ "bar": 2.142857142857143,
+ "total": 124.179,
+ "events": [
+  {
+   "name": "intro",
+   "t": 0
+  },
+  {
+   "name": "verse5",
+   "t": 8.571
+  },
+  {
+   "name": "break5",
+   "t": 26.25
+  },
+  {
+   "name": "verse4",
+   "t": 28.393
+  },
+  {
+   "name": "break4",
+   "t": 46.071
+  },
+  {
+   "name": "verse3",
+   "t": 48.214
+  },
+  {
+   "name": "break3",
+   "t": 65.893
+  },
+  {
+   "name": "verse2",
+   "t": 68.036
+  },
+  {
+   "name": "break2",
+   "t": 85.714
+  },
+  {
+   "name": "verse1",
+   "t": 87.857
+  },
+  {
+   "name": "break1",
+   "t": 105.536
+  },
+  {
+   "name": "ending",
+   "t": 107.679
+  }
+ ],
+ "lines": [
+  {
+   "tag": "v5l1",
+   "start": 8.571,
+   "end": 13.125,
+   "words": [
+    {
+     "text": "Five",
+     "start": 8.571,
+     "end": 9.107
+    },
+    {
+     "text": "little",
+     "start": 9.107,
+     "end": 9.643
+    },
+    {
+     "text": "monkeys",
+     "start": 9.643,
+     "end": 10.179
+    },
+    {
+     "text": "on",
+     "start": 10.179,
+     "end": 10.446
+    },
+    {
+     "text": "the",
+     "start": 10.446,
+     "end": 10.714
+    },
+    {
+     "text": "bed",
+     "start": 10.714,
+     "end": 11.25
+    },
+    {
+     "text": "bouncing",
+     "start": 11.518,
+     "end": 12.054
+    },
+    {
+     "text": "high!",
+     "start": 12.054,
+     "end": 12.857
+    }
+   ]
+  },
+  {
+   "tag": "v5l2",
+   "start": 13.125,
+   "end": 17.411,
+   "words": [
+    {
+     "text": "One",
+     "start": 13.125,
+     "end": 13.661
+    },
+    {
+     "text": "fell",
+     "start": 13.661,
+     "end": 13.929
+    },
+    {
+     "text": "off,",
+     "start": 13.929,
+     "end": 14.196
+    },
+    {
+     "text": "oh",
+     "start": 14.196,
+     "end": 14.464
+    },
+    {
+     "text": "no!",
+     "start": 14.464,
+     "end": 15.268
+    },
+    {
+     "text": "Bump!",
+     "start": 15.268,
+     "end": 15.804
+    },
+    {
+     "text": "Oh",
+     "start": 15.804,
+     "end": 16.071
+    },
+    {
+     "text": "my!",
+     "start": 16.071,
+     "end": 16.875
+    }
+   ]
+  },
+  {
+   "tag": "v5l3",
+   "start": 17.411,
+   "end": 21.696,
+   "words": [
+    {
+     "text": "Mama",
+     "start": 17.411,
+     "end": 17.946
+    },
+    {
+     "text": "called",
+     "start": 17.946,
+     "end": 18.214
+    },
+    {
+     "text": "the",
+     "start": 18.214,
+     "end": 18.482
+    },
+    {
+     "text": "doctor:",
+     "start": 18.482,
+     "end": 19.018
+    },
+    {
+     "text": "ring-a-ling-a-ling!",
+     "start": 19.554,
+     "end": 21.429
+    }
+   ]
+  },
+  {
+   "tag": "v5l4",
+   "start": 21.696,
+   "end": 26.25,
+   "words": [
+    {
+     "text": "No",
+     "start": 21.696,
+     "end": 21.964
+    },
+    {
+     "text": "more",
+     "start": 21.964,
+     "end": 22.232
+    },
+    {
+     "text": "jumping,",
+     "start": 22.232,
+     "end": 22.768
+    },
+    {
+     "text": "monkeys!",
+     "start": 22.768,
+     "end": 23.304
+    },
+    {
+     "text": "Beds",
+     "start": 23.839,
+     "end": 24.107
+    },
+    {
+     "text": "are",
+     "start": 24.107,
+     "end": 24.375
+    },
+    {
+     "text": "for",
+     "start": 24.375,
+     "end": 24.643
+    },
+    {
+     "text": "sleeping!",
+     "start": 24.643,
+     "end": 25.982
+    }
+   ]
+  },
+  {
+   "tag": "v4l1",
+   "start": 28.393,
+   "end": 32.946,
+   "words": [
+    {
+     "text": "Four",
+     "start": 28.393,
+     "end": 28.929
+    },
+    {
+     "text": "little",
+     "start": 28.929,
+     "end": 29.464
+    },
+    {
+     "text": "monkeys",
+     "start": 29.464,
+     "end": 30.0
+    },
+    {
+     "text": "on",
+     "start": 30.0,
+     "end": 30.268
+    },
+    {
+     "text": "the",
+     "start": 30.268,
+     "end": 30.536
+    },
+    {
+     "text": "bed",
+     "start": 30.536,
+     "end": 31.071
+    },
+    {
+     "text": "bouncing",
+     "start": 31.339,
+     "end": 31.875
+    },
+    {
+     "text": "high!",
+     "start": 31.875,
+     "end": 32.679
+    }
+   ]
+  },
+  {
+   "tag": "v4l2",
+   "start": 32.946,
+   "end": 37.232,
+   "words": [
+    {
+     "text": "One",
+     "start": 32.946,
+     "end": 33.482
+    },
+    {
+     "text": "fell",
+     "start": 33.482,
+     "end": 33.75
+    },
+    {
+     "text": "off,",
+     "start": 33.75,
+     "end": 34.018
+    },
+    {
+     "text": "oh",
+     "start": 34.018,
+     "end": 34.286
+    },
+    {
+     "text": "no!",
+     "start": 34.286,
+     "end": 35.089
+    },
+    {
+     "text": "Bump!",
+     "start": 35.089,
+     "end": 35.625
+    },
+    {
+     "text": "Oh",
+     "start": 35.625,
+     "end": 35.893
+    },
+    {
+     "text": "my!",
+     "start": 35.893,
+     "end": 36.696
+    }
+   ]
+  },
+  {
+   "tag": "v4l3",
+   "start": 37.232,
+   "end": 41.518,
+   "words": [
+    {
+     "text": "Mama",
+     "start": 37.232,
+     "end": 37.768
+    },
+    {
+     "text": "called",
+     "start": 37.768,
+     "end": 38.036
+    },
+    {
+     "text": "the",
+     "start": 38.036,
+     "end": 38.304
+    },
+    {
+     "text": "doctor:",
+     "start": 38.304,
+     "end": 38.839
+    },
+    {
+     "text": "ring-a-ling-a-ling!",
+     "start": 39.375,
+     "end": 41.25
+    }
+   ]
+  },
+  {
+   "tag": "v4l4",
+   "start": 41.518,
+   "end": 46.071,
+   "words": [
+    {
+     "text": "No",
+     "start": 41.518,
+     "end": 41.786
+    },
+    {
+     "text": "more",
+     "start": 41.786,
+     "end": 42.054
+    },
+    {
+     "text": "jumping,",
+     "start": 42.054,
+     "end": 42.589
+    },
+    {
+     "text": "monkeys!",
+     "start": 42.589,
+     "end": 43.125
+    },
+    {
+     "text": "Beds",
+     "start": 43.661,
+     "end": 43.929
+    },
+    {
+     "text": "are",
+     "start": 43.929,
+     "end": 44.196
+    },
+    {
+     "text": "for",
+     "start": 44.196,
+     "end": 44.464
+    },
+    {
+     "text": "sleeping!",
+     "start": 44.464,
+     "end": 45.804
+    }
+   ]
+  },
+  {
+   "tag": "v3l1",
+   "start": 48.214,
+   "end": 52.768,
+   "words": [
+    {
+     "text": "Three",
+     "start": 48.214,
+     "end": 48.75
+    },
+    {
+     "text": "little",
+     "start": 48.75,
+     "end": 49.286
+    },
+    {
+     "text": "monkeys",
+     "start": 49.286,
+     "end": 49.821
+    },
+    {
+     "text": "on",
+     "start": 49.821,
+     "end": 50.089
+    },
+    {
+     "text": "the",
+     "start": 50.089,
+     "end": 50.357
+    },
+    {
+     "text": "bed",
+     "start": 50.357,
+     "end": 50.893
+    },
+    {
+     "text": "bouncing",
+     "start": 51.161,
+     "end": 51.696
+    },
+    {
+     "text": "high!",
+     "start": 51.696,
+     "end": 52.5
+    }
+   ]
+  },
+  {
+   "tag": "v3l2",
+   "start": 52.768,
+   "end": 57.054,
+   "words": [
+    {
+     "text": "One",
+     "start": 52.768,
+     "end": 53.304
+    },
+    {
+     "text": "fell",
+     "start": 53.304,
+     "end": 53.571
+    },
+    {
+     "text": "off,",
+     "start": 53.571,
+     "end": 53.839
+    },
+    {
+     "text": "oh",
+     "start": 53.839,
+     "end": 54.107
+    },
+    {
+     "text": "no!",
+     "start": 54.107,
+     "end": 54.911
+    },
+    {
+     "text": "Bump!",
+     "start": 54.911,
+     "end": 55.446
+    },
+    {
+     "text": "Oh",
+     "start": 55.446,
+     "end": 55.714
+    },
+    {
+     "text": "my!",
+     "start": 55.714,
+     "end": 56.518
+    }
+   ]
+  },
+  {
+   "tag": "v3l3",
+   "start": 57.054,
+   "end": 61.339,
+   "words": [
+    {
+     "text": "Mama",
+     "start": 57.054,
+     "end": 57.589
+    },
+    {
+     "text": "called",
+     "start": 57.589,
+     "end": 57.857
+    },
+    {
+     "text": "the",
+     "start": 57.857,
+     "end": 58.125
+    },
+    {
+     "text": "doctor:",
+     "start": 58.125,
+     "end": 58.661
+    },
+    {
+     "text": "ring-a-ling-a-ling!",
+     "start": 59.196,
+     "end": 61.071
+    }
+   ]
+  },
+  {
+   "tag": "v3l4",
+   "start": 61.339,
+   "end": 65.893,
+   "words": [
+    {
+     "text": "No",
+     "start": 61.339,
+     "end": 61.607
+    },
+    {
+     "text": "more",
+     "start": 61.607,
+     "end": 61.875
+    },
+    {
+     "text": "jumping,",
+     "start": 61.875,
+     "end": 62.411
+    },
+    {
+     "text": "monkeys!",
+     "start": 62.411,
+     "end": 62.946
+    },
+    {
+     "text": "Beds",
+     "start": 63.482,
+     "end": 63.75
+    },
+    {
+     "text": "are",
+     "start": 63.75,
+     "end": 64.018
+    },
+    {
+     "text": "for",
+     "start": 64.018,
+     "end": 64.286
+    },
+    {
+     "text": "sleeping!",
+     "start": 64.286,
+     "end": 65.625
+    }
+   ]
+  },
+  {
+   "tag": "v2l1",
+   "start": 68.036,
+   "end": 72.589,
+   "words": [
+    {
+     "text": "Two",
+     "start": 68.036,
+     "end": 68.571
+    },
+    {
+     "text": "little",
+     "start": 68.571,
+     "end": 69.107
+    },
+    {
+     "text": "monkeys",
+     "start": 69.107,
+     "end": 69.643
+    },
+    {
+     "text": "on",
+     "start": 69.643,
+     "end": 69.911
+    },
+    {
+     "text": "the",
+     "start": 69.911,
+     "end": 70.179
+    },
+    {
+     "text": "bed",
+     "start": 70.179,
+     "end": 70.714
+    },
+    {
+     "text": "bouncing",
+     "start": 70.982,
+     "end": 71.518
+    },
+    {
+     "text": "high!",
+     "start": 71.518,
+     "end": 72.321
+    }
+   ]
+  },
+  {
+   "tag": "v2l2",
+   "start": 72.589,
+   "end": 76.875,
+   "words": [
+    {
+     "text": "One",
+     "start": 72.589,
+     "end": 73.125
+    },
+    {
+     "text": "fell",
+     "start": 73.125,
+     "end": 73.393
+    },
+    {
+     "text": "off,",
+     "start": 73.393,
+     "end": 73.661
+    },
+    {
+     "text": "oh",
+     "start": 73.661,
+     "end": 73.929
+    },
+    {
+     "text": "no!",
+     "start": 73.929,
+     "end": 74.732
+    },
+    {
+     "text": "Bump!",
+     "start": 74.732,
+     "end": 75.268
+    },
+    {
+     "text": "Oh",
+     "start": 75.268,
+     "end": 75.536
+    },
+    {
+     "text": "my!",
+     "start": 75.536,
+     "end": 76.339
+    }
+   ]
+  },
+  {
+   "tag": "v2l3",
+   "start": 76.875,
+   "end": 81.161,
+   "words": [
+    {
+     "text": "Mama",
+     "start": 76.875,
+     "end": 77.411
+    },
+    {
+     "text": "called",
+     "start": 77.411,
+     "end": 77.679
+    },
+    {
+     "text": "the",
+     "start": 77.679,
+     "end": 77.946
+    },
+    {
+     "text": "doctor:",
+     "start": 77.946,
+     "end": 78.482
+    },
+    {
+     "text": "ring-a-ling-a-ling!",
+     "start": 79.018,
+     "end": 80.893
+    }
+   ]
+  },
+  {
+   "tag": "v2l4",
+   "start": 81.161,
+   "end": 85.714,
+   "words": [
+    {
+     "text": "No",
+     "start": 81.161,
+     "end": 81.429
+    },
+    {
+     "text": "more",
+     "start": 81.429,
+     "end": 81.696
+    },
+    {
+     "text": "jumping,",
+     "start": 81.696,
+     "end": 82.232
+    },
+    {
+     "text": "monkeys!",
+     "start": 82.232,
+     "end": 82.768
+    },
+    {
+     "text": "Beds",
+     "start": 83.304,
+     "end": 83.571
+    },
+    {
+     "text": "are",
+     "start": 83.571,
+     "end": 83.839
+    },
+    {
+     "text": "for",
+     "start": 83.839,
+     "end": 84.107
+    },
+    {
+     "text": "sleeping!",
+     "start": 84.107,
+     "end": 85.446
+    }
+   ]
+  },
+  {
+   "tag": "v1l1",
+   "start": 87.857,
+   "end": 92.411,
+   "words": [
+    {
+     "text": "One",
+     "start": 87.857,
+     "end": 88.393
+    },
+    {
+     "text": "little",
+     "start": 88.393,
+     "end": 88.929
+    },
+    {
+     "text": "monkey",
+     "start": 88.929,
+     "end": 89.464
+    },
+    {
+     "text": "on",
+     "start": 89.464,
+     "end": 89.732
+    },
+    {
+     "text": "the",
+     "start": 89.732,
+     "end": 90.0
+    },
+    {
+     "text": "bed",
+     "start": 90.0,
+     "end": 90.536
+    },
+    {
+     "text": "bouncing",
+     "start": 90.804,
+     "end": 91.339
+    },
+    {
+     "text": "high!",
+     "start": 91.339,
+     "end": 92.143
+    }
+   ]
+  },
+  {
+   "tag": "v1l2",
+   "start": 92.411,
+   "end": 96.696,
+   "words": [
+    {
+     "text": "One",
+     "start": 92.411,
+     "end": 92.946
+    },
+    {
+     "text": "fell",
+     "start": 92.946,
+     "end": 93.214
+    },
+    {
+     "text": "off,",
+     "start": 93.214,
+     "end": 93.482
+    },
+    {
+     "text": "oh",
+     "start": 93.482,
+     "end": 93.75
+    },
+    {
+     "text": "no!",
+     "start": 93.75,
+     "end": 94.554
+    },
+    {
+     "text": "Bump!",
+     "start": 94.554,
+     "end": 95.089
+    },
+    {
+     "text": "Oh",
+     "start": 95.089,
+     "end": 95.357
+    },
+    {
+     "text": "my!",
+     "start": 95.357,
+     "end": 96.161
+    }
+   ]
+  },
+  {
+   "tag": "v1l3",
+   "start": 96.696,
+   "end": 100.982,
+   "words": [
+    {
+     "text": "Mama",
+     "start": 96.696,
+     "end": 97.232
+    },
+    {
+     "text": "called",
+     "start": 97.232,
+     "end": 97.5
+    },
+    {
+     "text": "the",
+     "start": 97.5,
+     "end": 97.768
+    },
+    {
+     "text": "doctor:",
+     "start": 97.768,
+     "end": 98.304
+    },
+    {
+     "text": "ring-a-ling-a-ling!",
+     "start": 98.839,
+     "end": 100.714
+    }
+   ]
+  },
+  {
+   "tag": "v1l4",
+   "start": 100.982,
+   "end": 105.536,
+   "words": [
+    {
+     "text": "No",
+     "start": 100.982,
+     "end": 101.25
+    },
+    {
+     "text": "more",
+     "start": 101.25,
+     "end": 101.518
+    },
+    {
+     "text": "jumping,",
+     "start": 101.518,
+     "end": 102.054
+    },
+    {
+     "text": "monkeys!",
+     "start": 102.054,
+     "end": 102.589
+    },
+    {
+     "text": "Beds",
+     "start": 103.125,
+     "end": 103.393
+    },
+    {
+     "text": "are",
+     "start": 103.393,
+     "end": 103.661
+    },
+    {
+     "text": "for",
+     "start": 103.661,
+     "end": 103.929
+    },
+    {
+     "text": "sleeping!",
+     "start": 103.929,
+     "end": 105.268
+    }
+   ]
+  },
+  {
+   "tag": "end1",
+   "start": 107.679,
+   "end": 111.964,
+   "words": [
+    {
+     "text": "No",
+     "start": 107.679,
+     "end": 108.214
+    },
+    {
+     "text": "little",
+     "start": 108.214,
+     "end": 108.75
+    },
+    {
+     "text": "monkeys",
+     "start": 108.75,
+     "end": 109.286
+    },
+    {
+     "text": "bouncing",
+     "start": 109.286,
+     "end": 109.821
+    },
+    {
+     "text": "on",
+     "start": 109.821,
+     "end": 110.089
+    },
+    {
+     "text": "the",
+     "start": 110.089,
+     "end": 110.357
+    },
+    {
+     "text": "bed.",
+     "start": 110.357,
+     "end": 111.429
+    }
+   ]
+  },
+  {
+   "tag": "end2",
+   "start": 111.964,
+   "end": 116.25,
+   "words": [
+    {
+     "text": "Five",
+     "start": 111.964,
+     "end": 112.5
+    },
+    {
+     "text": "sleepy",
+     "start": 112.5,
+     "end": 113.036
+    },
+    {
+     "text": "monkeys,",
+     "start": 113.036,
+     "end": 113.571
+    },
+    {
+     "text": "all",
+     "start": 113.571,
+     "end": 114.107
+    },
+    {
+     "text": "tucked",
+     "start": 114.107,
+     "end": 114.375
+    },
+    {
+     "text": "in",
+     "start": 114.375,
+     "end": 114.643
+    },
+    {
+     "text": "bed.",
+     "start": 114.643,
+     "end": 115.714
+    }
+   ]
+  },
+  {
+   "tag": "end3",
+   "start": 116.25,
+   "end": 120.536,
+   "words": [
+    {
+     "text": "Good",
+     "start": 116.25,
+     "end": 117.321
+    },
+    {
+     "text": "night!",
+     "start": 117.321,
+     "end": 119.464
+    }
+   ]
+  }
+ ]
+}
