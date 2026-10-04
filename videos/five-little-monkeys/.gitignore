@@ -1,0 +1,7 @@
+snapshots/
+renders/
+.hyperframes/
+assets/voice/
+assets/mix.wav
+work-*/
+.*hf-transaction*/

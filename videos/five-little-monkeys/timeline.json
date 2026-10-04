@@ -1,0 +1,381 @@
+{
+  "total": 136,
+  "lines": [
+    {
+      "id": "intro1",
+      "start": 1.6,
+      "dur": 4.395,
+      "en": "Hello, friends! Let's sing, count, and learn with five little monkeys!",
+      "zh": "小朋友们好！一起和五只小猴子唱歌、数数、学英语吧！"
+    },
+    {
+      "id": "v5a",
+      "start": 6.795,
+      "dur": 3.221,
+      "en": "Five little monkeys jump, jump, jump on the bed!",
+      "zh": "五只小猴子，在床上跳呀跳呀跳！"
+    },
+    {
+      "id": "v5b",
+      "start": 10.516,
+      "dur": 2.624,
+      "en": "One slipped off... bonk! And bumped a head.",
+      "zh": "一只滑下来……咚！撞到了头。"
+    },
+    {
+      "id": "v5c",
+      "start": 13.64,
+      "dur": 2.987,
+      "en": "Mama monkey called the doctor. Ring, ring!",
+      "zh": "猴妈妈给医生打电话。叮铃铃！"
+    },
+    {
+      "id": "v5d",
+      "start": 17.027,
+      "dur": 3.605,
+      "en": "The doctor said: Beds are for sleeping, not for jumping!",
+      "zh": "医生说：床是用来睡觉的，不是用来跳的！"
+    },
+    {
+      "id": "v5e",
+      "start": 21.432,
+      "dur": 4.267,
+      "en": "Five take away one makes four. 5 minus 1 equals 4!",
+      "zh": "5 减 1 等于 4！还剩四只小猴子。"
+    },
+    {
+      "id": "v5f",
+      "start": 26.299,
+      "dur": 2.965,
+      "en": "Word time! monkey. Say it with me: monkey!",
+      "zh": "学单词：monkey，猴子！跟我一起说：monkey！"
+    },
+    {
+      "id": "v4a",
+      "start": 30.264,
+      "dur": 3.072,
+      "en": "Four little monkeys jump, jump, jump on the bed!",
+      "zh": "四只小猴子，在床上跳呀跳呀跳！"
+    },
+    {
+      "id": "v4b",
+      "start": 33.836,
+      "dur": 2.624,
+      "en": "One slipped off... bonk! And bumped a head.",
+      "zh": "一只滑下来……咚！撞到了头。"
+    },
+    {
+      "id": "v4c",
+      "start": 36.96,
+      "dur": 2.987,
+      "en": "Mama monkey called the doctor. Ring, ring!",
+      "zh": "猴妈妈给医生打电话。叮铃铃！"
+    },
+    {
+      "id": "v4d",
+      "start": 40.347,
+      "dur": 3.605,
+      "en": "The doctor said: Beds are for sleeping, not for jumping!",
+      "zh": "医生说：床是用来睡觉的，不是用来跳的！"
+    },
+    {
+      "id": "v4e",
+      "start": 44.752,
+      "dur": 4.075,
+      "en": "Four take away one makes three. 4 minus 1 equals 3!",
+      "zh": "4 减 1 等于 3！还剩三只小猴子。"
+    },
+    {
+      "id": "v4f",
+      "start": 49.427,
+      "dur": 2.581,
+      "en": "Word time! bed. Say it with me: bed!",
+      "zh": "学单词：bed，床！跟我一起说：bed！"
+    },
+    {
+      "id": "v3a",
+      "start": 53.008,
+      "dur": 3.115,
+      "en": "Three little monkeys jump, jump, jump on the bed!",
+      "zh": "三只小猴子，在床上跳呀跳呀跳！"
+    },
+    {
+      "id": "v3b",
+      "start": 56.623,
+      "dur": 2.624,
+      "en": "One slipped off... bonk! And bumped a head.",
+      "zh": "一只滑下来……咚！撞到了头。"
+    },
+    {
+      "id": "v3c",
+      "start": 59.747,
+      "dur": 2.987,
+      "en": "Mama monkey called the doctor. Ring, ring!",
+      "zh": "猴妈妈给医生打电话。叮铃铃！"
+    },
+    {
+      "id": "v3d",
+      "start": 63.134,
+      "dur": 3.605,
+      "en": "The doctor said: Beds are for sleeping, not for jumping!",
+      "zh": "医生说：床是用来睡觉的，不是用来跳的！"
+    },
+    {
+      "id": "v3e",
+      "start": 67.539,
+      "dur": 3.925,
+      "en": "Three take away one makes two. 3 minus 1 equals 2!",
+      "zh": "3 减 1 等于 2！还剩二只小猴子。"
+    },
+    {
+      "id": "v3f",
+      "start": 72.064,
+      "dur": 2.773,
+      "en": "Word time! jump. Say it with me: jump!",
+      "zh": "学单词：jump，跳！跟我一起说：jump！"
+    },
+    {
+      "id": "v2a",
+      "start": 75.837,
+      "dur": 2.944,
+      "en": "Two little monkeys jump, jump, jump on the bed!",
+      "zh": "二只小猴子，在床上跳呀跳呀跳！"
+    },
+    {
+      "id": "v2b",
+      "start": 79.281,
+      "dur": 2.624,
+      "en": "One slipped off... bonk! And bumped a head.",
+      "zh": "一只滑下来……咚！撞到了头。"
+    },
+    {
+      "id": "v2c",
+      "start": 82.405,
+      "dur": 2.987,
+      "en": "Mama monkey called the doctor. Ring, ring!",
+      "zh": "猴妈妈给医生打电话。叮铃铃！"
+    },
+    {
+      "id": "v2d",
+      "start": 85.792,
+      "dur": 3.605,
+      "en": "The doctor said: Beds are for sleeping, not for jumping!",
+      "zh": "医生说：床是用来睡觉的，不是用来跳的！"
+    },
+    {
+      "id": "v2e",
+      "start": 90.197,
+      "dur": 3.755,
+      "en": "Two take away one makes one. 2 minus 1 equals 1!",
+      "zh": "2 减 1 等于 1！还剩一只小猴子。"
+    },
+    {
+      "id": "v2f",
+      "start": 94.552,
+      "dur": 2.475,
+      "en": "Word time! head. Say it with me: head!",
+      "zh": "学单词：head，头！跟我一起说：head！"
+    },
+    {
+      "id": "v1a",
+      "start": 98.027,
+      "dur": 3.136,
+      "en": "One little monkey jumps, jumps, jumps on the bed!",
+      "zh": "一只小猴子，在床上跳呀跳呀跳！"
+    },
+    {
+      "id": "v1b",
+      "start": 101.663,
+      "dur": 3.136,
+      "en": "Oh no, it slipped off... bonk! And bumped a head.",
+      "zh": "哎呀，它也滑下来……咚！撞到了头。"
+    },
+    {
+      "id": "v1c",
+      "start": 105.299,
+      "dur": 2.987,
+      "en": "Mama monkey called the doctor. Ring, ring!",
+      "zh": "猴妈妈给医生打电话。叮铃铃！"
+    },
+    {
+      "id": "v1d",
+      "start": 108.686,
+      "dur": 3.605,
+      "en": "The doctor said: Beds are for sleeping, not for jumping!",
+      "zh": "医生说：床是用来睡觉的，不是用来跳的！"
+    },
+    {
+      "id": "v1e",
+      "start": 113.091,
+      "dur": 3.52,
+      "en": "One take away one makes zero. No monkeys on the bed!",
+      "zh": "1 减 1 等于 0！床上没有小猴子啦。"
+    },
+    {
+      "id": "v1f",
+      "start": 117.211,
+      "dur": 2.88,
+      "en": "Word time! doctor. Say it with me: doctor!",
+      "zh": "学单词：doctor，医生！跟我一起说：doctor！"
+    },
+    {
+      "id": "out1",
+      "start": 121.091,
+      "dur": 4.267,
+      "en": "Now every little monkey is tucked in bed. Shh... good night!",
+      "zh": "现在所有的小猴子都乖乖躺在床上啦。嘘……晚安！"
+    },
+    {
+      "id": "out2",
+      "start": 125.958,
+      "dur": 3.797,
+      "en": "Let's count down together: five, four, three, two, one, zero!",
+      "zh": "我们一起倒数：五、四、三、二、一、零！"
+    },
+    {
+      "id": "out3",
+      "start": 130.355,
+      "dur": 3.605,
+      "en": "Monkey, bed, jump, head, doctor. You did it! Great job!",
+      "zh": "猴子、床、跳、头、医生。你真棒！"
+    }
+  ],
+  "sfx": [
+    {
+      "name": "sparkle",
+      "t": 0.3
+    },
+    {
+      "name": "pop",
+      "t": 0.9
+    },
+    {
+      "name": "boing",
+      "t": 6.845
+    },
+    {
+      "name": "bonk",
+      "t": 11.696
+    },
+    {
+      "name": "ring",
+      "t": 15.24
+    },
+    {
+      "name": "pop",
+      "t": 23.22414
+    },
+    {
+      "name": "chime",
+      "t": 26.899
+    },
+    {
+      "name": "boing",
+      "t": 30.314
+    },
+    {
+      "name": "bonk",
+      "t": 35.016
+    },
+    {
+      "name": "ring",
+      "t": 38.56
+    },
+    {
+      "name": "pop",
+      "t": 46.4635
+    },
+    {
+      "name": "chime",
+      "t": 50.027
+    },
+    {
+      "name": "boing",
+      "t": 53.058
+    },
+    {
+      "name": "bonk",
+      "t": 57.803
+    },
+    {
+      "name": "ring",
+      "t": 61.347
+    },
+    {
+      "name": "pop",
+      "t": 69.1875
+    },
+    {
+      "name": "chime",
+      "t": 72.66399999999999
+    },
+    {
+      "name": "boing",
+      "t": 75.887
+    },
+    {
+      "name": "bonk",
+      "t": 80.46100000000001
+    },
+    {
+      "name": "ring",
+      "t": 84.005
+    },
+    {
+      "name": "pop",
+      "t": 91.7741
+    },
+    {
+      "name": "chime",
+      "t": 95.152
+    },
+    {
+      "name": "boing",
+      "t": 98.077
+    },
+    {
+      "name": "bonk",
+      "t": 102.843
+    },
+    {
+      "name": "ring",
+      "t": 106.899
+    },
+    {
+      "name": "pop",
+      "t": 114.56939999999999
+    },
+    {
+      "name": "chime",
+      "t": 117.81099999999999
+    },
+    {
+      "name": "tick",
+      "t": 127.4768
+    },
+    {
+      "name": "tick",
+      "t": 127.87091111111111
+    },
+    {
+      "name": "tick",
+      "t": 128.26502222222223
+    },
+    {
+      "name": "tick",
+      "t": 128.65913333333333
+    },
+    {
+      "name": "tick",
+      "t": 129.05324444444443
+    },
+    {
+      "name": "tick",
+      "t": 129.44735555555553
+    },
+    {
+      "name": "sparkle",
+      "t": 132.59009999999998
+    }
+  ]
+}

@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>Five Little Monkeys</title>
+<script src="vendor/gsap.min.js"></script>
+<style>
+  :root { --night:#1e2a5a; --ink:#2b1a10; --sun:#ffd43b; --coral:#ff6b6b; --cream:#fff8e7; }
+  @font-face { font-family:"WenQuanYi Zen Hei"; src: local("WenQuanYi Zen Hei"); }
+  body { margin:0; background:#000; font-family:Nunito, "WenQuanYi Zen Hei", sans-serif; }
+  #root { position:relative; width:1920px; height:1080px; overflow:hidden; }
+  #stage { position:absolute; inset:0; }
+  .fill { position:absolute; inset:0; }
+  #wall { background: radial-gradient(ellipse at 50% 30%, #3b4c9b 0%, #26336e 55%, #1a2350 100%); }
+  #paper { background-image: radial-gradient(rgba(255,255,255,.07) 2px, transparent 2.5px); background-size: 48px 48px; }
+  #floor { position:absolute; left:0; right:0; top:800px; bottom:0; background: repeating-linear-gradient(90deg, #b07a4a 0 160px, #a46f40 160px 164px); }
+  #floor::after { content:""; position:absolute; inset:0; background:linear-gradient(#0003, #0000 40%); }
+  #rug { position:absolute; left:470px; top:830px; width:980px; height:90px; border-radius:50%; background:#e8590c; box-shadow: inset 0 0 0 10px #ff922b, inset 0 0 0 20px #e8590c, inset 0 0 0 26px #ffd8a8; }
+  #window { position:absolute; left:820px; top:96px; width:280px; height:250px; border-radius:140px 140px 18px 18px; background:linear-gradient(#0d1438, #233172); border:14px solid #f1e3c8; box-sizing:border-box; overflow:hidden; }
+  #window::before { content:""; position:absolute; left:50%; top:0; bottom:0; width:10px; margin-left:-5px; background:#f1e3c8; }
+  #moon { position:absolute; left:150px; top:40px; width:70px; height:70px; border-radius:50%; background:#fff3bf; box-shadow: 0 0 40px 10px #fff3bf55; }
+  #moon::after { content:""; position:absolute; left:-20px; top:-8px; width:70px; height:70px; border-radius:50%; background:#1a2560; }
+  #sky-stars { position:absolute; inset:0; }
+  .star { position:absolute; color:#ffe066; font-size:40px; line-height:1; text-shadow:0 0 14px #ffe06688; }
+  #headboard { position:absolute; left:520px; top:470px; width:880px; height:220px; border-radius:60px 60px 0 0; background:linear-gradient(#c98b55, #a0673a); box-shadow: inset 0 -12px 0 #8a5530; }
+  #headboard::before { content:""; position:absolute; left:40px; right:40px; top:30px; height:120px; border-radius:40px; background:#b47845; box-shadow: inset 0 4px 10px #0003; }
+  #pillow { position:absolute; left:580px; top:600px; width:220px; height:70px; border-radius:36px; background:#fff; box-shadow: inset 0 -8px 0 #dee2e6; }
+  #mattress { position:absolute; left:500px; top:648px; width:920px; height:44px; border-radius:16px; background:#fff; }
+  #quilt { position:absolute; left:500px; top:668px; width:920px; height:120px; border-radius:18px 18px 26px 26px; background-color:#4dabf7; background-image: radial-gradient(#fff 9px, transparent 10px), radial-gradient(#ffd43b 9px, transparent 10px); background-size:80px 80px; background-position:0 0, 40px 40px; box-shadow: inset 0 -14px 0 #339af0; }
+  .bedleg { position:absolute; top:780px; width:34px; height:50px; background:#8a5530; border-radius:0 0 8px 8px; }
+  #nightstand { position:absolute; left:330px; top:650px; width:150px; height:170px; border-radius:12px; background:#c98b55; box-shadow: inset 0 -10px 0 #a0673a; }
+  #nightstand::before { content:""; position:absolute; left:20px; right:20px; top:70px; height:40px; border-radius:8px; background:#b47845; }
+  #lamp { position:absolute; left:360px; top:520px; width:90px; height:130px; }
+  #lamp-shade { position:absolute; left:0; top:0; width:90px; height:70px; background:#ffd43b; clip-path:polygon(20% 0, 80% 0, 100% 100%, 0 100%); }
+  #lamp-base { position:absolute; left:38px; top:70px; width:14px; height:60px; background:#f1e3c8; }
+  #lamp-glow { position:absolute; left:230px; top:440px; width:360px; height:360px; border-radius:50%; background:radial-gradient(#ffe06655, #ffe06600 70%); }
+  .monkey, .sleeper { position:absolute; width:150px; height:197px; transform-origin:50% 100%; }
+  .monkey svg, .sleeper svg { display:block; }
+  .bandage { opacity:0; }
+  #blanket { position:absolute; left:500px; top:610px; width:920px; height:180px; border-radius:40px 40px 26px 26px; background-color:#9775fa; background-image: radial-gradient(#ffe066 8px, transparent 9px); background-size:70px 70px; box-shadow: inset 0 -14px 0 #7950f2, inset 0 18px 0 #fff; opacity:0; }
+  #night { background:#0b1033; opacity:0; }
+  .zzz { position:absolute; font-family:Nunito; font-weight:900; font-size:72px; color:#e5dbff; opacity:0; text-shadow:0 4px 0 #5f3dc4; }
+  .zzz small { font-size:48px; }
+
+  .card { position:absolute; top:44px; width:400px; height:350px; box-sizing:border-box; border-radius:32px; background:var(--cream); box-shadow: 0 10px 0 #0003, 0 0 0 8px #fff inset; padding:24px 28px; }
+  .card-left { left:56px; }
+  .card-right { left:1464px; }
+  .card-tag { font-weight:900; font-size:26px; color:#fff; background:var(--coral); display:inline-block; padding:4px 16px; border-radius:20px; }
+  .card-tag.blue { background:#339af0; }
+  .cnum { position:absolute; left:0; right:0; top:70px; display:flex; flex-direction:column; align-items:center; opacity:0; }
+  .cnum .big { font-weight:900; font-size:150px; line-height:1; color:var(--ink); }
+  .cnum .cword { font-weight:900; font-size:38px; color:#e8590c; }
+  .cfaces { position:absolute; left:24px; right:24px; bottom:20px; display:flex; justify-content:space-between; }
+  .bank-row { display:flex; align-items:center; gap:14px; height:50px; opacity:.25; }
+  .bank-list { margin-top:12px; }
+  .bank-dot { width:38px; height:38px; border-radius:50%; background:#51cf66; color:#fff; font-weight:900; font-size:22px; display:flex; align-items:center; justify-content:center; }
+  .bank-en { font-weight:900; font-size:34px; color:var(--ink); width:150px; }
+  .bank-zh { font-weight:900; font-size:30px; color:#868e96; }
+  .card-over { position:absolute; inset:0; border-radius:32px; background:var(--cream); padding:24px 28px; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; opacity:0; }
+  .card-over .card-tag { align-self:flex-start; }
+  .word .card-tag { background:#7950f2; }
+  .math .card-tag { background:#339af0; }
+  .mfaces { display:flex; gap:6px; height:60px; margin-top:20px; }
+  .eq { display:flex; gap:16px; align-items:center; font-weight:900; font-size:96px; color:var(--ink); margin-top:8px; line-height:1.1; }
+  .eq .op { color:#339af0; }
+  .eq .ans { color:#e8590c; display:inline-block; }
+  .eq-zh { font-weight:900; font-size:30px; color:#868e96; }
+  .w-icon { height:130px; display:flex; align-items:center; margin-top:4px; }
+  .w-en { font-weight:900; font-size:84px; color:#5f3dc4; line-height:1; display:flex; }
+  .lt { display:inline-block; }
+  .w-zh { font-weight:900; font-size:40px; color:#e8590c; margin-top:6px; }
+
+  #title-wrap { position:absolute; left:440px; top:70px; width:1040px; height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #title { font-weight:900; font-size:92px; color:var(--sun); text-shadow: 0 6px 0 #c2410c, 0 12px 24px #0006; letter-spacing:1px; }
+  #title-sub { font-weight:900; font-size:40px; color:#fff; background:#ff6b6b; padding:6px 28px; border-radius:30px; margin-top:10px; }
+
+  #call { position:absolute; left:500px; top:40px; width:920px; height:300px; border-radius:36px; background:#fff; box-shadow:0 10px 0 #0003; opacity:0; }
+  .portrait { position:absolute; top:30px; width:170px; height:170px; border-radius:50%; overflow:hidden; display:flex; justify-content:center; }
+  .portrait svg { margin-top:14px; }
+  #mama { left:40px; background:#ffd6e7; transform-origin:50% 50%; }
+  #doctor { right:40px; background:#d0ebff; }
+  .p-label { position:absolute; top:212px; width:210px; margin:0 -20px; white-space:nowrap; text-align:center; font-weight:900; font-size:28px; color:var(--ink); }
+  #wire { position:absolute; left:220px; right:220px; top:112px; height:0; border-top:8px dashed #ced4da; }
+  #ring-txt, #doc-txt { position:absolute; left:215px; right:215px; top:60px; text-align:center; font-weight:900; color:var(--ink); opacity:0; }
+  #ring-txt { font-size:56px; color:#e8590c; top:60px; background:#fff; padding:8px 0; border-radius:20px; }
+  #doc-txt { font-size:36px; line-height:1.2; top:40px; background:#fff; padding:10px; border-radius:20px; }
+  #ring-txt .dz, #doc-txt .dz { font-size:30px; color:#868e96; display:block; margin-top:6px; }
+  #finger { position:absolute; right:30px; top:150px; width:44px; height:70px; transform-origin:50% 100%; }
+
+  #bonk { position:absolute; left:860px; top:670px; width:200px; height:150px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:38px; color:#fff; background:#fa5252; clip-path:polygon(50% 0,61% 30%,95% 15%,72% 45%,100% 60%,68% 66%,78% 100%,50% 76%,22% 100%,32% 66%,0 60%,28% 45%,5% 15%,39% 30%); opacity:0; }
+
+  #sub-band { position:absolute; left:40px; right:40px; top:930px; height:130px; border-radius:30px; background:#1a2350e6; box-shadow:0 0 0 4px #ffffff22 inset; }
+  .sub { position:absolute; left:220px; right:60px; top:930px; height:130px; display:flex; flex-direction:column; justify-content:center; opacity:0; }
+  .sub-en { font-weight:900; font-size:50px; color:#fff; line-height:1.15; }
+  .sub-zh { font-weight:500; font-size:32px; color:#c5d0ff; margin-top:4px; font-family:"WenQuanYi Zen Hei", sans-serif; }
+  .hl-n { color:var(--sun); }
+  .hl-w { color:#b197fc; }
+  #verse-chip { position:absolute; left:64px; top:952px; width:136px; height:86px; border-radius:22px; background:#ff6b6b; color:#fff; font-weight:900; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #verse-chip .vc-l { font-size:22px; opacity:.9; }
+  #verse-chip .vc-stack { position:relative; width:100%; height:42px; }
+  #verse-chip .vc-n { font-size:34px; position:absolute; left:0; right:0; text-align:center; }
+
+  #countdown, #review { position:absolute; left:440px; top:70px; width:1040px; height:300px; display:flex; align-items:center; justify-content:center; gap:26px; opacity:0; }
+  .cd { width:140px; height:140px; border-radius:50%; background:var(--sun); color:var(--ink); font-weight:900; font-size:96px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 0 #c2410c; }
+  .rv { width:180px; height:250px; border-radius:26px; background:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 8px 0 #0003; }
+  .rv-ic { height:120px; display:flex; align-items:center; transform:scale(.8); }
+  .rv-en { font-weight:900; font-size:38px; color:#5f3dc4; }
+  .rv-zh { font-weight:900; font-size:28px; color:#e8590c; }
+  #great { position:absolute; left:560px; top:395px; width:800px; height:110px; border-radius:60px; background:#51cf66; color:#fff; font-weight:900; font-size:64px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 0 #2b8a3e; opacity:0; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="136">
+  <section id="stage" class="clip" data-start="0" data-duration="136" data-track-index="1">
+    <div id="wall" class="fill"></div>
+    <div id="paper" class="fill"></div>
+    <div id="sky-stars"><div class="star" id="st0" style="left:140px;top:470px;transform:scale(1)">★</div><div class="star" id="st1" style="left:300px;top:220px;transform:scale(0.7)">★</div><div class="star" id="st2" style="left:1700px;top:470px;transform:scale(0.8)">★</div><div class="star" id="st3" style="left:520px;top:120px;transform:scale(0.6)">★</div><div class="star" id="st4" style="left:1400px;top:150px;transform:scale(0.9)">★</div><div class="star" id="st5" style="left:760px;top:60px;transform:scale(0.5)">★</div><div class="star" id="st6" style="left:1180px;top:80px;transform:scale(0.7)">★</div><div class="star" id="st7" style="left:1840px;top:560px;transform:scale(0.6)">★</div><div class="star" id="st8" style="left:80px;top:640px;transform:scale(0.5)">★</div><div class="star" id="st9" style="left:640px;top:380px;transform:scale(0.4)">★</div><div class="star" id="st10" style="left:1300px;top:380px;transform:scale(0.5)">★</div></div>
+    <div id="window"><div id="moon"></div></div>
+    <div id="floor"></div>
+    <div id="rug"></div>
+    <div id="lamp-glow"></div>
+    <div id="nightstand"></div>
+    <div id="lamp"><div id="lamp-shade"></div><div id="lamp-base"></div></div>
+    <div id="headboard"></div>
+    <div id="pillow"></div>
+    <div class="sleeper" id="sl0" style="left:545px;top:488px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ff6b6b"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">1</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <path d="M58 60 Q66 66 74 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M86 60 Q94 66 102 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <ellipse cx="80" cy="90" rx="5" ry="4" fill="#2b1a10"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  
+</svg></div>
+<div class="sleeper" id="sl1" style="left:715px;top:488px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ffa94d"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">2</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <path d="M58 60 Q66 66 74 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M86 60 Q94 66 102 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <ellipse cx="80" cy="90" rx="5" ry="4" fill="#2b1a10"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  
+</svg></div>
+<div class="sleeper" id="sl2" style="left:885px;top:488px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ffd43b"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">3</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <path d="M58 60 Q66 66 74 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M86 60 Q94 66 102 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <ellipse cx="80" cy="90" rx="5" ry="4" fill="#2b1a10"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  
+</svg></div>
+<div class="sleeper" id="sl3" style="left:1055px;top:488px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#51cf66"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">4</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <path d="M58 60 Q66 66 74 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M86 60 Q94 66 102 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <ellipse cx="80" cy="90" rx="5" ry="4" fill="#2b1a10"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  
+</svg></div>
+<div class="sleeper" id="sl4" style="left:1225px;top:488px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#4dabf7"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">5</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <path d="M58 60 Q66 66 74 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M86 60 Q94 66 102 60" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <ellipse cx="80" cy="90" rx="5" ry="4" fill="#2b1a10"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  
+</svg></div>
+    <div id="mattress"></div>
+    <div id="quilt"></div>
+    <div id="blanket"></div>
+    <div class="bedleg" style="left:520px"></div><div class="bedleg" style="left:1366px"></div>
+    <div class="monkey" id="mk0" style="left:885px;top:458px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ff6b6b"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">1</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <g id="bd0" class="bandage"><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(35 110 17)"/><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(-35 110 17)"/></g>
+</svg></div>
+<div class="monkey" id="mk1" style="left:885px;top:458px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ffa94d"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">2</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <g id="bd1" class="bandage"><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(35 110 17)"/><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(-35 110 17)"/></g>
+</svg></div>
+<div class="monkey" id="mk2" style="left:885px;top:458px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ffd43b"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">3</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <g id="bd2" class="bandage"><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(35 110 17)"/><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(-35 110 17)"/></g>
+</svg></div>
+<div class="monkey" id="mk3" style="left:885px;top:458px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#51cf66"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">4</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <g id="bd3" class="bandage"><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(35 110 17)"/><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(-35 110 17)"/></g>
+</svg></div>
+<div class="monkey" id="mk4" style="left:885px;top:458px"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#4dabf7"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">5</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <g id="bd4" class="bandage"><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(35 110 17)"/><rect x="88" y="10" width="44" height="14" rx="6" fill="#ffd6a5" stroke="#d9a066" stroke-width="2" transform="rotate(-35 110 17)"/></g>
+</svg></div>
+    <div id="bonk">BONK!</div>
+    <div id="night" class="fill"></div>
+    <div class="zzz" id="z0" style="left:640px;top:470px">Z<small>z</small>z</div><div class="zzz" id="z1" style="left:900px;top:450px">Z<small>z</small>z</div><div class="zzz" id="z2" style="left:1160px;top:470px">Z<small>z</small>z</div>
+
+    <div class="card card-left">
+      <div class="card-tag">How many? · 有几只？</div>
+      <div class="cnum" id="cn0"><span class="big">0</span><span class="cword">Zero · 零</span></div><div class="cnum" id="cn1"><span class="big">1</span><span class="cword">One · 一</span></div><div class="cnum" id="cn2"><span class="big">2</span><span class="cword">Two · 二</span></div><div class="cnum" id="cn3"><span class="big">3</span><span class="cword">Three · 三</span></div><div class="cnum" id="cn4"><span class="big">4</span><span class="cword">Four · 四</span></div><div class="cnum" id="cn5"><span class="big">5</span><span class="cword">Five · 五</span></div>
+      <div class="cfaces"><svg id="cf0" class="cface" viewBox="0 0 120 100" width="56" height="46.666666666666664">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="cf1" class="cface" viewBox="0 0 120 100" width="56" height="46.666666666666664">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="cf2" class="cface" viewBox="0 0 120 100" width="56" height="46.666666666666664">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="cf3" class="cface" viewBox="0 0 120 100" width="56" height="46.666666666666664">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="cf4" class="cface" viewBox="0 0 120 100" width="56" height="46.666666666666664">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    </div>
+    <div class="card card-right">
+      <div class="card-tag blue">My Words · 我的单词</div>
+      <div class="bank-list"><div class="bank-row" id="bank0"><span class="bank-dot">1</span><span class="bank-en">monkey</span><span class="bank-zh">猴子</span></div><div class="bank-row" id="bank1"><span class="bank-dot">2</span><span class="bank-en">bed</span><span class="bank-zh">床</span></div><div class="bank-row" id="bank2"><span class="bank-dot">3</span><span class="bank-en">jump</span><span class="bank-zh">跳</span></div><div class="bank-row" id="bank3"><span class="bank-dot">4</span><span class="bank-en">head</span><span class="bank-zh">头</span></div><div class="bank-row" id="bank4"><span class="bank-dot">5</span><span class="bank-en">doctor</span><span class="bank-zh">医生</span></div></div>
+      <div class="card-over math" id="math5">
+    <div class="card-tag">Math · 数学</div>
+    <div class="mfaces"><svg id="mf5_0" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf5_1" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf5_2" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf5_3" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf5_4" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="eq"><span id="eqa5">5</span><span id="eqb5" class="op">−</span><span id="eqc5">1</span><span id="eqd5" class="op">=</span><span id="eqe5" class="ans">4</span></div>
+    <div class="eq-zh">5 减 1 等于 4</div>
+  </div>
+<div class="card-over math" id="math4">
+    <div class="card-tag">Math · 数学</div>
+    <div class="mfaces"><svg id="mf4_0" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf4_1" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf4_2" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf4_3" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="eq"><span id="eqa4">4</span><span id="eqb4" class="op">−</span><span id="eqc4">1</span><span id="eqd4" class="op">=</span><span id="eqe4" class="ans">3</span></div>
+    <div class="eq-zh">4 减 1 等于 3</div>
+  </div>
+<div class="card-over math" id="math3">
+    <div class="card-tag">Math · 数学</div>
+    <div class="mfaces"><svg id="mf3_0" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf3_1" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf3_2" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="eq"><span id="eqa3">3</span><span id="eqb3" class="op">−</span><span id="eqc3">1</span><span id="eqd3" class="op">=</span><span id="eqe3" class="ans">2</span></div>
+    <div class="eq-zh">3 减 1 等于 2</div>
+  </div>
+<div class="card-over math" id="math2">
+    <div class="card-tag">Math · 数学</div>
+    <div class="mfaces"><svg id="mf2_0" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg><svg id="mf2_1" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="eq"><span id="eqa2">2</span><span id="eqb2" class="op">−</span><span id="eqc2">1</span><span id="eqd2" class="op">=</span><span id="eqe2" class="ans">1</span></div>
+    <div class="eq-zh">2 减 1 等于 1</div>
+  </div>
+<div class="card-over math" id="math1">
+    <div class="card-tag">Math · 数学</div>
+    <div class="mfaces"><svg id="mf1_0" class="mface" viewBox="0 0 120 100" width="52" height="43.333333333333336">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="eq"><span id="eqa1">1</span><span id="eqb1" class="op">−</span><span id="eqc1">1</span><span id="eqd1" class="op">=</span><span id="eqe1" class="ans">0</span></div>
+    <div class="eq-zh">1 减 1 等于 0</div>
+  </div>
+      <div class="card-over word" id="word5">
+    <div class="card-tag">New word · 新单词</div>
+    <div class="w-icon"><svg  class="" viewBox="0 0 120 100" width="130" height="108.33333333333333">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div>
+    <div class="w-en"><span class="lt" id="lt5_0">m</span><span class="lt" id="lt5_1">o</span><span class="lt" id="lt5_2">n</span><span class="lt" id="lt5_3">k</span><span class="lt" id="lt5_4">e</span><span class="lt" id="lt5_5">y</span></div>
+    <div class="w-zh">猴子</div>
+  </div>
+<div class="card-over word" id="word4">
+    <div class="card-tag">New word · 新单词</div>
+    <div class="w-icon"><svg viewBox="0 0 140 100" width="150" height="107"><rect x="10" y="20" width="20" height="70" rx="6" fill="#a0673a"/><rect x="26" y="50" width="104" height="26" rx="8" fill="#4dabf7"/><rect x="34" y="38" width="30" height="16" rx="8" fill="#fff"/><rect x="118" y="56" width="12" height="34" rx="4" fill="#a0673a"/><rect x="26" y="72" width="8" height="18" fill="#a0673a"/></svg></div>
+    <div class="w-en"><span class="lt" id="lt4_0">b</span><span class="lt" id="lt4_1">e</span><span class="lt" id="lt4_2">d</span></div>
+    <div class="w-zh">床</div>
+  </div>
+<div class="card-over word" id="word3">
+    <div class="card-tag">New word · 新单词</div>
+    <div class="w-icon"><svg viewBox="0 0 140 110" width="150" height="118"><path d="M70 8 L92 34 H78 V58 H62 V34 H48 Z" fill="#ffd43b"/><circle cx="70" cy="76" r="18" fill="#8a5428"/><ellipse cx="70" cy="80" rx="11" ry="9" fill="#f6cfa0"/><path d="M30 104 Q70 84 110 104" stroke="#4dabf7" stroke-width="8" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="w-en"><span class="lt" id="lt3_0">j</span><span class="lt" id="lt3_1">u</span><span class="lt" id="lt3_2">m</span><span class="lt" id="lt3_3">p</span></div>
+    <div class="w-zh">跳</div>
+  </div>
+<div class="card-over word" id="word2">
+    <div class="card-tag">New word · 新单词</div>
+    <div class="w-icon"><svg viewBox="0 0 120 110" width="140" height="128"><circle cx="60" cy="58" r="50" fill="none" stroke="#ffd43b" stroke-width="6" stroke-dasharray="10 8"/><svg x="10" y="16"  class="" viewBox="0 0 120 100" width="100" height="83.33333333333333">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></svg></div>
+    <div class="w-en"><span class="lt" id="lt2_0">h</span><span class="lt" id="lt2_1">e</span><span class="lt" id="lt2_2">a</span><span class="lt" id="lt2_3">d</span></div>
+    <div class="w-zh">头</div>
+  </div>
+<div class="card-over word" id="word1">
+    <div class="card-tag">New word · 新单词</div>
+    <div class="w-icon"><svg viewBox="0 0 120 110" width="140" height="128"><rect x="20" y="16" width="80" height="80" rx="20" fill="#fff"/><rect x="50" y="30" width="20" height="52" rx="4" fill="#fa5252"/><rect x="34" y="46" width="52" height="20" rx="4" fill="#fa5252"/></svg></div>
+    <div class="w-en"><span class="lt" id="lt1_0">d</span><span class="lt" id="lt1_1">o</span><span class="lt" id="lt1_2">c</span><span class="lt" id="lt1_3">t</span><span class="lt" id="lt1_4">o</span><span class="lt" id="lt1_5">r</span></div>
+    <div class="w-zh">医生</div>
+  </div>
+    </div>
+
+    <div id="title-wrap"><div id="title">Five Little Monkeys</div><div id="title-sub">Sing · Count · Learn &nbsp;唱儿歌 · 学数数 · 学英语</div></div>
+
+    <div id="call">
+      <div class="portrait" id="mama"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#f783ac"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff">♥</text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <path d="M60 8 L80 18 L100 8 L100 30 L80 22 L60 30 Z" fill="#e64980"/>
+</svg></div>
+      <div class="p-label" style="left:40px">Mama · 妈妈</div>
+      <div class="portrait" id="doctor"><svg  viewBox="0 0 160 210" width="150" height="197" xmlns="http://www.w3.org/2000/svg">
+  <path d="M112 176 C152 178 158 124 132 116 C116 112 110 132 126 134" stroke="#6b3d1a" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <ellipse cx="60" cy="196" rx="17" ry="11" fill="#8a5428"/><ellipse cx="100" cy="196" rx="17" ry="11" fill="#8a5428"/>
+  <path d="M50 132 Q26 112 22 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M110 132 Q134 112 138 86" stroke="#8a5428" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="82" r="10" fill="#f6cfa0"/><circle cx="138" cy="82" r="10" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="150" rx="39" ry="45" fill="#ffffff"/>
+  <ellipse cx="80" cy="158" rx="22" ry="26" fill="#fff" opacity="0.28"/>
+  <text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="36" fill="#fff"></text>
+  <circle cx="28" cy="62" r="21" fill="#8a5428"/><circle cx="28" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="132" cy="62" r="21" fill="#8a5428"/><circle cx="132" cy="62" r="12" fill="#f6cfa0"/>
+  <circle cx="80" cy="60" r="50" fill="#8a5428"/>
+  <path d="M72 14 Q78 -2 86 12 Q84 4 78 6" fill="#8a5428"/>
+  <ellipse cx="67" cy="58" rx="19" ry="22" fill="#f6cfa0"/><ellipse cx="93" cy="58" rx="19" ry="22" fill="#f6cfa0"/>
+  <ellipse cx="80" cy="82" rx="33" ry="22" fill="#f6cfa0"/>
+  <circle cx="67" cy="58" r="7" fill="#2b1a10"/><circle cx="93" cy="58" r="7" fill="#2b1a10"/><circle cx="69.5" cy="55.5" r="2.4" fill="#fff"/><circle cx="95.5" cy="55.5" r="2.4" fill="#fff"/>
+  <ellipse cx="76" cy="76" rx="2.2" ry="3" fill="#2b1a10"/><ellipse cx="84" cy="76" rx="2.2" ry="3" fill="#2b1a10"/>
+  <path d="M66 86 Q80 100 94 86" stroke="#2b1a10" stroke-width="4.5" fill="#e8736b" stroke-linecap="round"/>
+  <circle cx="52" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/><circle cx="108" cy="80" r="7" fill="#ff8fa3" opacity="0.55"/>
+  <circle cx="80" cy="26" r="13" fill="#adb5bd" stroke="#868e96" stroke-width="3"/><path d="M58 112 Q80 140 102 112" stroke="#495057" stroke-width="4" fill="none"/><text x="80" y="170" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="40" fill="#fa5252">+</text>
+</svg></div>
+      <div class="p-label" style="right:40px">Doctor · 医生</div>
+      <svg id="finger" viewBox="0 0 44 70"><rect x="14" y="0" width="16" height="44" rx="8" fill="#f6cfa0" stroke="#6b3d1a" stroke-width="3"/><rect x="4" y="34" width="36" height="34" rx="12" fill="#f6cfa0" stroke="#6b3d1a" stroke-width="3"/></svg>
+      <div id="wire"></div>
+      <div id="ring-txt">Ring, ring!<span class="dz">叮铃铃～</span></div>
+      <div id="doc-txt">“Beds are for sleeping, not for jumping!”<span class="dz">床是用来睡觉的，不是用来跳的！</span></div>
+    </div>
+
+    <div id="countdown"><div class="cd" id="cd5">5</div><div class="cd" id="cd4">4</div><div class="cd" id="cd3">3</div><div class="cd" id="cd2">2</div><div class="cd" id="cd1">1</div><div class="cd" id="cd0">0</div></div>
+    <div id="review"><div class="rv" id="rv0"><div class="rv-ic"><svg  class="" viewBox="0 0 120 100" width="130" height="108.33333333333333">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></div><div class="rv-en">monkey</div><div class="rv-zh">猴子</div></div><div class="rv" id="rv1"><div class="rv-ic"><svg viewBox="0 0 140 100" width="150" height="107"><rect x="10" y="20" width="20" height="70" rx="6" fill="#a0673a"/><rect x="26" y="50" width="104" height="26" rx="8" fill="#4dabf7"/><rect x="34" y="38" width="30" height="16" rx="8" fill="#fff"/><rect x="118" y="56" width="12" height="34" rx="4" fill="#a0673a"/><rect x="26" y="72" width="8" height="18" fill="#a0673a"/></svg></div><div class="rv-en">bed</div><div class="rv-zh">床</div></div><div class="rv" id="rv2"><div class="rv-ic"><svg viewBox="0 0 140 110" width="150" height="118"><path d="M70 8 L92 34 H78 V58 H62 V34 H48 Z" fill="#ffd43b"/><circle cx="70" cy="76" r="18" fill="#8a5428"/><ellipse cx="70" cy="80" rx="11" ry="9" fill="#f6cfa0"/><path d="M30 104 Q70 84 110 104" stroke="#4dabf7" stroke-width="8" fill="none" stroke-linecap="round"/></svg></div><div class="rv-en">jump</div><div class="rv-zh">跳</div></div><div class="rv" id="rv3"><div class="rv-ic"><svg viewBox="0 0 120 110" width="140" height="128"><circle cx="60" cy="58" r="50" fill="none" stroke="#ffd43b" stroke-width="6" stroke-dasharray="10 8"/><svg x="10" y="16"  class="" viewBox="0 0 120 100" width="100" height="83.33333333333333">
+  <circle cx="18" cy="48" r="16" fill="#8a5428"/><circle cx="18" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="102" cy="48" r="16" fill="#8a5428"/><circle cx="102" cy="48" r="9" fill="#f6cfa0"/>
+  <circle cx="60" cy="50" r="40" fill="#8a5428"/>
+  <ellipse cx="50" cy="46" rx="15" ry="17" fill="#f6cfa0"/><ellipse cx="70" cy="46" rx="15" ry="17" fill="#f6cfa0"/>
+  <ellipse cx="60" cy="66" rx="26" ry="17" fill="#f6cfa0"/>
+  <circle cx="50" cy="46" r="5.5" fill="#2b1a10"/><circle cx="70" cy="46" r="5.5" fill="#2b1a10"/>
+  <path d="M49 69 Q60 79 71 69" stroke="#2b1a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg></svg></div><div class="rv-en">head</div><div class="rv-zh">头</div></div><div class="rv" id="rv4"><div class="rv-ic"><svg viewBox="0 0 120 110" width="140" height="128"><rect x="20" y="16" width="80" height="80" rx="20" fill="#fff"/><rect x="50" y="30" width="20" height="52" rx="4" fill="#fa5252"/><rect x="34" y="46" width="52" height="20" rx="4" fill="#fa5252"/></svg></div><div class="rv-en">doctor</div><div class="rv-zh">医生</div></div></div>
+    <div id="great">Great job! 你真棒！</div>
+
+    <div id="sub-band"></div>
+    <div id="verse-chip"><span class="vc-l">Verse</span><span class="vc-stack"><span class="vc-n" id="vcn6" style="opacity:1">Hi!</span><span class="vc-n" id="vcn5" style="opacity:0">1 / 5</span><span class="vc-n" id="vcn4" style="opacity:0">2 / 5</span><span class="vc-n" id="vcn3" style="opacity:0">3 / 5</span><span class="vc-n" id="vcn2" style="opacity:0">4 / 5</span><span class="vc-n" id="vcn1" style="opacity:0">5 / 5</span><span class="vc-n" id="vcn0" style="opacity:0">★</span></span></div>
+    <div class="sub" id="sub_intro1"><div class="sub-en">Hello, friends! Let's sing, count, and learn with <b class="hl-n">five</b> little monkeys!</div><div class="sub-zh">小朋友们好！一起和五只小猴子唱歌、数数、学英语吧！</div></div>
+<div class="sub" id="sub_v5a"><div class="sub-en"><b class="hl-n">Five</b> little monkeys <b class="hl-w">jump</b>, <b class="hl-w">jump</b>, <b class="hl-w">jump</b> on the <b class="hl-w">bed</b>!</div><div class="sub-zh">五只小猴子，在床上跳呀跳呀跳！</div></div>
+<div class="sub" id="sub_v5b"><div class="sub-en"><b class="hl-n">One</b> slipped off... bonk! And bumped a <b class="hl-w">head</b>.</div><div class="sub-zh">一只滑下来……咚！撞到了头。</div></div>
+<div class="sub" id="sub_v5c"><div class="sub-en">Mama <b class="hl-w">monkey</b> called the <b class="hl-w">doctor</b>. Ring, ring!</div><div class="sub-zh">猴妈妈给医生打电话。叮铃铃！</div></div>
+<div class="sub" id="sub_v5d"><div class="sub-en">The <b class="hl-w">doctor</b> said: Beds are for sleeping, not for jumping!</div><div class="sub-zh">医生说：床是用来睡觉的，不是用来跳的！</div></div>
+<div class="sub" id="sub_v5e"><div class="sub-en"><b class="hl-n">Five</b> take away <b class="hl-n">one</b> makes <b class="hl-n">four</b>. <b class="hl-n">5</b> minus <b class="hl-n">1</b> equals <b class="hl-n">4</b>!</div><div class="sub-zh">5 减 1 等于 4！还剩四只小猴子。</div></div>
+<div class="sub" id="sub_v5f"><div class="sub-en">Word time! <b class="hl-w">monkey</b>. Say it with me: <b class="hl-w">monkey</b>!</div><div class="sub-zh">学单词：monkey，猴子！跟我一起说：monkey！</div></div>
+<div class="sub" id="sub_v4a"><div class="sub-en"><b class="hl-n">Four</b> little monkeys <b class="hl-w">jump</b>, <b class="hl-w">jump</b>, <b class="hl-w">jump</b> on the <b class="hl-w">bed</b>!</div><div class="sub-zh">四只小猴子，在床上跳呀跳呀跳！</div></div>
+<div class="sub" id="sub_v4b"><div class="sub-en"><b class="hl-n">One</b> slipped off... bonk! And bumped a <b class="hl-w">head</b>.</div><div class="sub-zh">一只滑下来……咚！撞到了头。</div></div>
+<div class="sub" id="sub_v4c"><div class="sub-en">Mama <b class="hl-w">monkey</b> called the <b class="hl-w">doctor</b>. Ring, ring!</div><div class="sub-zh">猴妈妈给医生打电话。叮铃铃！</div></div>
+<div class="sub" id="sub_v4d"><div class="sub-en">The <b class="hl-w">doctor</b> said: Beds are for sleeping, not for jumping!</div><div class="sub-zh">医生说：床是用来睡觉的，不是用来跳的！</div></div>
+<div class="sub" id="sub_v4e"><div class="sub-en"><b class="hl-n">Four</b> take away <b class="hl-n">one</b> makes <b class="hl-n">three</b>. <b class="hl-n">4</b> minus <b class="hl-n">1</b> equals <b class="hl-n">3</b>!</div><div class="sub-zh">4 减 1 等于 3！还剩三只小猴子。</div></div>
+<div class="sub" id="sub_v4f"><div class="sub-en">Word time! <b class="hl-w">bed</b>. Say it with me: <b class="hl-w">bed</b>!</div><div class="sub-zh">学单词：bed，床！跟我一起说：bed！</div></div>
+<div class="sub" id="sub_v3a"><div class="sub-en"><b class="hl-n">Three</b> little monkeys <b class="hl-w">jump</b>, <b class="hl-w">jump</b>, <b class="hl-w">jump</b> on the <b class="hl-w">bed</b>!</div><div class="sub-zh">三只小猴子，在床上跳呀跳呀跳！</div></div>
+<div class="sub" id="sub_v3b"><div class="sub-en"><b class="hl-n">One</b> slipped off... bonk! And bumped a <b class="hl-w">head</b>.</div><div class="sub-zh">一只滑下来……咚！撞到了头。</div></div>
+<div class="sub" id="sub_v3c"><div class="sub-en">Mama <b class="hl-w">monkey</b> called the <b class="hl-w">doctor</b>. Ring, ring!</div><div class="sub-zh">猴妈妈给医生打电话。叮铃铃！</div></div>
+<div class="sub" id="sub_v3d"><div class="sub-en">The <b class="hl-w">doctor</b> said: Beds are for sleeping, not for jumping!</div><div class="sub-zh">医生说：床是用来睡觉的，不是用来跳的！</div></div>
+<div class="sub" id="sub_v3e"><div class="sub-en"><b class="hl-n">Three</b> take away <b class="hl-n">one</b> makes <b class="hl-n">two</b>. <b class="hl-n">3</b> minus <b class="hl-n">1</b> equals <b class="hl-n">2</b>!</div><div class="sub-zh">3 减 1 等于 2！还剩二只小猴子。</div></div>
+<div class="sub" id="sub_v3f"><div class="sub-en">Word time! <b class="hl-w">jump</b>. Say it with me: <b class="hl-w">jump</b>!</div><div class="sub-zh">学单词：jump，跳！跟我一起说：jump！</div></div>
+<div class="sub" id="sub_v2a"><div class="sub-en"><b class="hl-n">Two</b> little monkeys <b class="hl-w">jump</b>, <b class="hl-w">jump</b>, <b class="hl-w">jump</b> on the <b class="hl-w">bed</b>!</div><div class="sub-zh">二只小猴子，在床上跳呀跳呀跳！</div></div>
+<div class="sub" id="sub_v2b"><div class="sub-en"><b class="hl-n">One</b> slipped off... bonk! And bumped a <b class="hl-w">head</b>.</div><div class="sub-zh">一只滑下来……咚！撞到了头。</div></div>
+<div class="sub" id="sub_v2c"><div class="sub-en">Mama <b class="hl-w">monkey</b> called the <b class="hl-w">doctor</b>. Ring, ring!</div><div class="sub-zh">猴妈妈给医生打电话。叮铃铃！</div></div>
+<div class="sub" id="sub_v2d"><div class="sub-en">The <b class="hl-w">doctor</b> said: Beds are for sleeping, not for jumping!</div><div class="sub-zh">医生说：床是用来睡觉的，不是用来跳的！</div></div>
+<div class="sub" id="sub_v2e"><div class="sub-en"><b class="hl-n">Two</b> take away <b class="hl-n">one</b> makes <b class="hl-n">one</b>. <b class="hl-n">2</b> minus <b class="hl-n">1</b> equals <b class="hl-n">1</b>!</div><div class="sub-zh">2 减 1 等于 1！还剩一只小猴子。</div></div>
+<div class="sub" id="sub_v2f"><div class="sub-en">Word time! <b class="hl-w">head</b>. Say it with me: <b class="hl-w">head</b>!</div><div class="sub-zh">学单词：head，头！跟我一起说：head！</div></div>
+<div class="sub" id="sub_v1a"><div class="sub-en"><b class="hl-n">One</b> little <b class="hl-w">monkey</b> jumps, jumps, jumps on the <b class="hl-w">bed</b>!</div><div class="sub-zh">一只小猴子，在床上跳呀跳呀跳！</div></div>
+<div class="sub" id="sub_v1b"><div class="sub-en">Oh no, it slipped off... bonk! And bumped a <b class="hl-w">head</b>.</div><div class="sub-zh">哎呀，它也滑下来……咚！撞到了头。</div></div>
+<div class="sub" id="sub_v1c"><div class="sub-en">Mama <b class="hl-w">monkey</b> called the <b class="hl-w">doctor</b>. Ring, ring!</div><div class="sub-zh">猴妈妈给医生打电话。叮铃铃！</div></div>
+<div class="sub" id="sub_v1d"><div class="sub-en">The <b class="hl-w">doctor</b> said: Beds are for sleeping, not for jumping!</div><div class="sub-zh">医生说：床是用来睡觉的，不是用来跳的！</div></div>
+<div class="sub" id="sub_v1e"><div class="sub-en"><b class="hl-n">One</b> take away <b class="hl-n">one</b> makes <b class="hl-n">zero</b>. No monkeys on the <b class="hl-w">bed</b>!</div><div class="sub-zh">1 减 1 等于 0！床上没有小猴子啦。</div></div>
+<div class="sub" id="sub_v1f"><div class="sub-en">Word time! <b class="hl-w">doctor</b>. Say it with me: <b class="hl-w">doctor</b>!</div><div class="sub-zh">学单词：doctor，医生！跟我一起说：doctor！</div></div>
+<div class="sub" id="sub_out1"><div class="sub-en">Now every little <b class="hl-w">monkey</b> is tucked in <b class="hl-w">bed</b>. Shh... good night!</div><div class="sub-zh">现在所有的小猴子都乖乖躺在床上啦。嘘……晚安！</div></div>
+<div class="sub" id="sub_out2"><div class="sub-en">Let's count down together: <b class="hl-n">five</b>, <b class="hl-n">four</b>, <b class="hl-n">three</b>, <b class="hl-n">two</b>, <b class="hl-n">one</b>, <b class="hl-n">zero</b>!</div><div class="sub-zh">我们一起倒数：五、四、三、二、一、零！</div></div>
+<div class="sub" id="sub_out3"><div class="sub-en"><b class="hl-w">Monkey</b>, <b class="hl-w">bed</b>, <b class="hl-w">jump</b>, <b class="hl-w">head</b>, <b class="hl-w">doctor</b>. You did it! Great job!</div><div class="sub-zh">猴子、床、跳、头、医生。你真棒！</div></div>
+  </section>
+  <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="136" data-track-index="2" data-volume="1"></audio>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#title", {y:-60, opacity:0, scale:.8}, {y:0, opacity:1, scale:1, duration:.7, ease:"back.out(1.8)"}, 0.2);
+  tl.fromTo("#title-sub", {opacity:0, y:20}, {opacity:1, y:0, duration:.5}, 0.7);
+  tl.to("#title-wrap", {opacity:0, y:-40, duration:.5, ease:"power2.in"}, 6.395);
+  tl.fromTo("#mk0", {x:-340, y:200, scale:.2, opacity:0}, {x:-340, y:0, scale:1, opacity:1, duration:.5, ease:"back.out(2)"}, 0.9);
+  tl.fromTo("#mk1", {x:-170, y:200, scale:.2, opacity:0}, {x:-170, y:0, scale:1, opacity:1, duration:.5, ease:"back.out(2)"}, 1.02);
+  tl.fromTo("#mk2", {x:0, y:200, scale:.2, opacity:0}, {x:0, y:0, scale:1, opacity:1, duration:.5, ease:"back.out(2)"}, 1.14);
+  tl.fromTo("#mk3", {x:170, y:200, scale:.2, opacity:0}, {x:170, y:0, scale:1, opacity:1, duration:.5, ease:"back.out(2)"}, 1.26);
+  tl.fromTo("#mk4", {x:340, y:200, scale:.2, opacity:0}, {x:340, y:0, scale:1, opacity:1, duration:.5, ease:"back.out(2)"}, 1.38);
+  tl.fromTo(".card-left, .card-right", {opacity:0, y:-30}, {opacity:1, y:0, duration:.6, stagger:.15, ease:"power3.out"}, 1.4);
+  tl.fromTo("#cn5", {opacity:0, scale:.5}, {opacity:1, scale:1, duration:.5, ease:"back.out(2)"}, 1.6);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 2.2);
+  tl.to("#mk1", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 2.27);
+  tl.to("#mk2", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 2.34);
+  tl.to("#mk3", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 2.41);
+  tl.to("#mk4", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 2.48);
+  tl.fromTo("#sub_intro1", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 1.5);
+  tl.to("#sub_intro1", {opacity:0, duration:.12}, 6.675);
+  tl.fromTo("#sub_v5a", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 6.695);
+  tl.to("#sub_v5a", {opacity:0, duration:.12}, 10.396);
+  tl.fromTo("#sub_v5b", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 10.416);
+  tl.to("#sub_v5b", {opacity:0, duration:.12}, 13.52);
+  tl.fromTo("#sub_v5c", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 13.54);
+  tl.to("#sub_v5c", {opacity:0, duration:.12}, 16.907);
+  tl.fromTo("#sub_v5d", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 16.927);
+  tl.to("#sub_v5d", {opacity:0, duration:.12}, 21.312);
+  tl.fromTo("#sub_v5e", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 21.332);
+  tl.to("#sub_v5e", {opacity:0, duration:.12}, 26.179);
+  tl.fromTo("#sub_v5f", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 26.199);
+  tl.to("#sub_v5f", {opacity:0, duration:.12}, 30.144);
+  tl.fromTo("#sub_v4a", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 30.164);
+  tl.to("#sub_v4a", {opacity:0, duration:.12}, 33.716);
+  tl.fromTo("#sub_v4b", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 33.736);
+  tl.to("#sub_v4b", {opacity:0, duration:.12}, 36.84);
+  tl.fromTo("#sub_v4c", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 36.86);
+  tl.to("#sub_v4c", {opacity:0, duration:.12}, 40.227);
+  tl.fromTo("#sub_v4d", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 40.247);
+  tl.to("#sub_v4d", {opacity:0, duration:.12}, 44.632);
+  tl.fromTo("#sub_v4e", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 44.652);
+  tl.to("#sub_v4e", {opacity:0, duration:.12}, 49.307);
+  tl.fromTo("#sub_v4f", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 49.327);
+  tl.to("#sub_v4f", {opacity:0, duration:.12}, 52.888);
+  tl.fromTo("#sub_v3a", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 52.908);
+  tl.to("#sub_v3a", {opacity:0, duration:.12}, 56.503);
+  tl.fromTo("#sub_v3b", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 56.523);
+  tl.to("#sub_v3b", {opacity:0, duration:.12}, 59.627);
+  tl.fromTo("#sub_v3c", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 59.647);
+  tl.to("#sub_v3c", {opacity:0, duration:.12}, 63.014);
+  tl.fromTo("#sub_v3d", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 63.034);
+  tl.to("#sub_v3d", {opacity:0, duration:.12}, 67.419);
+  tl.fromTo("#sub_v3e", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 67.439);
+  tl.to("#sub_v3e", {opacity:0, duration:.12}, 71.944);
+  tl.fromTo("#sub_v3f", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 71.964);
+  tl.to("#sub_v3f", {opacity:0, duration:.12}, 75.717);
+  tl.fromTo("#sub_v2a", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 75.737);
+  tl.to("#sub_v2a", {opacity:0, duration:.12}, 79.161);
+  tl.fromTo("#sub_v2b", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 79.181);
+  tl.to("#sub_v2b", {opacity:0, duration:.12}, 82.285);
+  tl.fromTo("#sub_v2c", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 82.305);
+  tl.to("#sub_v2c", {opacity:0, duration:.12}, 85.672);
+  tl.fromTo("#sub_v2d", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 85.692);
+  tl.to("#sub_v2d", {opacity:0, duration:.12}, 90.077);
+  tl.fromTo("#sub_v2e", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 90.097);
+  tl.to("#sub_v2e", {opacity:0, duration:.12}, 94.432);
+  tl.fromTo("#sub_v2f", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 94.452);
+  tl.to("#sub_v2f", {opacity:0, duration:.12}, 97.907);
+  tl.fromTo("#sub_v1a", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 97.927);
+  tl.to("#sub_v1a", {opacity:0, duration:.12}, 101.543);
+  tl.fromTo("#sub_v1b", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 101.563);
+  tl.to("#sub_v1b", {opacity:0, duration:.12}, 105.179);
+  tl.fromTo("#sub_v1c", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 105.199);
+  tl.to("#sub_v1c", {opacity:0, duration:.12}, 108.566);
+  tl.fromTo("#sub_v1d", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 108.586);
+  tl.to("#sub_v1d", {opacity:0, duration:.12}, 112.971);
+  tl.fromTo("#sub_v1e", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 112.991);
+  tl.to("#sub_v1e", {opacity:0, duration:.12}, 117.091);
+  tl.fromTo("#sub_v1f", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 117.111);
+  tl.to("#sub_v1f", {opacity:0, duration:.12}, 120.971);
+  tl.fromTo("#sub_out1", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 120.991);
+  tl.to("#sub_out1", {opacity:0, duration:.12}, 125.838);
+  tl.fromTo("#sub_out2", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 125.858);
+  tl.to("#sub_out2", {opacity:0, duration:.12}, 130.235);
+  tl.fromTo("#sub_out3", {opacity:0, y:16}, {opacity:1, y:0, duration:.2}, 130.255);
+  tl.to("#sub_out3", {opacity:0, duration:.12}, 135.34);
+  tl.fromTo("#verse-chip", {scale:.6}, {scale:1, duration:.4, ease:"back.out(2)"}, 6.495);
+  tl.to("#vcn6", {opacity:0, duration:.15}, 6.495);
+  tl.to("#vcn5", {opacity:1, duration:.15}, 6.495);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 6.795);
+  tl.to("#mk1", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 6.865);
+  tl.to("#mk2", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 6.935);
+  tl.to("#mk3", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 7.005);
+  tl.to("#mk4", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 7.075);
+  tl.to("#mk4", {x:430, y:-150, rotation:180, duration:.38, ease:"power2.out"}, 10.816);
+  tl.to("#mk4", {x:520, y:245, rotation:360, scale:0.6, duration:.5, ease:"power2.in"}, 11.196);
+  tl.set("#mk4", {rotation:0}, 11.696);
+  tl.fromTo("#bonk", {x:520, scale:.2, opacity:0, rotation:-15}, {scale:1, opacity:1, rotation:0, duration:.25, ease:"back.out(3)"}, 11.696);
+  tl.to("#bonk", {opacity:0, scale:1.2, duration:.3}, 12.696);
+  tl.fromTo("#bd4", {opacity:0, scale:.3, transformOrigin:"110px 17px"}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 11.846);
+  tl.fromTo("#mk4", {scaleY:0.48}, {scaleY:0.6, duration:.35, ease:"elastic.out(1,.4)", immediateRender:false}, 11.696);
+  tl.fromTo("#call", {y:-360, opacity:0}, {y:0, opacity:1, duration:.55, ease:"back.out(1.4)"}, 13.44);
+  tl.fromTo("#ring-txt", {opacity:0, scale:.6}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 15.24);
+  tl.fromTo("#mama", {rotation:-8}, {rotation:8, duration:.08, yoyo:true, repeat:9, ease:"none"}, 15.24);
+  tl.to("#mama", {rotation:0, duration:.08}, 16.06);
+  tl.to("#ring-txt", {opacity:0, duration:.2}, 16.827);
+  tl.fromTo("#doc-txt", {opacity:0, y:12}, {opacity:1, y:0, duration:.3}, 17.627);
+  tl.fromTo("#doctor", {scale:1}, {scale:1.12, duration:.25, yoyo:true, repeat:3, ease:"sine.inOut"}, 17.627);
+  tl.fromTo("#finger", {rotation:-18}, {rotation:18, duration:.22, yoyo:true, repeat:9, ease:"sine.inOut"}, 17.727);
+  tl.to("#doc-txt", {opacity:0, duration:.2}, 20.932);
+  tl.to("#call", {y:-360, opacity:0, duration:.45, ease:"power2.in"}, 20.982);
+  tl.fromTo("#math5", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 21.232);
+  tl.fromTo("#eqa5", {opacity:0, y:20}, {opacity:1, y:0, duration:.25}, 21.632);
+  tl.fromTo("#eqb5, #eqc5", {opacity:0, y:20}, {opacity:1, y:0, duration:.25, stagger:.15}, 22.132);
+  tl.to("#mf5_4", {x:70, y:-40, rotation:40, opacity:0, duration:.5, ease:"power2.in"}, 22.232);
+  tl.fromTo("#eqd5", {opacity:0}, {opacity:1, duration:.2}, 23.024);
+  tl.fromTo("#eqe5", {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:.4, ease:"back.out(2.5)"}, 23.224);
+  tl.to("#cn5", {opacity:0, scale:.4, duration:.25, ease:"power2.in"}, 23.224);
+  tl.fromTo("#cn4", {opacity:0, scale:1.6}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 23.424);
+  tl.to("#cf4", {opacity:.18, scale:.8, duration:.3}, 23.424);
+  tl.to("#mk0", {x:-255, duration:.6, ease:"power2.inOut"}, 21.832);
+  tl.to("#mk1", {x:-85, duration:.6, ease:"power2.inOut"}, 21.882);
+  tl.to("#mk2", {x:85, duration:.6, ease:"power2.inOut"}, 21.932);
+  tl.to("#mk3", {x:255, duration:.6, ease:"power2.inOut"}, 21.982);
+  tl.to("#math5", {opacity:0, duration:.25}, 25.999);
+  tl.fromTo("#word5", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 26.049);
+  tl.fromTo("#word5 .lt", {opacity:0, y:30}, {opacity:1, y:0, duration:.25, stagger:.08, ease:"back.out(2)"}, 26.899);
+  tl.fromTo("#word5 .w-icon", {rotation:-10}, {rotation:10, duration:.3, yoyo:true, repeat:5, ease:"sine.inOut"}, 26.899);
+  tl.to("#word5", {opacity:0, duration:.3}, 29.914);
+  tl.fromTo("#bank0", {opacity:.25}, {opacity:1, duration:.3}, 29.914);
+  tl.fromTo("#bank0 .bank-dot", {scale:1.6}, {scale:1, duration:.4, ease:"back.out(3)"}, 29.964);
+  tl.fromTo("#verse-chip", {scale:.6}, {scale:1, duration:.4, ease:"back.out(2)", immediateRender:false}, 29.964);
+  tl.to("#vcn5", {opacity:0, duration:.15}, 29.964);
+  tl.to("#vcn4", {opacity:1, duration:.15}, 29.964);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 30.264);
+  tl.to("#mk1", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 30.334);
+  tl.to("#mk2", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 30.404);
+  tl.to("#mk3", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 30.474);
+  tl.to("#mk3", {x:428.5, y:-150, rotation:180, duration:.38, ease:"power2.out"}, 34.136);
+  tl.to("#mk3", {x:602, y:245, rotation:360, scale:0.6, duration:.5, ease:"power2.in"}, 34.516);
+  tl.set("#mk3", {rotation:0}, 35.016);
+  tl.fromTo("#bonk", {x:602, scale:.2, opacity:0, rotation:-15}, {scale:1, opacity:1, rotation:0, duration:.25, ease:"back.out(3)", immediateRender:false}, 35.016);
+  tl.to("#bonk", {opacity:0, scale:1.2, duration:.3}, 36.016);
+  tl.fromTo("#bd3", {opacity:0, scale:.3, transformOrigin:"110px 17px"}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 35.166);
+  tl.fromTo("#mk3", {scaleY:0.48}, {scaleY:0.6, duration:.35, ease:"elastic.out(1,.4)", immediateRender:false}, 35.016);
+  tl.fromTo("#call", {y:-360, opacity:0}, {y:0, opacity:1, duration:.55, ease:"back.out(1.4)", immediateRender:false}, 36.76);
+  tl.fromTo("#ring-txt", {opacity:0, scale:.6}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)", immediateRender:false}, 38.56);
+  tl.fromTo("#mama", {rotation:-8}, {rotation:8, duration:.08, yoyo:true, repeat:9, ease:"none", immediateRender:false}, 38.56);
+  tl.to("#mama", {rotation:0, duration:.08}, 39.38);
+  tl.to("#ring-txt", {opacity:0, duration:.2}, 40.147);
+  tl.fromTo("#doc-txt", {opacity:0, y:12}, {opacity:1, y:0, duration:.3, immediateRender:false}, 40.947);
+  tl.fromTo("#doctor", {scale:1}, {scale:1.12, duration:.25, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 40.947);
+  tl.fromTo("#finger", {rotation:-18}, {rotation:18, duration:.22, yoyo:true, repeat:9, ease:"sine.inOut", immediateRender:false}, 41.047);
+  tl.to("#doc-txt", {opacity:0, duration:.2}, 44.252);
+  tl.to("#call", {y:-360, opacity:0, duration:.45, ease:"power2.in"}, 44.302);
+  tl.fromTo("#math4", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 44.552);
+  tl.fromTo("#eqa4", {opacity:0, y:20}, {opacity:1, y:0, duration:.25}, 44.952);
+  tl.fromTo("#eqb4, #eqc4", {opacity:0, y:20}, {opacity:1, y:0, duration:.25, stagger:.15}, 45.452);
+  tl.to("#mf4_3", {x:70, y:-40, rotation:40, opacity:0, duration:.5, ease:"power2.in"}, 45.552);
+  tl.fromTo("#eqd4", {opacity:0}, {opacity:1, duration:.2}, 46.264);
+  tl.fromTo("#eqe4", {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:.4, ease:"back.out(2.5)"}, 46.464);
+  tl.to("#cn4", {opacity:0, scale:.4, duration:.25, ease:"power2.in"}, 46.464);
+  tl.fromTo("#cn3", {opacity:0, scale:1.6}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 46.664);
+  tl.to("#cf3", {opacity:.18, scale:.8, duration:.3}, 46.664);
+  tl.to("#mk0", {x:-170, duration:.6, ease:"power2.inOut"}, 45.152);
+  tl.to("#mk1", {x:0, duration:.6, ease:"power2.inOut"}, 45.202);
+  tl.to("#mk2", {x:170, duration:.6, ease:"power2.inOut"}, 45.252);
+  tl.to("#math4", {opacity:0, duration:.25}, 49.127);
+  tl.fromTo("#word4", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 49.177);
+  tl.fromTo("#word4 .lt", {opacity:0, y:30}, {opacity:1, y:0, duration:.25, stagger:.08, ease:"back.out(2)"}, 50.027);
+  tl.fromTo("#word4 .w-icon", {rotation:-10}, {rotation:10, duration:.3, yoyo:true, repeat:5, ease:"sine.inOut"}, 50.027);
+  tl.to("#word4", {opacity:0, duration:.3}, 52.658);
+  tl.fromTo("#bank1", {opacity:.25}, {opacity:1, duration:.3}, 52.658);
+  tl.fromTo("#bank1 .bank-dot", {scale:1.6}, {scale:1, duration:.4, ease:"back.out(3)"}, 52.708);
+  tl.fromTo("#verse-chip", {scale:.6}, {scale:1, duration:.4, ease:"back.out(2)", immediateRender:false}, 52.708);
+  tl.to("#vcn4", {opacity:0, duration:.15}, 52.708);
+  tl.to("#vcn3", {opacity:1, duration:.15}, 52.708);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 53.008);
+  tl.to("#mk1", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 53.078);
+  tl.to("#mk2", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 53.148);
+  tl.to("#mk2", {x:427, y:-150, rotation:180, duration:.38, ease:"power2.out"}, 56.923);
+  tl.to("#mk2", {x:684, y:245, rotation:360, scale:0.6, duration:.5, ease:"power2.in"}, 57.303);
+  tl.set("#mk2", {rotation:0}, 57.803);
+  tl.fromTo("#bonk", {x:684, scale:.2, opacity:0, rotation:-15}, {scale:1, opacity:1, rotation:0, duration:.25, ease:"back.out(3)", immediateRender:false}, 57.803);
+  tl.to("#bonk", {opacity:0, scale:1.2, duration:.3}, 58.803);
+  tl.fromTo("#bd2", {opacity:0, scale:.3, transformOrigin:"110px 17px"}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 57.953);
+  tl.fromTo("#mk2", {scaleY:0.48}, {scaleY:0.6, duration:.35, ease:"elastic.out(1,.4)", immediateRender:false}, 57.803);
+  tl.fromTo("#call", {y:-360, opacity:0}, {y:0, opacity:1, duration:.55, ease:"back.out(1.4)", immediateRender:false}, 59.547);
+  tl.fromTo("#ring-txt", {opacity:0, scale:.6}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)", immediateRender:false}, 61.347);
+  tl.fromTo("#mama", {rotation:-8}, {rotation:8, duration:.08, yoyo:true, repeat:9, ease:"none", immediateRender:false}, 61.347);
+  tl.to("#mama", {rotation:0, duration:.08}, 62.167);
+  tl.to("#ring-txt", {opacity:0, duration:.2}, 62.934);
+  tl.fromTo("#doc-txt", {opacity:0, y:12}, {opacity:1, y:0, duration:.3, immediateRender:false}, 63.734);
+  tl.fromTo("#doctor", {scale:1}, {scale:1.12, duration:.25, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 63.734);
+  tl.fromTo("#finger", {rotation:-18}, {rotation:18, duration:.22, yoyo:true, repeat:9, ease:"sine.inOut", immediateRender:false}, 63.834);
+  tl.to("#doc-txt", {opacity:0, duration:.2}, 67.039);
+  tl.to("#call", {y:-360, opacity:0, duration:.45, ease:"power2.in"}, 67.089);
+  tl.fromTo("#math3", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 67.339);
+  tl.fromTo("#eqa3", {opacity:0, y:20}, {opacity:1, y:0, duration:.25}, 67.739);
+  tl.fromTo("#eqb3, #eqc3", {opacity:0, y:20}, {opacity:1, y:0, duration:.25, stagger:.15}, 68.239);
+  tl.to("#mf3_2", {x:70, y:-40, rotation:40, opacity:0, duration:.5, ease:"power2.in"}, 68.339);
+  tl.fromTo("#eqd3", {opacity:0}, {opacity:1, duration:.2}, 68.988);
+  tl.fromTo("#eqe3", {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:.4, ease:"back.out(2.5)"}, 69.188);
+  tl.to("#cn3", {opacity:0, scale:.4, duration:.25, ease:"power2.in"}, 69.188);
+  tl.fromTo("#cn2", {opacity:0, scale:1.6}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 69.388);
+  tl.to("#cf2", {opacity:.18, scale:.8, duration:.3}, 69.388);
+  tl.to("#mk0", {x:-85, duration:.6, ease:"power2.inOut"}, 67.939);
+  tl.to("#mk1", {x:85, duration:.6, ease:"power2.inOut"}, 67.989);
+  tl.to("#math3", {opacity:0, duration:.25}, 71.764);
+  tl.fromTo("#word3", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 71.814);
+  tl.fromTo("#word3 .lt", {opacity:0, y:30}, {opacity:1, y:0, duration:.25, stagger:.08, ease:"back.out(2)"}, 72.664);
+  tl.fromTo("#word3 .w-icon", {rotation:-10}, {rotation:10, duration:.3, yoyo:true, repeat:5, ease:"sine.inOut"}, 72.664);
+  tl.to("#word3", {opacity:0, duration:.3}, 75.487);
+  tl.fromTo("#bank2", {opacity:.25}, {opacity:1, duration:.3}, 75.487);
+  tl.fromTo("#bank2 .bank-dot", {scale:1.6}, {scale:1, duration:.4, ease:"back.out(3)"}, 75.537);
+  tl.fromTo("#verse-chip", {scale:.6}, {scale:1, duration:.4, ease:"back.out(2)", immediateRender:false}, 75.537);
+  tl.to("#vcn3", {opacity:0, duration:.15}, 75.537);
+  tl.to("#vcn2", {opacity:1, duration:.15}, 75.537);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 75.837);
+  tl.to("#mk1", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 75.907);
+  tl.to("#mk1", {x:425.5, y:-150, rotation:180, duration:.38, ease:"power2.out"}, 79.581);
+  tl.to("#mk1", {x:766, y:245, rotation:360, scale:0.6, duration:.5, ease:"power2.in"}, 79.961);
+  tl.set("#mk1", {rotation:0}, 80.461);
+  tl.fromTo("#bonk", {x:766, scale:.2, opacity:0, rotation:-15}, {scale:1, opacity:1, rotation:0, duration:.25, ease:"back.out(3)", immediateRender:false}, 80.461);
+  tl.to("#bonk", {opacity:0, scale:1.2, duration:.3}, 81.461);
+  tl.fromTo("#bd1", {opacity:0, scale:.3, transformOrigin:"110px 17px"}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 80.611);
+  tl.fromTo("#mk1", {scaleY:0.48}, {scaleY:0.6, duration:.35, ease:"elastic.out(1,.4)", immediateRender:false}, 80.461);
+  tl.fromTo("#call", {y:-360, opacity:0}, {y:0, opacity:1, duration:.55, ease:"back.out(1.4)", immediateRender:false}, 82.205);
+  tl.fromTo("#ring-txt", {opacity:0, scale:.6}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)", immediateRender:false}, 84.005);
+  tl.fromTo("#mama", {rotation:-8}, {rotation:8, duration:.08, yoyo:true, repeat:9, ease:"none", immediateRender:false}, 84.005);
+  tl.to("#mama", {rotation:0, duration:.08}, 84.825);
+  tl.to("#ring-txt", {opacity:0, duration:.2}, 85.592);
+  tl.fromTo("#doc-txt", {opacity:0, y:12}, {opacity:1, y:0, duration:.3, immediateRender:false}, 86.392);
+  tl.fromTo("#doctor", {scale:1}, {scale:1.12, duration:.25, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 86.392);
+  tl.fromTo("#finger", {rotation:-18}, {rotation:18, duration:.22, yoyo:true, repeat:9, ease:"sine.inOut", immediateRender:false}, 86.492);
+  tl.to("#doc-txt", {opacity:0, duration:.2}, 89.697);
+  tl.to("#call", {y:-360, opacity:0, duration:.45, ease:"power2.in"}, 89.747);
+  tl.fromTo("#math2", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 89.997);
+  tl.fromTo("#eqa2", {opacity:0, y:20}, {opacity:1, y:0, duration:.25}, 90.397);
+  tl.fromTo("#eqb2, #eqc2", {opacity:0, y:20}, {opacity:1, y:0, duration:.25, stagger:.15}, 90.897);
+  tl.to("#mf2_1", {x:70, y:-40, rotation:40, opacity:0, duration:.5, ease:"power2.in"}, 90.997);
+  tl.fromTo("#eqd2", {opacity:0}, {opacity:1, duration:.2}, 91.574);
+  tl.fromTo("#eqe2", {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:.4, ease:"back.out(2.5)"}, 91.774);
+  tl.to("#cn2", {opacity:0, scale:.4, duration:.25, ease:"power2.in"}, 91.774);
+  tl.fromTo("#cn1", {opacity:0, scale:1.6}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 91.974);
+  tl.to("#cf1", {opacity:.18, scale:.8, duration:.3}, 91.974);
+  tl.to("#mk0", {x:0, duration:.6, ease:"power2.inOut"}, 90.597);
+  tl.to("#math2", {opacity:0, duration:.25}, 94.252);
+  tl.fromTo("#word2", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 94.302);
+  tl.fromTo("#word2 .lt", {opacity:0, y:30}, {opacity:1, y:0, duration:.25, stagger:.08, ease:"back.out(2)"}, 95.152);
+  tl.fromTo("#word2 .w-icon", {rotation:-10}, {rotation:10, duration:.3, yoyo:true, repeat:5, ease:"sine.inOut"}, 95.152);
+  tl.to("#word2", {opacity:0, duration:.3}, 97.677);
+  tl.fromTo("#bank3", {opacity:.25}, {opacity:1, duration:.3}, 97.677);
+  tl.fromTo("#bank3 .bank-dot", {scale:1.6}, {scale:1, duration:.4, ease:"back.out(3)"}, 97.727);
+  tl.fromTo("#verse-chip", {scale:.6}, {scale:1, duration:.4, ease:"back.out(2)", immediateRender:false}, 97.727);
+  tl.to("#vcn2", {opacity:0, duration:.15}, 97.727);
+  tl.to("#vcn1", {opacity:1, duration:.15}, 97.727);
+  tl.to("#mk0", {y:-120, duration:0.3, ease:"power2.out", yoyo:true, repeat:11}, 98.027);
+  tl.to("#mk0", {x:424, y:-150, rotation:180, duration:.38, ease:"power2.out"}, 101.963);
+  tl.to("#mk0", {x:848, y:245, rotation:360, scale:0.6, duration:.5, ease:"power2.in"}, 102.343);
+  tl.set("#mk0", {rotation:0}, 102.843);
+  tl.fromTo("#bonk", {x:848, scale:.2, opacity:0, rotation:-15}, {scale:1, opacity:1, rotation:0, duration:.25, ease:"back.out(3)", immediateRender:false}, 102.843);
+  tl.to("#bonk", {opacity:0, scale:1.2, duration:.3}, 103.843);
+  tl.fromTo("#bd0", {opacity:0, scale:.3, transformOrigin:"110px 17px"}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)"}, 102.993);
+  tl.fromTo("#mk0", {scaleY:0.48}, {scaleY:0.6, duration:.35, ease:"elastic.out(1,.4)", immediateRender:false}, 102.843);
+  tl.fromTo("#call", {y:-360, opacity:0}, {y:0, opacity:1, duration:.55, ease:"back.out(1.4)", immediateRender:false}, 105.099);
+  tl.fromTo("#ring-txt", {opacity:0, scale:.6}, {opacity:1, scale:1, duration:.3, ease:"back.out(3)", immediateRender:false}, 106.899);
+  tl.fromTo("#mama", {rotation:-8}, {rotation:8, duration:.08, yoyo:true, repeat:9, ease:"none", immediateRender:false}, 106.899);
+  tl.to("#mama", {rotation:0, duration:.08}, 107.719);
+  tl.to("#ring-txt", {opacity:0, duration:.2}, 108.486);
+  tl.fromTo("#doc-txt", {opacity:0, y:12}, {opacity:1, y:0, duration:.3, immediateRender:false}, 109.286);
+  tl.fromTo("#doctor", {scale:1}, {scale:1.12, duration:.25, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 109.286);
+  tl.fromTo("#finger", {rotation:-18}, {rotation:18, duration:.22, yoyo:true, repeat:9, ease:"sine.inOut", immediateRender:false}, 109.386);
+  tl.to("#doc-txt", {opacity:0, duration:.2}, 112.591);
+  tl.to("#call", {y:-360, opacity:0, duration:.45, ease:"power2.in"}, 112.641);
+  tl.fromTo("#math1", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 112.891);
+  tl.fromTo("#eqa1", {opacity:0, y:20}, {opacity:1, y:0, duration:.25}, 113.291);
+  tl.fromTo("#eqb1, #eqc1", {opacity:0, y:20}, {opacity:1, y:0, duration:.25, stagger:.15}, 113.791);
+  tl.to("#mf1_0", {x:70, y:-40, rotation:40, opacity:0, duration:.5, ease:"power2.in"}, 113.891);
+  tl.fromTo("#eqd1", {opacity:0}, {opacity:1, duration:.2}, 114.369);
+  tl.fromTo("#eqe1", {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:.4, ease:"back.out(2.5)"}, 114.569);
+  tl.to("#cn1", {opacity:0, scale:.4, duration:.25, ease:"power2.in"}, 114.569);
+  tl.fromTo("#cn0", {opacity:0, scale:1.6}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 114.769);
+  tl.to("#cf0", {opacity:.18, scale:.8, duration:.3}, 114.769);
+  tl.to("#math1", {opacity:0, duration:.25}, 116.911);
+  tl.fromTo("#word1", {opacity:0, scale:.85}, {opacity:1, scale:1, duration:.4, ease:"back.out(2)"}, 116.961);
+  tl.fromTo("#word1 .lt", {opacity:0, y:30}, {opacity:1, y:0, duration:.25, stagger:.08, ease:"back.out(2)"}, 117.811);
+  tl.fromTo("#word1 .w-icon", {rotation:-10}, {rotation:10, duration:.3, yoyo:true, repeat:5, ease:"sine.inOut"}, 117.811);
+  tl.to("#word1", {opacity:0, duration:.3}, 120.741);
+  tl.fromTo("#bank4", {opacity:.25}, {opacity:1, duration:.3}, 120.741);
+  tl.fromTo("#bank4 .bank-dot", {scale:1.6}, {scale:1, duration:.4, ease:"back.out(3)"}, 120.791);
+  tl.to("#vcn1", {opacity:0, duration:.15}, 120.791);
+  tl.to("#vcn0", {opacity:1, duration:.15}, 120.791);
+  tl.to("#night", {opacity:.5, duration:1.2}, 120.791);
+  tl.to(".monkey", {opacity:0, duration:.6}, 121.091);
+  tl.fromTo(".sleeper", {y:80, opacity:0}, {y:0, opacity:1, duration:.6, stagger:.12, ease:"power2.out"}, 121.391);
+  tl.fromTo("#blanket", {y:120, opacity:0}, {y:0, opacity:1, duration:.6, ease:"power2.out"}, 121.391);
+  tl.fromTo("#z0", {y:0, opacity:0, scale:.6}, {y:-60, opacity:1, scale:1.1, duration:1.6, repeat:7, ease:"sine.out"}, 122.291);
+  tl.fromTo("#z1", {y:0, opacity:0, scale:.6}, {y:-60, opacity:1, scale:1.1, duration:1.6, repeat:6, ease:"sine.out"}, 122.791);
+  tl.fromTo("#z2", {y:0, opacity:0, scale:.6}, {y:-60, opacity:1, scale:1.1, duration:1.6, repeat:6, ease:"sine.out"}, 123.291);
+  tl.fromTo("#lamp-glow", {opacity:1}, {opacity:.25, duration:.8}, 121.091);
+  tl.to("#window", {opacity:0, duration:.4}, 125.658);
+  tl.fromTo("#countdown", {opacity:0}, {opacity:1, duration:.3}, 125.958);
+  tl.fromTo("#cd5", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 127.477);
+  tl.to("#cd5", {scale:1, duration:.2}, 127.677);
+  tl.fromTo("#cd4", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 127.871);
+  tl.to("#cd4", {scale:1, duration:.2}, 128.071);
+  tl.fromTo("#cd3", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 128.265);
+  tl.to("#cd3", {scale:1, duration:.2}, 128.465);
+  tl.fromTo("#cd2", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 128.659);
+  tl.to("#cd2", {scale:1, duration:.2}, 128.859);
+  tl.fromTo("#cd1", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 129.053);
+  tl.to("#cd1", {scale:1, duration:.2}, 129.253);
+  tl.fromTo("#cd0", {opacity:.15, scale:.7}, {opacity:1, scale:1.25, duration:.2, ease:"back.out(3)"}, 129.447);
+  tl.to("#cd0", {scale:1, duration:.2}, 129.647);
+  tl.to("#countdown", {opacity:0, duration:.3}, 130.005);
+  tl.fromTo("#review", {opacity:0}, {opacity:1, duration:.3}, 130.105);
+  tl.fromTo("#rv0", {opacity:0, y:40, scale:.7}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(2.4)"}, 130.405);
+  tl.fromTo("#rv1", {opacity:0, y:40, scale:.7}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(2.4)"}, 130.802);
+  tl.fromTo("#rv2", {opacity:0, y:40, scale:.7}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(2.4)"}, 131.198);
+  tl.fromTo("#rv3", {opacity:0, y:40, scale:.7}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(2.4)"}, 131.595);
+  tl.fromTo("#rv4", {opacity:0, y:40, scale:.7}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(2.4)"}, 131.991);
+  tl.fromTo("#great", {opacity:0, scale:.3, rotation:-8}, {opacity:1, scale:1, rotation:0, duration:.6, ease:"back.out(2.5)"}, 132.59);
+  tl.fromTo(".star", {opacity:.5}, {opacity:1, scale:1.4, duration:.4, stagger:.05, yoyo:true, repeat:1}, 132.59);
+  tl.fromTo("#sky-stars", {opacity:.55}, {opacity:1, duration:2, yoyo:true, repeat:67, ease:"sine.inOut"}, 0);
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>
