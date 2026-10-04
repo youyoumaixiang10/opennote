@@ -1,0 +1,5 @@
+snapshots/
+renders/
+work-*/
+.*hf-transaction*/
+render.log
