@@ -1,0 +1,8 @@
+src/
+assets/song.wav
+*.mp4
+snapshots/
+renders/
+work-*/
+.*hf-transaction*/
+render.log

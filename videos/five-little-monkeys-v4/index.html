@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<title>Five Little Monkeys</title>
+<script src="vendor/gsap.min.js"></script>
+<style>
+@font-face { font-family:"WenQuanYi Zen Hei"; src: local("WenQuanYi Zen Hei"); }
+body { margin:0; background:#000; font-family:Nunito, "WenQuanYi Zen Hei", sans-serif; }
+#root { position:relative; width:1920px; height:1080px; overflow:hidden; }
+#stage { position:absolute; inset:0; }
+#room { position:absolute; inset:0; width:1920px; height:1080px; }
+.monkey { position:absolute; width:300px; height:330px; transform-origin:50% 100%; }
+.monkey img { position:absolute; bottom:0; left:50%; transform:translateX(-50%); height:300px; filter: drop-shadow(0 8px 6px #3a1f0c40); }
+.monkey .p-fall { height:310px; opacity:0; }
+.monkey .p-hurt { height:250px; opacity:0; }
+.tag { position:absolute; width:80px; height:80px; border-radius:50%; background:#fff6e4; box-shadow:0 6px 0 #c98a52, 0 10px 20px #0004;
+  display:flex; align-items:center; justify-content:center; font-weight:900; font-size:54px; color:#e2553f; opacity:0; z-index:2; }
+#bump { position:absolute; left:870px; top:700px; width:180px; height:120px; display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:40px; color:#fff; background:#ff6b5a; opacity:0;
+  clip-path: polygon(50% 0,61% 28%,95% 14%,73% 44%,100% 60%,68% 66%,78% 100%,50% 78%,22% 100%,32% 66%,0 60%,27% 44%,5% 14%,39% 28%); }
+#goodnight { position:absolute; inset:0; width:1920px; height:1080px; opacity:0; }
+.zzz { position:absolute; font-weight:900; font-size:66px; color:#fff; opacity:0; text-shadow:0 4px 0 #6b5bd6, 0 0 20px #0006; }
+#fade { position:absolute; inset:0; background:#000; opacity:0; }
+#title { position:absolute; left:460px; top:70px; width:1000px; padding:26px 0 30px; text-align:center; border-radius:60px; background:#fff6e4f2; box-shadow:0 12px 30px #0004; opacity:0; }
+#title .t1 { font-weight:900; font-size:96px; color:#a0522d; line-height:1; }
+#title .t2 { font-size:40px; color:#c46a3a; margin-top:10px; font-family:"WenQuanYi Zen Hei", sans-serif; }
+#counter { position:absolute; left:60px; top:50px; width:180px; height:190px; border-radius:30px; background:#fff6e4f2; box-shadow: 0 10px 0 #c98a52, 0 16px 30px #0004; opacity:0; }
+.cnt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; }
+.cn { font-weight:900; font-size:116px; line-height:1; color:#e2553f; }
+.cw { font-weight:900; font-size:32px; color:#8a4b1f; }
+#eq { position:absolute; left:262px; top:96px; width:340px; height:96px; border-radius:48px; background:#fff6e4f2; box-shadow:0 8px 0 #c98a5288; opacity:0; }
+.eqr { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:14px; font-weight:900; font-size:66px; color:#8a4b1f; opacity:0; }
+.eqr .op { color:#4a8fd8; } .eqc { color:#e2553f; display:inline-block; }
+.bubble { position:absolute; width:400px; height:400px; border-radius:50%; overflow:hidden; background:#fff6e4; box-shadow: 0 0 0 12px #fff6e4, 0 20px 40px #0005; opacity:0; }
+.bubble img { width:100%; height:100%; object-fit:cover; }
+#mama { left:90px; top:300px; } #mama img { object-position:50% 10%; }
+#doc { left:1440px; top:90px; } #doc img { object-position:50% 20%; }
+#ring { position:absolute; left:470px; top:290px; width:130px; height:130px; opacity:0; }
+</style></head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="123">
+ <section id="stage" class="clip" data-start="0" data-duration="123" data-track-index="1">
+  <img id="room" src="art/bedroom.jpg"/>
+  <div class="monkey" id="mk0" style="left:810px;top:490px">
+  <img class="p-jump" src="art/red_jump.png"/><img class="p-fall" src="art/red_fall.png"/><img class="p-hurt" src="art/red_hurt.png"/></div><div class="monkey" id="mk1" style="left:810px;top:490px">
+  <img class="p-jump" src="art/yellow_jump.png"/><img class="p-fall" src="art/yellow_fall.png"/><img class="p-hurt" src="art/yellow_hurt.png"/></div><div class="monkey" id="mk2" style="left:810px;top:490px">
+  <img class="p-jump" src="art/green_jump.png"/><img class="p-fall" src="art/green_fall.png"/><img class="p-hurt" src="art/green_hurt.png"/></div><div class="monkey" id="mk3" style="left:810px;top:490px">
+  <img class="p-jump" src="art/blue_jump.png"/><img class="p-fall" src="art/blue_fall.png"/><img class="p-hurt" src="art/blue_hurt.png"/></div><div class="monkey" id="mk4" style="left:810px;top:490px">
+  <img class="p-jump" src="art/purple_jump.png"/><img class="p-fall" src="art/purple_fall.png"/><img class="p-hurt" src="art/purple_hurt.png"/></div>
+  <div class="tag" id="tg5_0" style="left:496px;top:440px">1</div><div class="tag" id="tg5_1" style="left:708px;top:440px">2</div><div class="tag" id="tg5_2" style="left:920px;top:440px">3</div><div class="tag" id="tg5_3" style="left:1132px;top:440px">4</div><div class="tag" id="tg5_4" style="left:1344px;top:440px">5</div><div class="tag" id="tg4_0" style="left:602px;top:440px">1</div><div class="tag" id="tg4_1" style="left:814px;top:440px">2</div><div class="tag" id="tg4_2" style="left:1026px;top:440px">3</div><div class="tag" id="tg4_3" style="left:1238px;top:440px">4</div><div class="tag" id="tg3_0" style="left:708px;top:440px">1</div><div class="tag" id="tg3_1" style="left:920px;top:440px">2</div><div class="tag" id="tg3_2" style="left:1132px;top:440px">3</div><div class="tag" id="tg2_0" style="left:814px;top:440px">1</div><div class="tag" id="tg2_1" style="left:1026px;top:440px">2</div><div class="tag" id="tg1_0" style="left:920px;top:440px">1</div>
+  <div id="bump">BUMP!</div>
+  <img id="goodnight" src="art/goodnight.jpg"/>
+  <div class="zzz" id="z0" style="left:640px;top:420px">Z<small>z</small></div>
+  <div class="zzz" id="z1" style="left:960px;top:400px">Z<small>z</small></div>
+  <div class="zzz" id="z2" style="left:1260px;top:430px">Z<small>z</small></div>
+  <div id="title"><div class="t1">Five Little Monkeys</div><div class="t2">五只小猴子 · 学数数</div></div>
+  <div id="counter"><div class="cnt" id="cnt0"><div class="cn">0</div><div class="cw">zero</div></div><div class="cnt" id="cnt1"><div class="cn">1</div><div class="cw">one</div></div><div class="cnt" id="cnt2"><div class="cn">2</div><div class="cw">two</div></div><div class="cnt" id="cnt3"><div class="cn">3</div><div class="cw">three</div></div><div class="cnt" id="cnt4"><div class="cn">4</div><div class="cw">four</div></div><div class="cnt" id="cnt5"><div class="cn">5</div><div class="cw">five</div></div></div>
+  <div id="eq"><div class="eqr" id="eqr5"><span>5</span><span class="op">−</span><span>1</span><span class="op">=</span><span class="eqc" id="eqc5">4</span></div><div class="eqr" id="eqr4"><span>4</span><span class="op">−</span><span>1</span><span class="op">=</span><span class="eqc" id="eqc4">3</span></div><div class="eqr" id="eqr3"><span>3</span><span class="op">−</span><span>1</span><span class="op">=</span><span class="eqc" id="eqc3">2</span></div><div class="eqr" id="eqr2"><span>2</span><span class="op">−</span><span>1</span><span class="op">=</span><span class="eqc" id="eqc2">1</span></div><div class="eqr" id="eqr1"><span>1</span><span class="op">−</span><span>1</span><span class="op">=</span><span class="eqc" id="eqc1">0</span></div></div>
+  <div class="bubble" id="mama"><img src="art/mama.png"/></div>
+  <svg id="ring" viewBox="0 0 120 120"><path d="M20 40 Q40 15 64 24" stroke="#e2553f" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M28 72 Q62 58 86 32" stroke="#e2553f" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M48 104 Q84 92 104 62" stroke="#e2553f" stroke-width="8" fill="none" stroke-linecap="round"/></svg>
+  <div class="bubble" id="doc"><img src="art/doctor.png"/></div>
+  <div id="fade"></div>
+ </section>
+ <audio id="song" src="assets/song.wav" data-start="0" data-duration="123" data-track-index="2" data-volume="1"></audio>
+</div>
+<script>
+ window.__timelines = window.__timelines || {};
+ const tl = gsap.timeline({ paused: true });
+ tl.fromTo("#title", {y:-60, opacity:0, scale:.8}, {y:0, opacity:1, scale:1, duration:.9, ease:'back.out(1.6)'}, 0.4);
+ tl.to("#title", {y:-40, opacity:0, duration:.6, ease:'power2.in'}, 12.78);
+ tl.fromTo("#mk0", {x:-424, y:-1100}, {x:-424, y:0, duration:0.439, ease:'bounce.out'}, 2.747);
+ tl.fromTo("#mk1", {x:-212, y:-1100}, {x:-212, y:0, duration:0.439, ease:'bounce.out'}, 3.722);
+ tl.fromTo("#mk2", {x:0, y:-1100}, {x:0, y:0, duration:0.439, ease:'bounce.out'}, 4.697);
+ tl.fromTo("#mk3", {x:212, y:-1100}, {x:212, y:0, duration:0.439, ease:'bounce.out'}, 5.672);
+ tl.fromTo("#mk4", {x:424, y:-1100}, {x:424, y:0, duration:0.439, ease:'bounce.out'}, 6.648);
+ tl.fromTo("#counter", {opacity:0, scale:.5, rotation:-10}, {opacity:1, scale:1, rotation:0, duration:.6, ease:'back.out(2)'}, 13.18);
+ tl.set("#cnt5", {opacity:1}, 13.18);
+ tl.fromTo("#tg5_0", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 13.98);
+ tl.to("#tg5_0", {opacity:0, duration:.25}, 16.399);
+ tl.fromTo("#tg5_1", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 14.224);
+ tl.to("#tg5_1", {opacity:0, duration:.25}, 16.399);
+ tl.fromTo("#tg5_2", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 14.468);
+ tl.to("#tg5_2", {opacity:0, duration:.25}, 16.399);
+ tl.fromTo("#tg5_3", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 14.711);
+ tl.to("#tg5_3", {opacity:0, duration:.25}, 16.399);
+ tl.fromTo("#tg5_4", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 14.955);
+ tl.to("#tg5_4", {opacity:0, duration:.25}, 16.399);
+ tl.to("#mk0", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 15.376);
+ tl.to("#mk1", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 15.376);
+ tl.to("#mk2", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 15.376);
+ tl.to("#mk3", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 15.376);
+ tl.to("#mk4", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 15.376);
+ tl.to("#mk4", {x:514, rotation:14, duration:.25, ease:"power2.out"}, 20.48);
+ tl.set("#mk4 .p-jump", {opacity:0}, 20.98);
+ tl.set("#mk4 .p-fall", {opacity:1}, 20.98);
+ tl.to("#mk4", {x:557, y:-200, rotation:-20, duration:0.725, ease:"power2.out"}, 20.98);
+ tl.to("#mk4", {x:600, y:110, rotation:0, scale:0.88, duration:0.725, ease:"power2.in"}, 21.705);
+ tl.set("#mk4 .p-fall", {opacity:0}, 22.43);
+ tl.set("#mk4 .p-hurt", {opacity:1}, 22.43);
+ tl.fromTo("#mk4", {scaleY:0.7040000000000001}, {scaleY:0.88, duration:.45, ease:"elastic.out(1,.4)", immediateRender:false}, 22.43);
+ tl.fromTo("#bump", {x:600, y:50, opacity:0, scale:.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:.25, ease:'back.out(3)'}, 22.43);
+ tl.to("#bump", {opacity:0, scale:1.3, duration:.3}, 23.53);
+ tl.fromTo("#mk4", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 23.23);
+ tl.fromTo("#eq", {opacity:0, x:-30}, {opacity:1, x:0, duration:.35, ease:'back.out(2)'}, 22.63);
+ tl.set("#eqr5", {opacity:1}, 22.63);
+ tl.fromTo("#eqc5", {scale:2, opacity:0}, {scale:1, opacity:1, duration:.35, ease:'back.out(3)'}, 23.63);
+ tl.fromTo("#mama", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)'}, 24.17);
+ tl.fromTo("#mama", {rotation:-4}, {rotation:4, duration:0.122, yoyo:true, repeat:13, ease:"sine.inOut", immediateRender:false}, 24.47);
+ tl.fromTo("#ring", {opacity:0, scale:.6}, {opacity:1, scale:1.15, duration:0.244, yoyo:true, repeat:5}, 24.47);
+ tl.to("#mama", {scale:0, opacity:0, duration:.3, ease:'back.in(2)'}, 26.1);
+ tl.fromTo("#doc", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)'}, 26);
+ tl.fromTo("#doc", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:21, ease:"sine.inOut", immediateRender:false}, 26.5);
+ tl.to("#doc", {scale:0, opacity:0, duration:.35, ease:'back.in(2)'}, 31.97);
+ tl.fromTo("#mk0", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 28.37);
+ tl.fromTo("#mk1", {rotation:0}, {rotation:-5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 28.37);
+ tl.fromTo("#mk2", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 28.37);
+ tl.fromTo("#mk3", {rotation:0}, {rotation:-5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 28.37);
+ tl.to("#cnt5", {opacity:0, scale:.3, duration:.25}, 32.27);
+ tl.fromTo("#cnt4", {opacity:0, scale:1.7}, {opacity:1, scale:1, duration:.45, ease:'back.out(2.2)'}, 32.47);
+ tl.to("#eq", {opacity:0, duration:.3}, 33.47);
+ tl.set("#eqr5", {opacity:0}, 33.87);
+ tl.to("#mk0", {x:-318, rotation:0, duration:0.975, ease:"power2.inOut"}, 32.47);
+ tl.to("#mk1", {x:-106, rotation:0, duration:0.975, ease:"power2.inOut"}, 32.47);
+ tl.to("#mk2", {x:106, rotation:0, duration:0.975, ease:"power2.inOut"}, 32.47);
+ tl.to("#mk3", {x:318, rotation:0, duration:0.975, ease:"power2.inOut"}, 32.47);
+ tl.fromTo("#tg4_0", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 35.82);
+ tl.to("#tg4_0", {opacity:0, duration:.25}, 37.995);
+ tl.fromTo("#tg4_1", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 36.064);
+ tl.to("#tg4_1", {opacity:0, duration:.25}, 37.995);
+ tl.fromTo("#tg4_2", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 36.308);
+ tl.to("#tg4_2", {opacity:0, duration:.25}, 37.995);
+ tl.fromTo("#tg4_3", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 36.551);
+ tl.to("#tg4_3", {opacity:0, duration:.25}, 37.995);
+ tl.to("#mk0", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 37.318);
+ tl.to("#mk1", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 37.318);
+ tl.to("#mk2", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 37.318);
+ tl.to("#mk3", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:19}, 37.318);
+ tl.to("#mk3", {x:408, rotation:14, duration:.25, ease:"power2.out"}, 42.32);
+ tl.set("#mk3 .p-jump", {opacity:0}, 42.82);
+ tl.set("#mk3 .p-fall", {opacity:1}, 42.82);
+ tl.to("#mk3", {x:574, y:-200, rotation:-20, duration:0.725, ease:"power2.out"}, 42.82);
+ tl.to("#mk3", {x:740, y:110, rotation:0, scale:0.88, duration:0.725, ease:"power2.in"}, 43.545);
+ tl.set("#mk3 .p-fall", {opacity:0}, 44.27);
+ tl.set("#mk3 .p-hurt", {opacity:1}, 44.27);
+ tl.fromTo("#mk3", {scaleY:0.7040000000000001}, {scaleY:0.88, duration:.45, ease:"elastic.out(1,.4)", immediateRender:false}, 44.27);
+ tl.fromTo("#bump", {x:740, y:50, opacity:0, scale:.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:.25, ease:'back.out(3)', immediateRender:false}, 44.27);
+ tl.to("#bump", {opacity:0, scale:1.3, duration:.3}, 45.37);
+ tl.fromTo("#mk3", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 45.07);
+ tl.fromTo("#eq", {opacity:0, x:-30}, {opacity:1, x:0, duration:.35, ease:'back.out(2)', immediateRender:false}, 44.47);
+ tl.set("#eqr4", {opacity:1}, 44.47);
+ tl.fromTo("#eqc4", {scale:2, opacity:0}, {scale:1, opacity:1, duration:.35, ease:'back.out(3)'}, 45.47);
+ tl.fromTo("#mama", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 45.97);
+ tl.fromTo("#mama", {rotation:-4}, {rotation:4, duration:0.122, yoyo:true, repeat:13, ease:"sine.inOut", immediateRender:false}, 46.27);
+ tl.fromTo("#ring", {opacity:0, scale:.6}, {opacity:1, scale:1.15, duration:0.244, yoyo:true, repeat:5, immediateRender:false}, 46.27);
+ tl.to("#mama", {scale:0, opacity:0, duration:.3, ease:'back.in(2)'}, 47.93);
+ tl.fromTo("#doc", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 47.83);
+ tl.fromTo("#doc", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:21, ease:"sine.inOut", immediateRender:false}, 48.33);
+ tl.to("#doc", {scale:0, opacity:0, duration:.35, ease:'back.in(2)'}, 53.83);
+ tl.fromTo("#mk0", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 50.23);
+ tl.fromTo("#mk1", {rotation:0}, {rotation:-5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 50.23);
+ tl.fromTo("#mk2", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 50.23);
+ tl.to("#cnt4", {opacity:0, scale:.3, duration:.25}, 54.13);
+ tl.fromTo("#cnt3", {opacity:0, scale:1.7}, {opacity:1, scale:1, duration:.45, ease:'back.out(2.2)'}, 54.33);
+ tl.to("#eq", {opacity:0, duration:.3}, 55.33);
+ tl.set("#eqr4", {opacity:0}, 55.73);
+ tl.to("#mk0", {x:-212, rotation:0, duration:0.975, ease:"power2.inOut"}, 54.33);
+ tl.to("#mk1", {x:0, rotation:0, duration:0.975, ease:"power2.inOut"}, 54.33);
+ tl.to("#mk2", {x:212, rotation:0, duration:0.975, ease:"power2.inOut"}, 54.33);
+ tl.fromTo("#tg3_0", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 57.68);
+ tl.to("#tg3_0", {opacity:0, duration:.25}, 59.611);
+ tl.fromTo("#tg3_1", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 57.924);
+ tl.to("#tg3_1", {opacity:0, duration:.25}, 59.611);
+ tl.fromTo("#tg3_2", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 58.168);
+ tl.to("#tg3_2", {opacity:0, duration:.25}, 59.611);
+ tl.to("#mk0", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:21}, 58.772);
+ tl.to("#mk1", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:21}, 58.772);
+ tl.to("#mk2", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:21}, 58.772);
+ tl.to("#mk2", {x:302, rotation:14, duration:.25, ease:"power2.out"}, 64.18);
+ tl.set("#mk2 .p-jump", {opacity:0}, 64.68);
+ tl.set("#mk2 .p-fall", {opacity:1}, 64.68);
+ tl.to("#mk2", {x:586, y:-200, rotation:-20, duration:0.725, ease:"power2.out"}, 64.68);
+ tl.to("#mk2", {x:870, y:110, rotation:0, scale:0.88, duration:0.725, ease:"power2.in"}, 65.405);
+ tl.set("#mk2 .p-fall", {opacity:0}, 66.13);
+ tl.set("#mk2 .p-hurt", {opacity:1}, 66.13);
+ tl.fromTo("#mk2", {scaleY:0.7040000000000001}, {scaleY:0.88, duration:.45, ease:"elastic.out(1,.4)", immediateRender:false}, 66.13);
+ tl.fromTo("#bump", {x:870, y:50, opacity:0, scale:.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:.25, ease:'back.out(3)', immediateRender:false}, 66.13);
+ tl.to("#bump", {opacity:0, scale:1.3, duration:.3}, 67.23);
+ tl.fromTo("#mk2", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 66.93);
+ tl.fromTo("#eq", {opacity:0, x:-30}, {opacity:1, x:0, duration:.35, ease:'back.out(2)', immediateRender:false}, 66.33);
+ tl.set("#eqr3", {opacity:1}, 66.33);
+ tl.fromTo("#eqc3", {scale:2, opacity:0}, {scale:1, opacity:1, duration:.35, ease:'back.out(3)'}, 67.33);
+ tl.fromTo("#mama", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 67.87);
+ tl.fromTo("#mama", {rotation:-4}, {rotation:4, duration:0.122, yoyo:true, repeat:13, ease:"sine.inOut", immediateRender:false}, 68.17);
+ tl.fromTo("#ring", {opacity:0, scale:.6}, {opacity:1, scale:1.15, duration:0.244, yoyo:true, repeat:5, immediateRender:false}, 68.17);
+ tl.to("#mama", {scale:0, opacity:0, duration:.3, ease:'back.in(2)'}, 69.83);
+ tl.fromTo("#doc", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 69.73);
+ tl.fromTo("#doc", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:21, ease:"sine.inOut", immediateRender:false}, 70.23);
+ tl.to("#doc", {scale:0, opacity:0, duration:.35, ease:'back.in(2)'}, 75.7);
+ tl.fromTo("#mk0", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 72.1);
+ tl.fromTo("#mk1", {rotation:0}, {rotation:-5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 72.1);
+ tl.to("#cnt3", {opacity:0, scale:.3, duration:.25}, 76);
+ tl.fromTo("#cnt2", {opacity:0, scale:1.7}, {opacity:1, scale:1, duration:.45, ease:'back.out(2.2)'}, 76.2);
+ tl.to("#eq", {opacity:0, duration:.3}, 77.2);
+ tl.set("#eqr3", {opacity:0}, 77.6);
+ tl.to("#mk0", {x:-106, rotation:0, duration:0.975, ease:"power2.inOut"}, 76.2);
+ tl.to("#mk1", {x:106, rotation:0, duration:0.975, ease:"power2.inOut"}, 76.2);
+ tl.fromTo("#tg2_0", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 79.62);
+ tl.to("#tg2_0", {opacity:0, duration:.25}, 81.308);
+ tl.fromTo("#tg2_1", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 79.864);
+ tl.to("#tg2_1", {opacity:0, duration:.25}, 81.308);
+ tl.to("#mk0", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:23}, 80.226);
+ tl.to("#mk1", {y:-110, duration:0.244, ease:"power2.out", yoyo:true, repeat:23}, 80.226);
+ tl.to("#mk0", {x:-196, rotation:-14, duration:.25, ease:"power2.out"}, 86.12);
+ tl.set("#mk0 .p-jump", {opacity:0}, 86.62);
+ tl.set("#mk0 .p-fall", {opacity:1}, 86.62);
+ tl.to("#mk0", {x:-428, y:-200, rotation:20, duration:0.725, ease:"power2.out"}, 86.62);
+ tl.to("#mk0", {x:-660, y:110, rotation:0, scale:0.88, duration:0.725, ease:"power2.in"}, 87.345);
+ tl.set("#mk0 .p-fall", {opacity:0}, 88.07);
+ tl.set("#mk0 .p-hurt", {opacity:1}, 88.07);
+ tl.fromTo("#mk0", {scaleY:0.7040000000000001}, {scaleY:0.88, duration:.45, ease:"elastic.out(1,.4)", immediateRender:false}, 88.07);
+ tl.fromTo("#bump", {x:-660, y:50, opacity:0, scale:.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:.25, ease:'back.out(3)', immediateRender:false}, 88.07);
+ tl.to("#bump", {opacity:0, scale:1.3, duration:.3}, 89.17);
+ tl.fromTo("#mk0", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 88.87);
+ tl.fromTo("#eq", {opacity:0, x:-30}, {opacity:1, x:0, duration:.35, ease:'back.out(2)', immediateRender:false}, 88.27);
+ tl.set("#eqr2", {opacity:1}, 88.27);
+ tl.fromTo("#eqc2", {scale:2, opacity:0}, {scale:1, opacity:1, duration:.35, ease:'back.out(3)'}, 89.27);
+ tl.fromTo("#mama", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 89.77);
+ tl.fromTo("#mama", {rotation:-4}, {rotation:4, duration:0.122, yoyo:true, repeat:13, ease:"sine.inOut", immediateRender:false}, 90.07);
+ tl.fromTo("#ring", {opacity:0, scale:.6}, {opacity:1, scale:1.15, duration:0.244, yoyo:true, repeat:5, immediateRender:false}, 90.07);
+ tl.to("#mama", {scale:0, opacity:0, duration:.3, ease:'back.in(2)'}, 91.7);
+ tl.fromTo("#doc", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 91.6);
+ tl.fromTo("#doc", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:21, ease:"sine.inOut", immediateRender:false}, 92.1);
+ tl.to("#doc", {scale:0, opacity:0, duration:.35, ease:'back.in(2)'}, 97.57);
+ tl.fromTo("#mk1", {rotation:0}, {rotation:5, duration:0.488, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 93.97);
+ tl.to("#cnt2", {opacity:0, scale:.3, duration:.25}, 97.87);
+ tl.fromTo("#cnt1", {opacity:0, scale:1.7}, {opacity:1, scale:1, duration:.45, ease:'back.out(2.2)'}, 98.07);
+ tl.to("#eq", {opacity:0, duration:.3}, 99.07);
+ tl.set("#eqr2", {opacity:0}, 99.47);
+ tl.to("#mk1", {x:0, rotation:0, duration:0.975, ease:"power2.inOut"}, 98.07);
+ tl.fromTo("#tg1_0", {opacity:0, scale:.3}, {opacity:1, scale:1, duration:.2, ease:'back.out(3)'}, 101.45);
+ tl.to("#tg1_0", {opacity:0, duration:.25}, 102.894);
+ tl.to("#mk1", {y:-150, duration:0.244, ease:"power2.out", yoyo:true, repeat:21}, 102.168);
+ tl.to("#mk1", {x:-90, rotation:-14, duration:.25, ease:"power2.out"}, 107.95);
+ tl.set("#mk1 .p-jump", {opacity:0}, 108.45);
+ tl.set("#mk1 .p-fall", {opacity:1}, 108.45);
+ tl.to("#mk1", {x:-455, y:-200, rotation:20, duration:0.725, ease:"power2.out"}, 108.45);
+ tl.to("#mk1", {x:-820, y:110, rotation:0, scale:0.88, duration:0.725, ease:"power2.in"}, 109.175);
+ tl.set("#mk1 .p-fall", {opacity:0}, 109.9);
+ tl.set("#mk1 .p-hurt", {opacity:1}, 109.9);
+ tl.fromTo("#mk1", {scaleY:0.7040000000000001}, {scaleY:0.88, duration:.45, ease:"elastic.out(1,.4)", immediateRender:false}, 109.9);
+ tl.fromTo("#bump", {x:-820, y:50, opacity:0, scale:.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:.25, ease:'back.out(3)', immediateRender:false}, 109.9);
+ tl.to("#bump", {opacity:0, scale:1.3, duration:.3}, 111);
+ tl.fromTo("#mk1", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:3, ease:"sine.inOut", immediateRender:false}, 110.7);
+ tl.fromTo("#eq", {opacity:0, x:-30}, {opacity:1, x:0, duration:.35, ease:'back.out(2)', immediateRender:false}, 110.1);
+ tl.set("#eqr1", {opacity:1}, 110.1);
+ tl.fromTo("#eqc1", {scale:2, opacity:0}, {scale:1, opacity:1, duration:.35, ease:'back.out(3)'}, 111.1);
+ tl.fromTo("#mama", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 111.6);
+ tl.fromTo("#mama", {rotation:-4}, {rotation:4, duration:0.122, yoyo:true, repeat:13, ease:"sine.inOut", immediateRender:false}, 111.9);
+ tl.fromTo("#ring", {opacity:0, scale:.6}, {opacity:1, scale:1.15, duration:0.244, yoyo:true, repeat:5, immediateRender:false}, 111.9);
+ tl.to("#mama", {scale:0, opacity:0, duration:.3, ease:'back.in(2)'}, 113.53);
+ tl.fromTo("#doc", {scale:0, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(1.8)', immediateRender:false}, 113.43);
+ tl.fromTo("#doc", {rotation:-4}, {rotation:4, duration:0.244, yoyo:true, repeat:21, ease:"sine.inOut", immediateRender:false}, 113.93);
+ tl.to("#doc", {scale:0, opacity:0, duration:.35, ease:'back.in(2)'}, 119.43);
+ tl.to("#cnt1", {opacity:0, scale:.3, duration:.25}, 119.73);
+ tl.fromTo("#cnt0", {opacity:0, scale:1.7}, {opacity:1, scale:1, duration:.45, ease:'back.out(2.2)'}, 119.93);
+ tl.to(".monkey", {opacity:0, duration:.5}, 119.67);
+ tl.to("#counter", {opacity:0, duration:.4}, 119.67);
+ tl.to("#eq", {opacity:0, duration:.3}, 119.67);
+ tl.fromTo("#goodnight", {opacity:0, scale:1.08}, {opacity:1, scale:1, duration:1.0, ease:'power2.out'}, 119.67);
+ tl.fromTo("#z0", {y:0, opacity:0, scale:.6}, {y:-70, opacity:1, scale:1.1, duration:1.6, ease:'sine.out'}, 120.47);
+ tl.fromTo("#z1", {y:0, opacity:0, scale:.6}, {y:-70, opacity:1, scale:1.1, duration:1.6, ease:'sine.out'}, 120.87);
+ tl.fromTo("#z2", {y:0, opacity:0, scale:.6}, {y:-70, opacity:1, scale:1.1, duration:1.6, ease:'sine.out'}, 121.27);
+ tl.fromTo("#fade", {opacity:0}, {opacity:1, duration:1.0}, 121.9);
+ window.__timelines["main"] = tl;
+</script>
+</body></html>
