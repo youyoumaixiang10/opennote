@@ -389,7 +389,7 @@ export async function build(q) {
   function render(ctx, t) {
     const dt = 1 / 24, a = cam.at(t), b = cam.at(Math.max(0, t - dt));
     const sp = Math.hypot((a.x - b.x) * a.z, (a.y - b.y) * a.z) + Math.abs(Math.log(a.z / b.z)) * 900;
-    const N = sp > 14 ? Math.min(12, Math.ceil(sp * .5 / 4)) : 1;
+    const N = sp > 45 ? Math.min(12, Math.ceil(sp * .5 / 4)) : 1;   // blur only real whips; slow tracks stay sharp for reading
     if (N === 1) { board.render(ctx, t, cam); return; }
     const ov = board.overlays; board.overlays = [];
     for (let i = 0; i < N; i++) { board.render(oc, t - dt * .5 * i / (N - 1), cam); ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(off, 0, 0); }
