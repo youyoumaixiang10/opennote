@@ -1,0 +1,6 @@
+out/
+stills/
+events.json
+voice/kokoro/*.wav
+voice/out/*.wav
+voice/*/.cache/
