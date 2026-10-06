@@ -4,3 +4,4 @@ events.json
 voice/kokoro/*.wav
 voice/out/*.wav
 voice/*/.cache/
+music/*.wav

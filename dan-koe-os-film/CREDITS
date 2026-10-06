@@ -1,0 +1,23 @@
+《一块白板，蒸馏出一套个人成长操作系统》— 第三方素材与授权
+
+内容
+- 文案改编自作者本人的公众号文章《我把油管大神 Dan Koe 上千份内容，蒸馏成了可调用的个人成长操作系统》。
+  片中引用的 Dan Koe 语句为文章中的中文转述；Dan Koe 及其文章《How to Fix Your Entire Life in 1 Day》的权利归原作者所有。
+
+字体与书写数据
+- 汉字笔顺（单线书写）：hanzi-writer-data（Make Me a Hanzi），笔画数据源自 AR PL 字体，Arphic Public License（见 fonts/ARPHICPL-hanzi.txt）
+  https://github.com/chanind/hanzi-writer-data · https://github.com/skishore/makemeahanzi
+- 拉丁字母单线手写：EMS Tech — Sheldon B. Michaels（源自 Kimberly Geswein 的 Architects Daughter），SVG 转换 Windell H. Oskay（Evil Mad Scientist），SIL Open Font License 1.1
+- 字幕字体：ZCOOL KuaiLe（站酷快乐体，子集），SIL Open Font License 1.1 — https://fonts.google.com/specimen/ZCOOL+KuaiLe
+
+声音
+- 配音：Kokoro-82M（hexgrad，Apache-2.0）经 kokoro-onnx 离线合成，音色 zf_xiaoxiao
+- 配乐采样（CC0 1.0）：Versilian Community Sample Library（VCSL，Versilian Studios）— 马林巴、颤音琴、钟琴、木块、沙锤
+  Karoryfer Samples / sfzinstruments — 爵士低音提琴（Sneakybass）
+- 拟音（马克笔、板擦、磁贴、笔帽、挂钟、房间底噪）：程序合成，无第三方素材
+
+画面与工具
+- 白板绘制引擎改编自 Lemo-Opuscar 白板讲解风格（MIT License）
+- 渲染：Chromium（Playwright）、FFmpeg
+
+使用片中的文字与素材时，请自行确认相应权利。

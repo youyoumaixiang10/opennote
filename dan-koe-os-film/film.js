@@ -127,7 +127,7 @@ export async function build(q) {
     const al = c > .3 ? 'left' : c < -.3 ? 'right' : 'center', lx = nx + (al === 'left' ? 46 : al === 'right' ? -46 : 0);
     const ly = s < -.5 ? ny - 50 : s > .5 ? ny + 110 : ny + 26;
     const t0 = T('l03', sub, 0) - .1, t1 = T('l03', sub) + .1;
-    tl.draw(K, [W.circle(nx, ny, 16, { w: 9, lap: .4 })], t0 - .22, { by: t0 });
+    tl.draw(K2, [W.circle(nx, ny, 16, { w: 9, lap: .4 })], t0 - .3, { by: t0 - .02 });
     tl.draw(K, H(w, lx, ly, { h: 60, align: al }), t0, { by: t1 });
   });
   // "连成了一套系统": ring through the nodes + 系统 in the centre
@@ -166,7 +166,7 @@ export async function build(q) {
   const F = { x: 2950, y: 300, w: 2500, h: 1260 };   // the content system
   const frame = W.dashed([[F.x, F.y], [F.x + F.w, F.y], [F.x + F.w, F.y + F.h], [F.x, F.y + F.h], [F.x, F.y + 8]], { w: 7, dash: 46, gap: 30, smooth: 0 });
   tl.draw(G, frame, VO.l11 - .1, { by: T('l11', '内容体系') });
-  tl.draw(G, H('内容体系', F.x, F.y - 40, { h: 52 }), T('l11', '内容体系', 0), { by: T('l11', '切面', 0) });
+  tl.draw(K2, H('内容体系', F.x, F.y - 40, { h: 52, color: INK.green }), T('l11', '内容体系', 0), { by: T('l11', '切面', 0) });
   // the doc grid: 1297 tiny marks (Isotype); the first one is the viral post
   const NC = 49, NR = 27, sx = (F.w - 120) / NC, sy = (F.h - 110) / NR, docs = [];
   for (let i = 0; i < 1297; i++) {
@@ -225,11 +225,11 @@ export async function build(q) {
   const chain = [['真实问题', '识别真实问题', 0], ['识别意图', '识别真实问题', 1], ['选择 1-3 个框架', '选择一到三个框架', 1], ['读取证据', '回到对应证据', 1], ['给出下一步', '给出下一步行动', 1]];
   chain.forEach(([w, sub, ed], i) => {
     const tA = i === 0 ? T('l17', '识别', 0) - .1 : i === 1 ? T('l17', '真实问题', 0) : T('l17', sub, 0) - .05;
-    const tB = i === 0 ? T('l17', '真实问题', 0) : i === 1 ? T('l17', '真实问题') + .05 : T('l17', sub) - .05;
+    const tB = i === 0 ? T('l17', '真实问题') : i === 1 ? T('l17', '选择', 0) - .1 : T('l17', sub) - .05;
     const pen = i % 2 ? K2 : K;
     tl.draw(pen, [W.roundRect(CX[i] - CW / 2, CY - CH / 2, CW, CH, 40, { w: 9 })], tA - .45, { by: tA });
     tl.draw(pen, H(w, CX[i] + (i === 4 ? 40 : 0), CY + 26, { h: 52, align: 'center', color: i === 4 ? INK.orange : undefined }), tA, { by: tB });
-    if (i) tl.draw(G, W.arrow(CX[i - 1] + CW / 2 + 22, CY, CX[i] - CW / 2 - 22, CY, { w: 9, head: 26 }), tA - .7, { by: tA - .48 });
+    if (i) tl.draw(G, W.arrow(CX[i - 1] + CW / 2 + 22, CY, CX[i] - CW / 2 - 22, CY, { w: 9, head: 26 }), tA - .42, { by: tA - .12 });
   });
   // the flag on the last node
   const FL = [CX[4] - 230, CY + 50];
@@ -404,5 +404,5 @@ export async function build(q) {
   const texts = t => { const s = subs.find(s => t >= s.t0 && t < s.t1); return s ? [{ id: 'sub', text: s.text, x0: 400, y0: 960, x1: 1520, y1: 1040 }] : []; };
   return { dur: END, render, ev, subs, cam, tl, VO, texts,
     cues: { BPM, BEAT, ...cues, VO, VE: Object.fromEntries(lines.map(l => [l.id, +VE(l.id).toFixed(3)])),
-      chainEnd: VE('l17'), wide0: VO.l22, push0: c0, endCard: ec } };
+      chainEnd: VE('l17'), wide0: VO.l22, push0: c0, endCard: ec, subs: subs.map(s => ({ t0: +s.t0.toFixed(3), t1: +s.t1.toFixed(3), text: s.text })) } };
 }
