@@ -1,0 +1,13 @@
+Third-party material used in the three films
+
+Font
+- ZCOOL KuaiLe (站酷快乐体), by ZCOOL — SIL Open Font License 1.1 (fonts/OFL.txt). Source: github.com/google/fonts/tree/main/ofl/zcoolkuaile
+
+Voice (offline text-to-speech)
+- Kokoro-82M v1.1-zh model and voices, by hexgrad — Apache License 2.0. ONNX export from github.com/thewh1teagle/kokoro-onnx (MIT) release "model-files-v1.1".
+- misaki[zh] grapheme-to-phoneme, by hexgrad — Apache License 2.0.
+
+Style reference (guidance only; no code or assets copied)
+- "Crayon Picture Book" style notes from Lemo-Opuscar (github.com/lemomo-ai/lemo-opuscar) — MIT License.
+
+Everything else — drawings, characters, music, sound effects and code — was made for these films.

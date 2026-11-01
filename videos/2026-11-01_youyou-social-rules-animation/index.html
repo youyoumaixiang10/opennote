@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>@font-face{font-family:Kuaile;src:url(/fonts/ZCOOLKuaiLe-Regular.ttf)}html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script type="module">
+import { boot } from '/engine/player.js';
+const q = new URLSearchParams(location.search), ep = q.get('ep') || 'ep1';
+const E = (await import(`/episodes/${ep}.mjs`)).default;
+let durs = {}; try { durs = await (await fetch(`/voice/${ep}/dur.json`)).json(); } catch (e) {}
+await boot(E, durs);
+</script></body></html>

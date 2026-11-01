@@ -475,3 +475,9 @@
 ## 附：资料说明
 
 本文引用的研究结论来自儿童发展心理学领域比较公认的经典研究方向：幼儿身体攻击的发展轨迹（Tremblay 等）、早期共情（Zahn-Waxler 等）、对他人愿望的理解（Repacholi & Gopnik 1997）、对他人所有权的理解（Rossano, Rakoczy & Tomasello 2011）、观察学习（Bandura）、诱导式管教与道德内化（Hoffman；Kochanska）、幼儿的视频缺陷效应（Anderson & Pempek 2005）。不同研究给出的具体年龄存在差异，文中年龄均为大致范围。本方案是教育建议，不能代替专业的儿童发育评估。
+
+---
+
+## 附：已制作的动画
+
+三集蜡笔绘本风格动画的源码在 `videos/2026-11-01_youyou-social-rules-animation/`（每集约 110 秒，9:16 竖屏，中文配音）。运行 `sh build.sh ep1|ep2|ep3` 可以重新生成成片。
